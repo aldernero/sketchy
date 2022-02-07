@@ -20,6 +20,13 @@ type Curve struct {
 	Closed bool
 }
 
+type Rect struct {
+	X float64
+	Y float64
+	W float64
+	H float64
+}
+
 func (p Point) String() string {
 	return fmt.Sprintf("(%f, %f)", p.X, p.Y)
 }
@@ -86,4 +93,8 @@ func (c *Curve) Last() Point {
 		return c.Points[0]
 	}
 	return c.Points[n-1]
+}
+
+func (r *Rect) ContainsPoint(p Point) bool {
+	return p.X >= r.X && p.X <= r.X+r.W && p.Y >= r.Y && p.Y <= r.Y+r.H
 }
