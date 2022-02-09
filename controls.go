@@ -73,6 +73,7 @@ func (s *Slider) CheckAndUpdate() error {
 				} else {
 					s.Val += s.Incr
 				}
+				s.Val = Clamp(s.MinVal, s.MaxVal, s.Val)
 			}
 		}
 	}

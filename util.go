@@ -30,6 +30,16 @@ func Map(a float64, b float64, c float64, d float64, i float64) float64 {
 	return Lerp(c, d, p)
 }
 
+func Clamp(a float64, b float64, c float64) float64 {
+	if c <= a {
+		return a
+	}
+	if c >= b {
+		return b
+	}
+	return c
+}
+
 func Linspace(i float64, j float64, n int, b bool) []float64 {
 	d := (j - i) / float64(n-1)
 	var result []float64
