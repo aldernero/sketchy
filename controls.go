@@ -6,12 +6,14 @@ import (
 	"strconv"
 
 	"github.com/fogleman/gg"
+	"github.com/hajimehoshi/ebiten/v2"
 )
 
 const (
-	sliderHeight   = 10.0
-	sliderHPadding = 5.0
-	sliderVPadding = 2.0
+	sliderHeight              = 10.0
+	sliderHPadding            = 5.0
+	sliderVPadding            = 2.0
+	sliderMouseWheelThreshold = 0.5
 )
 
 var sliderOutline color.Color = color.Black
@@ -22,6 +24,7 @@ type Slider struct {
 	Name   string
 	Pos    Point
 	Width  float64
+	Height float64
 	MinVal float64
 	MaxVal float64
 	Val    float64
@@ -36,8 +39,12 @@ func (s *Slider) GetRect(ctx *gg.Context) Rect {
 	x := s.Pos.X - sliderHPadding
 	y := s.Pos.Y - sliderVPadding - ctx.FontHeight()
 	w := s.Width + 2*sliderHPadding
-	h := sliderHeight + ctx.FontHeight() + sliderVPadding
+	h := s.Height + ctx.FontHeight() + sliderVPadding
 	return Rect{X: x, Y: y, W: w, H: h}
+}
+
+func (s *Slider) AutoHeight(ctx *gg.Context) {
+	s.Height = ctx.FontHeight()
 }
 
 func (s *Slider) IsInside(x float64, y float64) bool {
@@ -49,6 +56,27 @@ func (s *Slider) Update(x float64) {
 	totalIncr := math.Round((s.MaxVal - s.MinVal) / s.Incr)
 	pct := Map(s.Pos.X, s.Pos.X+s.Width, 0, 1, x)
 	s.Val = s.MinVal + pct*totalIncr*s.Incr
+}
+
+func (s *Slider) CheckAndUpdate() error {
+	x, y := ebiten.CursorPosition()
+	if ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft) {
+		if s.IsInside(float64(x), float64(y)) {
+			s.Update(float64(x))
+		}
+	} else {
+		if s.IsInside(float64(x), float64(y)) {
+			_, dy := ebiten.Wheel()
+			if math.Abs(dy) > sliderMouseWheelThreshold {
+				if dy < 0 {
+					s.Val -= s.Incr
+				} else {
+					s.Val += s.Incr
+				}
+			}
+		}
+	}
+	return nil
 }
 
 func (s *Slider) Draw(ctx *gg.Context) {
