@@ -1,4 +1,4 @@
-package genart
+package sketchy
 
 import (
 	"fmt"
