@@ -2,10 +2,12 @@ package sketchy
 
 import (
 	"encoding/json"
+	"image/color"
 	"log"
 	"os"
 
 	"github.com/fogleman/gg"
+	"github.com/hajimehoshi/ebiten/v2"
 )
 
 type Sketch struct {
@@ -51,6 +53,23 @@ func (s *Sketch) DrawControls(ctx *gg.Context) {
 	}
 }
 
-func (g *Sketch) Layout(outsideWidth, outsideHeight int) (int, int) {
-	return int(g.ControlWidth + g.SketchWidth), int(g.SketchHeight)
+func (s *Sketch) Layout(outsideWidth, outsideHeight int) (int, int) {
+	return int(s.ControlWidth + s.SketchWidth), int(s.SketchHeight)
+}
+
+func (s *Sketch) Update() error {
+	s.UpdateControls()
+	// Custom update code goes here
+	return nil
+}
+
+func (s *Sketch) Draw(screen *ebiten.Image) {
+	screen.Fill(color.White)
+	// Control context
+	cc := gg.NewContext(int(s.ControlWidth), int(s.SketchHeight))
+	cc.DrawRectangle(0, 0, s.ControlWidth, s.SketchHeight)
+	cc.SetColor(color.White)
+	cc.Fill()
+	s.DrawControls(cc)
+	// Custom draw code goes here
 }

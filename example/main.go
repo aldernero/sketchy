@@ -1,23 +1,11 @@
 package main
 
 import (
-	"image/color"
 	"log"
 
 	"github.com/aldernero/sketchy"
 	"github.com/hajimehoshi/ebiten/v2"
 )
-
-func (s *sketchy.Sketch) Update() error {
-	s.UpdateControls()
-	// Custom update code goes here
-	return nil
-}
-
-func (s *sketchy.Sketch) Draw(screen *ebiten.Image) {
-	screen.Fill(color.White)
-	// Custom draw code goes here
-}
 
 func main() {
 	s, err := sketchy.NewSketchFromFile("config.json")
