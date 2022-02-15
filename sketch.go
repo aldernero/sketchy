@@ -10,11 +10,16 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
+type SketchUpdater func(s *Sketch)
+type SketchDrawer func(s *Sketch, c *gg.Context)
+
 type Sketch struct {
 	SketchWidth  float64
 	SketchHeight float64
 	ControlWidth float64
 	Controls     []Slider
+	Updater      SketchUpdater
+	Drawer       SketchDrawer
 }
 
 func NewSketchFromFile(fname string) (*Sketch, error) {
@@ -59,18 +64,25 @@ func (s *Sketch) Layout(outsideWidth, outsideHeight int) (int, int) {
 
 func (s *Sketch) Update() error {
 	s.UpdateControls()
-	// Custom update code goes here
+	s.Updater(s)
 	return nil
 }
 
 func (s *Sketch) Draw(screen *ebiten.Image) {
+	w := int(s.ControlWidth)
+	W := int(s.ControlWidth + s.SketchWidth)
+	H := int(s.SketchHeight)
 	screen.Fill(color.White)
-	// Control context
-	cc := gg.NewContext(int(s.ControlWidth), int(s.SketchHeight))
+	cc := gg.NewContext(w, H)
 	cc.DrawRectangle(0, 0, s.ControlWidth, s.SketchHeight)
 	cc.SetColor(color.White)
 	cc.Fill()
 	s.DrawControls(cc)
 	screen.DrawImage(ebiten.NewImageFromImage(cc.Image()), nil)
-	// Custom draw code goes here
+	ctx := gg.NewContext(W, H)
+	ctx.Push()
+	ctx.Translate(s.ControlWidth, 0)
+	s.Drawer(s, ctx)
+	ctx.Pop()
+	screen.DrawImage(ebiten.NewImageFromImage(ctx.Image()), nil)
 }

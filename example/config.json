@@ -4,24 +4,24 @@
     "ControlWidth": 200,
     "Controls": [
         {
-            "Name": "slider1",
+            "Name": "radius",
             "MinVal": 0,
-            "MaxVal": 100,
-            "Val": 25,
+            "MaxVal": 400,
+            "Val": 200,
             "Incr": 1
         },
         {
-            "Name": "slider2",
+            "Name": "yphase",
             "MinVal": 0,
             "MaxVal": 360,
             "Val": 180,
             "Incr": 1
         },
         {
-            "Name": "slider3",
-            "MinVal": 0,
+            "Name": "phaseChange",
+            "MinVal": -1,
             "MaxVal": 1,
-            "Val": 0.3,
+            "Val": 0.01,
             "Incr": 0.01
         }
     ]
