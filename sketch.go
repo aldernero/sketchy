@@ -17,7 +17,7 @@ type Sketch struct {
 	Controls     []Slider
 }
 
-func NewSketchFromFile(fname string) (Sketch, error) {
+func NewSketchFromFile(fname string) (*Sketch, error) {
 	jsonFile, err := os.Open(fname)
 	if err != nil {
 		log.Fatal(err)
@@ -27,29 +27,29 @@ func NewSketchFromFile(fname string) (Sketch, error) {
 	if err = parser.Decode(&sketch); err != nil {
 		log.Fatal(err)
 	}
-	return sketch, nil
+	return &sketch, nil
 }
 
 func (s *Sketch) UpdateControls() {
-	for _, c := range s.Controls {
-		c.CheckAndUpdate()
+	for i := range s.Controls {
+		s.Controls[i].CheckAndUpdate()
 	}
 }
 
 func (s *Sketch) PlaceControls(w float64, h float64, ctx *gg.Context) {
-	for i, c := range s.Controls {
-		c.AutoHeight(ctx)
-		c.Width = s.ControlWidth - 2*sliderHPadding
-		c.Pos = Point{
-			X: sliderHPadding,
-			Y: 2*float64(i)*c.Height + c.Height,
+	for i := range s.Controls {
+		s.Controls[i].AutoHeight(ctx)
+		s.Controls[i].Width = s.ControlWidth - 2*SliderHPadding
+		s.Controls[i].Pos = Point{
+			X: SliderHPadding,
+			Y: 2*float64(i)*s.Controls[i].Height + s.Controls[i].Height,
 		}
 	}
 }
 
 func (s *Sketch) DrawControls(ctx *gg.Context) {
-	for _, c := range s.Controls {
-		c.Draw(ctx)
+	for i := range s.Controls {
+		s.Controls[i].Draw(ctx)
 	}
 }
 
@@ -71,5 +71,6 @@ func (s *Sketch) Draw(screen *ebiten.Image) {
 	cc.SetColor(color.White)
 	cc.Fill()
 	s.DrawControls(cc)
+	screen.DrawImage(ebiten.NewImageFromImage(cc.Image()), nil)
 	// Custom draw code goes here
 }

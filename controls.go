@@ -10,10 +10,10 @@ import (
 )
 
 const (
-	sliderHeight              = 10.0
-	sliderHPadding            = 5.0
-	sliderVPadding            = 2.0
-	sliderMouseWheelThreshold = 0.5
+	SliderHeight              = 10.0
+	SliderHPadding            = 5.0
+	SliderVPadding            = 2.0
+	SliderMouseWheelThreshold = 0.5
 )
 
 var sliderOutline color.Color = color.Black
@@ -36,10 +36,10 @@ func (s *Slider) GetPercentage() float64 {
 }
 
 func (s *Slider) GetRect(ctx *gg.Context) Rect {
-	x := s.Pos.X - sliderHPadding
-	y := s.Pos.Y - sliderVPadding - ctx.FontHeight()
-	w := s.Width + 2*sliderHPadding
-	h := s.Height + ctx.FontHeight() + sliderVPadding
+	x := s.Pos.X - SliderHPadding
+	y := s.Pos.Y - SliderVPadding - ctx.FontHeight()
+	w := s.Width + 2*SliderHPadding
+	h := s.Height + ctx.FontHeight() + SliderVPadding
 	return Rect{X: x, Y: y, W: w, H: h}
 }
 
@@ -49,7 +49,7 @@ func (s *Slider) AutoHeight(ctx *gg.Context) {
 
 func (s *Slider) IsInside(x float64, y float64) bool {
 	return x >= s.Pos.X &&
-		x <= s.Pos.X+s.Width && y >= s.Pos.Y && y <= s.Pos.Y+sliderHeight
+		x <= s.Pos.X+s.Width && y >= s.Pos.Y && y <= s.Pos.Y+SliderHeight
 }
 
 func (s *Slider) Update(x float64) {
@@ -67,7 +67,7 @@ func (s *Slider) CheckAndUpdate() error {
 	} else {
 		if s.IsInside(float64(x), float64(y)) {
 			_, dy := ebiten.Wheel()
-			if math.Abs(dy) > sliderMouseWheelThreshold {
+			if math.Abs(dy) > SliderMouseWheelThreshold {
 				if dy < 0 {
 					s.Val -= s.Incr
 				} else {
@@ -82,22 +82,22 @@ func (s *Slider) CheckAndUpdate() error {
 
 func (s *Slider) Draw(ctx *gg.Context) {
 	ctx.SetColor(sliderBackground)
-	ctx.DrawRectangle(s.Pos.X, s.Pos.Y, s.Width, sliderHeight)
+	ctx.DrawRectangle(s.Pos.X, s.Pos.Y, s.Width, SliderHeight)
 	ctx.Fill()
 	ctx.SetColor(sliderFill)
-	ctx.DrawRectangle(s.Pos.X, s.Pos.Y, s.Width*s.GetPercentage(), sliderHeight)
+	ctx.DrawRectangle(s.Pos.X, s.Pos.Y, s.Width*s.GetPercentage(), SliderHeight)
 	ctx.Fill()
 	ctx.SetColor(sliderOutline)
-	ctx.DrawRectangle(s.Pos.X, s.Pos.Y, s.Width, sliderHeight)
+	ctx.DrawRectangle(s.Pos.X, s.Pos.Y, s.Width, SliderHeight)
 	ctx.Stroke()
 	digits := 0
 	if s.Incr < 1 {
 		digits = int(math.Ceil(math.Abs(math.Log10(s.Incr))))
 	}
-	ctx.DrawStringWrapped(s.Name, s.Pos.X, s.Pos.Y-ctx.FontHeight()-sliderVPadding, 0, 0, s.Width, 1, gg.AlignLeft)
+	ctx.DrawStringWrapped(s.Name, s.Pos.X, s.Pos.Y-ctx.FontHeight()-SliderVPadding, 0, 0, s.Width, 1, gg.AlignLeft)
 	ctx.DrawStringWrapped(
 		strconv.FormatFloat(s.Val, 'f', digits, 64),
-		s.Pos.X, s.Pos.Y-ctx.FontHeight()-sliderVPadding,
+		s.Pos.X, s.Pos.Y-ctx.FontHeight()-SliderVPadding,
 		0, 0, s.Width, 1, gg.AlignRight)
 }
 
