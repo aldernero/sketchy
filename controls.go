@@ -10,25 +10,25 @@ import (
 )
 
 const (
-	SliderHeight              = 10.0
-	SliderHPadding            = 5.0
-	SliderVPadding            = 2.0
+	SliderHeight              = 15.0
+	SliderHPadding            = 7.0
+	SliderVPadding            = 7.0
 	SliderMouseWheelThreshold = 0.5
 )
 
-var sliderOutline color.Color = color.Black
-var sliderBackground color.Color = color.White
-var sliderFill color.Color = color.Gray{Y: 128}
-
 type Slider struct {
-	Name   string
-	Pos    Point
-	Width  float64
-	Height float64
-	MinVal float64
-	MaxVal float64
-	Val    float64
-	Incr   float64
+	Name            string
+	Pos             Point
+	Width           float64
+	Height          float64
+	MinVal          float64
+	MaxVal          float64
+	Val             float64
+	Incr            float64
+	OutlineColor    color.Color
+	BackgroundColor color.Color
+	FillColor       color.Color
+	TextColor       color.Color
 }
 
 func (s *Slider) GetPercentage() float64 {
@@ -81,19 +81,20 @@ func (s *Slider) CheckAndUpdate() error {
 }
 
 func (s *Slider) Draw(ctx *gg.Context) {
-	ctx.SetColor(sliderBackground)
+	ctx.SetColor(s.BackgroundColor)
 	ctx.DrawRectangle(s.Pos.X, s.Pos.Y, s.Width, SliderHeight)
 	ctx.Fill()
-	ctx.SetColor(sliderFill)
+	ctx.SetColor(s.FillColor)
 	ctx.DrawRectangle(s.Pos.X, s.Pos.Y, s.Width*s.GetPercentage(), SliderHeight)
 	ctx.Fill()
-	ctx.SetColor(sliderOutline)
+	ctx.SetColor(s.OutlineColor)
 	ctx.DrawRectangle(s.Pos.X, s.Pos.Y, s.Width, SliderHeight)
 	ctx.Stroke()
 	digits := 0
 	if s.Incr < 1 {
 		digits = int(math.Ceil(math.Abs(math.Log10(s.Incr))))
 	}
+	ctx.SetColor(s.TextColor)
 	ctx.DrawStringWrapped(s.Name, s.Pos.X, s.Pos.Y-ctx.FontHeight()-SliderVPadding, 0, 0, s.Width, 1, gg.AlignLeft)
 	ctx.DrawStringWrapped(
 		strconv.FormatFloat(s.Val, 'f', digits, 64),
