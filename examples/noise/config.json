@@ -1,0 +1,70 @@
+{
+    "SketchWidth": 1080,
+    "SketchHeight": 1080,
+    "ControlWidth": 240,
+    "Controls": [
+        {
+            "Name": "cellSize",
+            "MinVal": 1,
+            "MaxVal": 100,
+            "Val": 10,
+            "Incr": 1
+        },
+        {
+            "Name": "seed",
+            "MinVal": -10000,
+            "MaxVal": 10000,
+            "Val": 0,
+            "Incr": 1
+        },
+        {
+            "Name": "octaves",
+            "MinVal": 1,
+            "MaxVal": 10,
+            "Val": 1,
+            "Incr": 1
+        },
+        {
+            "Name": "persistence",
+            "MinVal": 0,
+            "MaxVal": 2,
+            "Val": 0.9,
+            "Incr": 0.01
+        },
+        {
+            "Name": "lacunarity",
+            "MinVal": 0,
+            "MaxVal": 10,
+            "Val": 2,
+            "Incr": 0.1
+        },
+        {
+            "Name": "xscale",
+            "MinVal": 0,
+            "MaxVal": 0.1,
+            "Val": 0.005,
+            "Incr": 0.001
+        },
+        {
+            "Name": "yscale",
+            "MinVal": 0,
+            "MaxVal": 0.1,
+            "Val": 0.005,
+            "Incr": 0.001
+        },
+        {
+            "Name": "xoffset",
+            "MinVal": -1000,
+            "MaxVal": 1000,
+            "Val": 0,
+            "Incr": 1
+        },
+        {
+            "Name": "yoffset",
+            "MinVal": -1000,
+            "MaxVal": 1000,
+            "Val": 0,
+            "Incr": 1
+        }
+    ]
+}

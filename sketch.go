@@ -2,12 +2,14 @@ package sketchy
 
 import (
 	"encoding/json"
+	"fmt"
 	"image/color"
 	"log"
 	"os"
 
 	"github.com/fogleman/gg"
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"github.com/lucasb-eyer/go-colorful"
 )
 
@@ -35,6 +37,8 @@ type Sketch struct {
 	Updater                SketchUpdater
 	Drawer                 SketchDrawer
 	controlMap             map[string]int
+	Rand                   Rng
+	isSavingPNG            bool
 }
 
 func NewSketchFromFile(fname string) (*Sketch, error) {
@@ -51,7 +55,8 @@ func NewSketchFromFile(fname string) (*Sketch, error) {
 }
 
 func (s *Sketch) Init() {
-	s.buildMap()
+	s.buildMaps()
+	s.Rand = NewRng(0)
 	ctx := gg.NewContext(int(s.ControlWidth), int(s.SketchHeight))
 	s.PlaceControls(s.ControlWidth, s.SketchHeight, ctx)
 	for i := range s.Controls {
@@ -123,6 +128,12 @@ func (s *Sketch) Var(name string) float64 {
 }
 
 func (s *Sketch) UpdateControls() {
+	if inpututil.IsKeyJustReleased(ebiten.KeyS) {
+		s.isSavingPNG = true
+	}
+	if inpututil.IsKeyJustReleased(ebiten.KeyC) {
+		s.saveConfig()
+	}
 	for i := range s.Controls {
 		s.Controls[i].CheckAndUpdate()
 	}
@@ -167,7 +178,6 @@ func (s *Sketch) Update() error {
 func (s *Sketch) Draw(screen *ebiten.Image) {
 	W := int(s.ControlWidth + s.SketchWidth)
 	H := int(s.SketchHeight)
-	//screen.Fill(color.White)
 	cc := gg.NewContext(W, H)
 	cc.DrawRectangle(0, 0, s.ControlWidth, s.SketchHeight)
 	cc.SetColor(color.White)
@@ -180,17 +190,28 @@ func (s *Sketch) Draw(screen *ebiten.Image) {
 	cc.DrawRectangle(s.ControlWidth+2.5, 2.5, s.SketchWidth-5, s.SketchHeight-5)
 	cc.Stroke()
 	screen.DrawImage(ebiten.NewImageFromImage(cc.Image()), nil)
-	ctx := gg.NewContext(W, H)
+	ctx := gg.NewContext(int(s.SketchWidth), H)
 	ctx.Push()
-	ctx.Translate(s.ControlWidth, 0)
 	s.Drawer(s, ctx)
 	ctx.Pop()
-	screen.DrawImage(ebiten.NewImageFromImage(ctx.Image()), nil)
+	if s.isSavingPNG {
+		fmt.Println("saving image")
+		fname := "test_" + GetTimestampString() + ".png"
+		ctx.SavePNG(fname)
+		s.isSavingPNG = false
+	}
+	op := &ebiten.DrawImageOptions{}
+	op.GeoM.Translate(s.ControlWidth, 0)
+	screen.DrawImage(ebiten.NewImageFromImage(ctx.Image()), op)
 }
 
-func (s *Sketch) buildMap() {
+func (s *Sketch) buildMaps() {
 	s.controlMap = make(map[string]int)
 	for i := range s.Controls {
 		s.controlMap[s.Controls[i].Name] = i
 	}
+}
+
+func (s *Sketch) saveConfig() {
+
 }

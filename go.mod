@@ -6,6 +6,7 @@ require (
 	github.com/fogleman/gg v1.3.0
 	github.com/hajimehoshi/ebiten/v2 v2.2.4
 	github.com/lucasb-eyer/go-colorful v1.2.0
+	github.com/ojrac/opensimplex-go v1.0.2
 )
 
 require (

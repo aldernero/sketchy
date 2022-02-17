@@ -1,6 +1,7 @@
 package sketchy
 
 import (
+	"fmt"
 	"math"
 	"math/rand"
 	"time"
@@ -84,4 +85,11 @@ func Shuffle(p *[]Point) {
 		k := rand.Intn(n)
 		(*p)[j], (*p)[k] = (*p)[k], (*p)[j]
 	}
+}
+
+func GetTimestampString() string {
+	now := time.Now()
+	return fmt.Sprintf("%d%02d%02d_%02d%02d%02d",
+		now.Year(), now.Month(), now.Day(), now.Hour(),
+		now.Minute(), now.Second())
 }
