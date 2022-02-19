@@ -10,35 +10,36 @@ import (
 	"github.com/fogleman/gg"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
-	"github.com/lucasb-eyer/go-colorful"
 )
 
 const (
+	DefaultTitle           = "Sketchy Sketch"
+	DefaultPrefix          = "sketch"
 	DefaultBackgroundColor = "#1e1e1e"
 	DefaultOutlineColor    = "#ffdb00"
-	SliderBackgroundColor  = "#1e1e1e"
-	SliderOutlineColor     = "#ffdb00"
-	SliderFillColor        = "#ffdb00"
-	SliderTextColor        = "#ffffff"
 )
 
 type SketchUpdater func(s *Sketch)
 type SketchDrawer func(s *Sketch, c *gg.Context)
 
 type Sketch struct {
-	SketchWidth            float64
-	SketchHeight           float64
-	ControlWidth           float64
-	ControlBackgroundColor color.Color
-	ControlOutlineColor    color.Color
-	SketchBackgroundColor  color.Color
-	SketchOutlineColor     color.Color
-	Controls               []Slider
-	Updater                SketchUpdater
-	Drawer                 SketchDrawer
-	controlMap             map[string]int
-	Rand                   Rng
-	isSavingPNG            bool
+	Title                  string         `json:"Title"`
+	Prefix                 string         `json:"Prefix"`
+	SketchWidth            float64        `json:"SketchWidth"`
+	SketchHeight           float64        `json:"SketchHeight"`
+	ControlWidth           float64        `json:"ControlWidth"`
+	ControlBackgroundColor string         `json:"ControlBackgroundColor"`
+	ControlOutlineColor    string         `json:"ControlOutlineColor"`
+	SketchBackgroundColor  string         `json:"SketchBackgroundColor"`
+	SketchOutlineColor     string         `json:"SketchOutlineColor"`
+	Controls               []Slider       `json:"Controls"`
+	Updater                SketchUpdater  `json:"-"`
+	Drawer                 SketchDrawer   `json:"-"`
+	controlMap             map[string]int `json:"-"`
+	controlColorConfig     ColorConfig    `json:"-"`
+	sketchColorConfig      ColorConfig    `json:"-"`
+	Rand                   Rng            `json:"-"`
+	isSavingPNG            bool           `json:"-"`
 }
 
 func NewSketchFromFile(fname string) (*Sketch, error) {
@@ -55,68 +56,17 @@ func NewSketchFromFile(fname string) (*Sketch, error) {
 }
 
 func (s *Sketch) Init() {
+	if s.Title == "" {
+		s.Title = DefaultTitle
+	}
+	if s.Prefix == "" {
+		s.Prefix = DefaultPrefix
+	}
 	s.buildMaps()
+	s.parseColors()
 	s.Rand = NewRng(0)
 	ctx := gg.NewContext(int(s.ControlWidth), int(s.SketchHeight))
 	s.PlaceControls(s.ControlWidth, s.SketchHeight, ctx)
-	for i := range s.Controls {
-		if s.Controls[i].BackgroundColor == nil {
-			c, err := colorful.Hex(SliderBackgroundColor)
-			if err != nil {
-				panic(err)
-			}
-			s.Controls[i].BackgroundColor = c
-		}
-		if s.Controls[i].OutlineColor == nil {
-			c, err := colorful.Hex(SliderOutlineColor)
-			if err != nil {
-				panic(err)
-			}
-			s.Controls[i].OutlineColor = c
-		}
-		if s.Controls[i].FillColor == nil {
-			c, err := colorful.Hex(SliderFillColor)
-			if err != nil {
-				panic(err)
-			}
-			s.Controls[i].FillColor = c
-		}
-		if s.Controls[i].TextColor == nil {
-			c, err := colorful.Hex(SliderTextColor)
-			if err != nil {
-				panic(err)
-			}
-			s.Controls[i].TextColor = c
-		}
-	}
-	if s.ControlBackgroundColor == nil {
-		c, err := colorful.Hex(DefaultBackgroundColor)
-		if err != nil {
-			panic(err)
-		}
-		s.ControlBackgroundColor = c
-	}
-	if s.ControlOutlineColor == nil {
-		c, err := colorful.Hex(DefaultOutlineColor)
-		if err != nil {
-			panic(err)
-		}
-		s.ControlOutlineColor = c
-	}
-	if s.SketchBackgroundColor == nil {
-		c, err := colorful.Hex(DefaultBackgroundColor)
-		if err != nil {
-			panic(err)
-		}
-		s.SketchBackgroundColor = c
-	}
-	if s.SketchOutlineColor == nil {
-		c, err := colorful.Hex(DefaultOutlineColor)
-		if err != nil {
-			panic(err)
-		}
-		s.SketchOutlineColor = c
-	}
 }
 
 func (s *Sketch) Var(name string) float64 {
@@ -154,10 +104,10 @@ func (s *Sketch) PlaceControls(w float64, h float64, ctx *gg.Context) {
 }
 
 func (s *Sketch) DrawControls(ctx *gg.Context) {
-	ctx.SetColor(s.ControlBackgroundColor)
+	ctx.SetColor(s.controlColorConfig.Background)
 	ctx.DrawRectangle(0, 0, s.ControlWidth, s.SketchHeight)
 	ctx.Fill()
-	ctx.SetColor(s.ControlOutlineColor)
+	ctx.SetColor(s.controlColorConfig.Outline)
 	ctx.DrawRectangle(2.5, 2.5, s.ControlWidth-5, s.SketchHeight-5)
 	ctx.Stroke()
 	for i := range s.Controls {
@@ -183,10 +133,10 @@ func (s *Sketch) Draw(screen *ebiten.Image) {
 	cc.SetColor(color.White)
 	cc.Fill()
 	s.DrawControls(cc)
-	cc.SetColor(s.SketchBackgroundColor)
+	cc.SetColor(s.sketchColorConfig.Background)
 	cc.DrawRectangle(s.ControlWidth, 0, s.SketchWidth, s.SketchHeight)
 	cc.Fill()
-	cc.SetColor(s.SketchOutlineColor)
+	cc.SetColor(s.sketchColorConfig.Outline)
 	cc.DrawRectangle(s.ControlWidth+2.5, 2.5, s.SketchWidth-5, s.SketchHeight-5)
 	cc.Stroke()
 	screen.DrawImage(ebiten.NewImageFromImage(cc.Image()), nil)
@@ -195,9 +145,9 @@ func (s *Sketch) Draw(screen *ebiten.Image) {
 	s.Drawer(s, ctx)
 	ctx.Pop()
 	if s.isSavingPNG {
-		fmt.Println("saving image")
-		fname := "test_" + GetTimestampString() + ".png"
+		fname := s.Prefix + "_" + GetTimestampString() + ".png"
 		ctx.SavePNG(fname)
+		fmt.Println("Saved ", fname)
 		s.isSavingPNG = false
 	}
 	op := &ebiten.DrawImageOptions{}
@@ -209,6 +159,16 @@ func (s *Sketch) buildMaps() {
 	s.controlMap = make(map[string]int)
 	for i := range s.Controls {
 		s.controlMap[s.Controls[i].Name] = i
+	}
+}
+
+func (s *Sketch) parseColors() {
+	s.controlColorConfig.Set(s.ControlBackgroundColor, BackgroundColorType, DefaultBackgroundColor)
+	s.controlColorConfig.Set(s.ControlOutlineColor, OutlineColorType, DefaultOutlineColor)
+	s.sketchColorConfig.Set(s.SketchBackgroundColor, BackgroundColorType, DefaultBackgroundColor)
+	s.sketchColorConfig.Set(s.SketchOutlineColor, OutlineColorType, DefaultOutlineColor)
+	for i := range s.Controls {
+		s.Controls[i].parseColors()
 	}
 }
 

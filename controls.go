@@ -1,7 +1,6 @@
 package sketchy
 
 import (
-	"image/color"
 	"math"
 	"strconv"
 
@@ -14,21 +13,26 @@ const (
 	SliderHPadding            = 7.0
 	SliderVPadding            = 7.0
 	SliderMouseWheelThreshold = 0.5
+	SliderBackgroundColor     = "#1e1e1e"
+	SliderOutlineColor        = "#ffdb00"
+	SliderFillColor           = "#ffdb00"
+	SliderTextColor           = "#ffffff"
 )
 
 type Slider struct {
-	Name            string
-	Pos             Point
-	Width           float64
-	Height          float64
-	MinVal          float64
-	MaxVal          float64
-	Val             float64
-	Incr            float64
-	OutlineColor    color.Color
-	BackgroundColor color.Color
-	FillColor       color.Color
-	TextColor       color.Color
+	Name            string      `json:"Name"`
+	Pos             Point       `json:"-"`
+	Width           float64     `json:"Width"`
+	Height          float64     `json:"Height"`
+	MinVal          float64     `json:"MinVal"`
+	MaxVal          float64     `json:"MaxVal"`
+	Val             float64     `json:"Val"`
+	Incr            float64     `json:"Incr"`
+	OutlineColor    string      `json:"OutlineColor"`
+	BackgroundColor string      `json:"BackgroundColor"`
+	FillColor       string      `json:"FillColor"`
+	TextColor       string      `json:"TextColor"`
+	colors          ColorConfig `json:"-"`
 }
 
 func (s *Slider) GetPercentage() float64 {
@@ -81,20 +85,20 @@ func (s *Slider) CheckAndUpdate() error {
 }
 
 func (s *Slider) Draw(ctx *gg.Context) {
-	ctx.SetColor(s.BackgroundColor)
+	ctx.SetColor(s.colors.Background)
 	ctx.DrawRectangle(s.Pos.X, s.Pos.Y, s.Width, SliderHeight)
 	ctx.Fill()
-	ctx.SetColor(s.FillColor)
+	ctx.SetColor(s.colors.Fill)
 	ctx.DrawRectangle(s.Pos.X, s.Pos.Y, s.Width*s.GetPercentage(), SliderHeight)
 	ctx.Fill()
-	ctx.SetColor(s.OutlineColor)
+	ctx.SetColor(s.colors.Outline)
 	ctx.DrawRectangle(s.Pos.X, s.Pos.Y, s.Width, SliderHeight)
 	ctx.Stroke()
 	digits := 0
 	if s.Incr < 1 {
 		digits = int(math.Ceil(math.Abs(math.Log10(s.Incr))))
 	}
-	ctx.SetColor(s.TextColor)
+	ctx.SetColor(s.colors.Text)
 	ctx.DrawStringWrapped(s.Name, s.Pos.X, s.Pos.Y-ctx.FontHeight()-SliderVPadding, 0, 0, s.Width, 1, gg.AlignLeft)
 	ctx.DrawStringWrapped(
 		strconv.FormatFloat(s.Val, 'f', digits, 64),
@@ -126,4 +130,11 @@ func NewRadiansSlider(name string, steps int) Slider {
 		Incr:   Tau / float64(steps),
 	}
 	return s
+}
+
+func (s *Slider) parseColors() {
+	s.colors.Set(s.BackgroundColor, BackgroundColorType, SliderBackgroundColor)
+	s.colors.Set(s.OutlineColor, OutlineColorType, SliderOutlineColor)
+	s.colors.Set(s.TextColor, TextColorType, SliderTextColor)
+	s.colors.Set(s.FillColor, FillColorType, SliderFillColor)
 }

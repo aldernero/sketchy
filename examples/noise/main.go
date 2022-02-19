@@ -43,7 +43,7 @@ func main() {
 	}
 	s.Init()
 	ebiten.SetWindowSize(int(s.ControlWidth+s.SketchWidth), int(s.SketchHeight))
-	ebiten.SetWindowTitle("Sketchy Noise Example")
+	ebiten.SetWindowTitle(s.Title)
 	ebiten.SetWindowResizable(false)
 	if err := ebiten.RunGame(s); err != nil {
 		log.Fatal(err)

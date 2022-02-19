@@ -43,14 +43,14 @@
             "MinVal": 0,
             "MaxVal": 0.1,
             "Val": 0.005,
-            "Incr": 0.001
+            "Incr": 0.0001
         },
         {
             "Name": "yscale",
             "MinVal": 0,
             "MaxVal": 0.1,
             "Val": 0.005,
-            "Incr": 0.001
+            "Incr": 0.0001
         },
         {
             "Name": "xoffset",
