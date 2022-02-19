@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"image/color"
+	"io/ioutil"
 	"log"
 	"os"
 
@@ -13,7 +14,7 @@ import (
 )
 
 const (
-	DefaultTitle           = "Sketchy Sketch"
+	DefaultTitle           = "Sketch"
 	DefaultPrefix          = "sketch"
 	DefaultBackgroundColor = "#1e1e1e"
 	DefaultOutlineColor    = "#ffdb00"
@@ -32,6 +33,7 @@ type Sketch struct {
 	ControlOutlineColor    string         `json:"ControlOutlineColor"`
 	SketchBackgroundColor  string         `json:"SketchBackgroundColor"`
 	SketchOutlineColor     string         `json:"SketchOutlineColor"`
+	RandomSeed             int64          `json:"RandomSeed"`
 	Controls               []Slider       `json:"Controls"`
 	Updater                SketchUpdater  `json:"-"`
 	Drawer                 SketchDrawer   `json:"-"`
@@ -64,7 +66,7 @@ func (s *Sketch) Init() {
 	}
 	s.buildMaps()
 	s.parseColors()
-	s.Rand = NewRng(0)
+	s.Rand = NewRng(s.RandomSeed)
 	ctx := gg.NewContext(int(s.ControlWidth), int(s.SketchHeight))
 	s.PlaceControls(s.ControlWidth, s.SketchHeight, ctx)
 }
@@ -173,5 +175,11 @@ func (s *Sketch) parseColors() {
 }
 
 func (s *Sketch) saveConfig() {
-
+	configJson, _ := json.MarshalIndent(s, "", "    ")
+	fname := s.Prefix + "_config_" + GetTimestampString() + ".json"
+	err := ioutil.WriteFile(fname, configJson, 0644)
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println("Saved config ", fname)
 }

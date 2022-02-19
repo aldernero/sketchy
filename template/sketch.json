@@ -1,0 +1,21 @@
+{
+    "SketchWidth": 1080,
+    "SketchHeight": 1080,
+    "ControlWidth": 240,
+    "Controls": [
+        {
+            "Name": "control1",
+            "MinVal": 1,
+            "MaxVal": 100,
+            "Val": 10,
+            "Incr": 1
+        },
+        {
+            "Name": "control2",
+            "MinVal": 0,
+            "MaxVal": 2,
+            "Val": 0.9,
+            "Incr": 0.01
+        }
+    ]
+}
