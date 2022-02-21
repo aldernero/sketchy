@@ -4,33 +4,39 @@ import (
 	"flag"
 	"image/color"
 	"log"
+	"math"
 
 	"github.com/aldernero/sketchy"
 	"github.com/fogleman/gg"
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
-var lissa sketchy.Lissajous = sketchy.Lissajous{Nx: 3, Ny: 2}
+const radius = 300.0
 
 func update(s *sketchy.Sketch) {
-	lissa.Nx = int(s.Var("nx"))
-	lissa.Ny = int(s.Var("ny"))
-	lissa.Px += s.Var("phaseChange")
-	lissa.Py = sketchy.Deg2Rad(s.Var("yphase"))
+	// Update logic goes here
+	// Not needed for this example
 }
 
 func draw(s *sketchy.Sketch, c *gg.Context) {
-	radius := s.Var("radius")
-	origin := sketchy.Point{X: s.SketchWidth / 2, Y: s.SketchHeight / 2}
-	curve := sketchy.GenLissajous(lissa, 1000, origin, radius)
-	c.SetColor(color.CMYK{C: 200})
-	c.SetLineWidth(3)
-	c.MoveTo(curve.Points[0].X, curve.Points[0].Y)
-	for _, p := range curve.Points {
-		c.LineTo(p.X, p.Y)
+	// Drawing code goes here
+	N := int(s.Var("N"))
+	sides := int(s.Var("sides"))
+	rotate := sketchy.Deg2Rad(s.Var("rotate"))
+	scale := s.Var("scale")
+	c.SetColor(color.CMYK{
+		C: 200,
+		M: 0,
+		Y: 0,
+		K: 0,
+	})
+	for i := 0; i < N; i++ {
+		x := s.SketchWidth / 2
+		y := s.SketchHeight / 2
+		r := math.Pow(scale, float64(i)) * radius
+		c.DrawRegularPolygon(sides, x, y, r, float64(i)*rotate)
+		c.Stroke()
 	}
-	c.LineTo(curve.Points[0].X, curve.Points[0].Y)
-	c.Stroke()
 }
 
 func main() {

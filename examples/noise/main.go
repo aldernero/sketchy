@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"log"
 
 	"github.com/aldernero/sketchy"
@@ -11,7 +10,7 @@ import (
 	"github.com/lucasb-eyer/go-colorful"
 )
 
-var hasShownMinMax bool = false
+var tick int64
 
 func update(s *sketchy.Sketch) {
 	s.Rand.SetSeed(int64(s.Var("seed")))
@@ -22,31 +21,23 @@ func update(s *sketchy.Sketch) {
 	s.Rand.SetNoiseScaleY(s.Var("yscale"))
 	s.Rand.SetNoiseOffsetX(s.Var("xoffset"))
 	s.Rand.SetNoiseOffsetY(s.Var("yoffset"))
+	s.Rand.SetNoiseScaleZ(0.005)
+	s.Rand.SetNoiseOffsetZ(float64(tick))
+	tick++
 }
 
 func draw(s *sketchy.Sketch, c *gg.Context) {
 	cellSize := s.Var("cellSize")
-	minNoise := 100.0
-	maxNoise := -100.0
+	c.SetLineWidth(0)
 	for x := 0.0; x < s.SketchWidth; x += cellSize {
 		for y := 0.0; y < s.SketchHeight; y += cellSize {
-			noise := s.Rand.Noise2D(x, y)
-			if noise > maxNoise {
-				maxNoise = noise
-			}
-			if noise < minNoise {
-				minNoise = noise
-			}
-			hue := sketchy.Map(-1, 1, 0, 360, noise)
+			noise := s.Rand.Noise3D(x, y, 0)
+			hue := sketchy.Map(0, 1, 0, 360, noise)
 			cellColor := colorful.Hsl(hue, 0.5, 0.5)
 			c.SetColor(cellColor)
 			c.DrawRectangle(x, y, cellSize, cellSize)
 			c.Fill()
 		}
-	}
-	if !hasShownMinMax {
-		fmt.Println(minNoise, maxNoise)
-		hasShownMinMax = true
 	}
 }
 
@@ -55,7 +46,7 @@ func main() {
 	var prefix string
 	var randomSeed int64
 	flag.StringVar(&configFile, "c", "sketch.json", "Sketch config file")
-	flag.StringVar(&configFile, "p", "sketch", "Output file prefix")
+	flag.StringVar(&prefix, "p", "sketch", "Output file prefix")
 	flag.Int64Var(&randomSeed, "s", 0, "Random number generator seed")
 	s, err := sketchy.NewSketchFromFile(configFile)
 	if err != nil {

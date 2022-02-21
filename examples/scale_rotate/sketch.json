@@ -1,0 +1,37 @@
+{
+    "Title": "Scale & Rotate",
+    "Prefix": "scale_rotate",
+    "SketchWidth": 800,
+    "SketchHeight": 800,
+    "ControlWidth": 240,
+    "Controls": [
+        {
+            "Name": "N",
+            "MinVal": 1,
+            "MaxVal": 100,
+            "Val": 30,
+            "Incr": 1
+        },
+        {
+            "Name": "sides",
+            "MinVal": 1,
+            "MaxVal": 100,
+            "Val": 7,
+            "Incr": 1
+        },
+        {
+            "Name": "rotate",
+            "MinVal": -180,
+            "MaxVal": 180,
+            "Val": -60,
+            "Incr": 0.5
+        },
+        {
+            "Name": "scale",
+            "MinVal": 0,
+            "MaxVal": 1,
+            "Val": 0.9,
+            "Incr": 0.01
+        }
+    ]
+}
