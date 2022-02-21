@@ -6,7 +6,6 @@ Sketchy is still very much in the alpha stage. Below is an example of what the f
 
 ![Screenshot_20220216_204611](https://user-images.githubusercontent.com/96601789/154401686-2cf1e26a-e94e-46b5-a022-9002c4b723d5.png)
 
-You configure the slider controls and other sketch properties via JSON, and the in code there is are `update` and `draw` functions with a sketch instance and `gg` context to do the actual drawing. More examples and documentation to come.
 
 # Installation
 
