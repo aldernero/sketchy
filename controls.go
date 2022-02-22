@@ -33,6 +33,7 @@ type Slider struct {
 	FillColor       string      `json:"FillColor"`
 	TextColor       string      `json:"TextColor"`
 	colors          ColorConfig `json:"-"`
+	DidJustChange   bool        `json:"-"`
 }
 
 func (s *Slider) GetPercentage() float64 {
@@ -62,11 +63,13 @@ func (s *Slider) Update(x float64) {
 	s.Val = s.MinVal + pct*totalIncr*s.Incr
 }
 
-func (s *Slider) CheckAndUpdate() error {
+func (s *Slider) CheckAndUpdate() (bool, error) {
+	didChange := false
 	x, y := ebiten.CursorPosition()
 	if ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft) {
 		if s.IsInside(float64(x), float64(y)) {
 			s.Update(float64(x))
+			didChange = true
 		}
 	} else {
 		if s.IsInside(float64(x), float64(y)) {
@@ -78,10 +81,12 @@ func (s *Slider) CheckAndUpdate() error {
 					s.Val += s.Incr
 				}
 				s.Val = Clamp(s.MinVal, s.MaxVal, s.Val)
+				didChange = true
 			}
 		}
 	}
-	return nil
+	s.DidJustChange = didChange
+	return didChange, nil
 }
 
 func (s *Slider) Draw(ctx *gg.Context) {

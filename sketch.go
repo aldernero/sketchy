@@ -37,10 +37,11 @@ type Sketch struct {
 	Controls               []Slider       `json:"Controls"`
 	Updater                SketchUpdater  `json:"-"`
 	Drawer                 SketchDrawer   `json:"-"`
+	DidControlsChange      bool           `json:"-"`
+	Rand                   Rng            `json:"-"`
 	controlMap             map[string]int `json:"-"`
 	controlColorConfig     ColorConfig    `json:"-"`
 	sketchColorConfig      ColorConfig    `json:"-"`
-	Rand                   Rng            `json:"-"`
 	isSavingPNG            bool           `json:"-"`
 }
 
@@ -80,6 +81,7 @@ func (s *Sketch) Var(name string) float64 {
 }
 
 func (s *Sketch) UpdateControls() {
+	controlsChanged := false
 	if inpututil.IsKeyJustReleased(ebiten.KeyS) {
 		s.isSavingPNG = true
 	}
@@ -87,8 +89,15 @@ func (s *Sketch) UpdateControls() {
 		s.saveConfig()
 	}
 	for i := range s.Controls {
-		s.Controls[i].CheckAndUpdate()
+		didChange, err := s.Controls[i].CheckAndUpdate()
+		if err != nil {
+			panic(err)
+		}
+		if didChange {
+			controlsChanged = true
+		}
 	}
+	s.DidControlsChange = controlsChanged
 }
 
 func (s *Sketch) PlaceControls(w float64, h float64, ctx *gg.Context) {
@@ -155,6 +164,11 @@ func (s *Sketch) Draw(screen *ebiten.Image) {
 	op := &ebiten.DrawImageOptions{}
 	op.GeoM.Translate(s.ControlWidth, 0)
 	screen.DrawImage(ebiten.NewImageFromImage(ctx.Image()), op)
+}
+
+func (s *Sketch) SketchCoords() Point {
+	x, y := ebiten.CursorPosition()
+	return Point{X: float64(x) - s.ControlWidth, Y: float64(y)}
 }
 
 func (s *Sketch) buildMaps() {
