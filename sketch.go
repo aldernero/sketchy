@@ -166,9 +166,12 @@ func (s *Sketch) Draw(screen *ebiten.Image) {
 	screen.DrawImage(ebiten.NewImageFromImage(ctx.Image()), op)
 }
 
-func (s *Sketch) SketchCoords() Point {
-	x, y := ebiten.CursorPosition()
+func (s *Sketch) SketchCoords(x, y float64) Point {
 	return Point{X: float64(x) - s.ControlWidth, Y: float64(y)}
+}
+
+func (s *Sketch) PointInSketchArea(x, y float64) bool {
+	return x > s.ControlWidth && x <= (s.ControlWidth+s.SketchWidth) && y >= 0 && y <= s.SketchHeight
 }
 
 func (s *Sketch) buildMaps() {
