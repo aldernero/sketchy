@@ -2,6 +2,8 @@
 
 Sketchy is a framework for making generative art in Go. It is inspired by [vsketch](https://github.com/abey79/vsketch) and [openFrameworks](https://github.com/openframeworks/openFrameworks). It uses [gg](https://github.com/fogleman/gg) for drawing and the [ebiten](https://github.com/hajimehoshi/ebiten) game engine for the GUI. It's designed to provide controls (sliders) via simple JSON that can be used within a familiar `update()` and `draw()` framework to enable quick iteration on designs.
 
+The [Getting Started](docs/getting-started.md) is a good place to start, and even walk through creating a "Hello Circle" sketch from scratch.
+
 Sketchy is still very much in the alpha stage. Below is an example of what the framework looks like while running the "noise" example.
 
 ![Screenshot_20220216_204611](https://user-images.githubusercontent.com/96601789/154401686-2cf1e26a-e94e-46b5-a022-9002c4b723d5.png)
