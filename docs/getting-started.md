@@ -69,7 +69,6 @@ go.mod  go.sum  main.go  sketch.json
 ```
 So far this is identical to the previous section. Let's look at the contents of `sketch.json`:
 ```json
-❯ cat sketch.json
 {
     "SketchWidth": 800,
     "SketchHeight": 800,
@@ -94,7 +93,6 @@ So far this is identical to the previous section. Let's look at the contents of 
 ```
 This is the default configuration with 2 example controls. The first 3 lines define the sketch area size (800 x 800 pixels), and the the control area width (240 pixels). The "Controls" section lists the controls that will appear as sliders in the sketch. Let's make them more meaningful. The first one will represent the radius of a circle we draw in the sketch area. The second one will represent the line width of the circle. Change the values to the following:
 ```json
-❯ cat sketch.json
 {
     "SketchWidth": 800,
     "SketchHeight": 800,
@@ -124,6 +122,8 @@ You can run `sketchy run hello_circle` from sketchy's base directory, or if you 
 ```shell
 go run main.go
 ```
+![Screenshot_20220222_212504](https://user-images.githubusercontent.com/96601789/155263278-221a2e98-f48e-4300-a07b-4c6c844d3aeb.png)
+
 You should see 2 sliders in the control area on the left. You can change the values by clicking or dragging within the slider bar area. You can also use the mouse wheel to increment and decrement the value. The sketch area is blank at the moment, let's change that!
 
 Close the sketch and open `main.go` in an editor. There are two functions `update` and `draw` where you implement the drawing. For a simple case like this we don't need `update`, we can do everything in the `draw` function.
@@ -163,7 +163,9 @@ func draw(s *sketchy.Sketch, c *gg.Context) {
 ```
 The `DrawCircle` gg function takes 3 arguments: an x and y positions for the center of the circle and a radius. We can reference the `SketchWidth` and `SketchHeight` arguments directly on the sketch struct. Halving these values places the circle at the center of the drawing area.
 
-Run the sketch again, and you should see a white circle in the sketch area, and you should be able to vary the radius and thickness with the sliders. Congratulations, you made your first sketch!
+Run the sketch again, and you should see a white circle in the sketch area, and you should be able to vary the radius and thickness with the sliders. 
+![Screenshot_20220222_214157](https://user-images.githubusercontent.com/96601789/155263315-a90d8730-e049-4005-bf06-9bc5c0cc27f4.png)
+Congratulations, you made your first sketch!
 
 # Saving sketches and configurations
 
