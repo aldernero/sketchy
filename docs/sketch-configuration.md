@@ -40,6 +40,7 @@ There are other parameters not listed in the template. Here are the missing para
 | SketchOutlineColor | string | "#ffdb00" | sketch area outline color |
 | ControlBackgroundColor | string | "#1e1e1e" | control area background color |
 | ControlOutlineColor | string | "#ffdb00" | control area background color |
+| DisableClearBetweenFrames | bool | false | don't clear sketch area between frames |
 
 ## Control Parameters
 |Parameter| Type | Default | Description|

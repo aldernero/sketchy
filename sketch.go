@@ -3,7 +3,6 @@ package sketchy
 import (
 	"encoding/json"
 	"fmt"
-	"image/color"
 	"io/ioutil"
 	"log"
 	"os"
@@ -24,25 +23,27 @@ type SketchUpdater func(s *Sketch)
 type SketchDrawer func(s *Sketch, c *gg.Context)
 
 type Sketch struct {
-	Title                  string         `json:"Title"`
-	Prefix                 string         `json:"Prefix"`
-	SketchWidth            float64        `json:"SketchWidth"`
-	SketchHeight           float64        `json:"SketchHeight"`
-	ControlWidth           float64        `json:"ControlWidth"`
-	ControlBackgroundColor string         `json:"ControlBackgroundColor"`
-	ControlOutlineColor    string         `json:"ControlOutlineColor"`
-	SketchBackgroundColor  string         `json:"SketchBackgroundColor"`
-	SketchOutlineColor     string         `json:"SketchOutlineColor"`
-	RandomSeed             int64          `json:"RandomSeed"`
-	Controls               []Slider       `json:"Controls"`
-	Updater                SketchUpdater  `json:"-"`
-	Drawer                 SketchDrawer   `json:"-"`
-	DidControlsChange      bool           `json:"-"`
-	Rand                   Rng            `json:"-"`
-	controlMap             map[string]int `json:"-"`
-	controlColorConfig     ColorConfig    `json:"-"`
-	sketchColorConfig      ColorConfig    `json:"-"`
-	isSavingPNG            bool           `json:"-"`
+	Title                     string         `json:"Title"`
+	Prefix                    string         `json:"Prefix"`
+	SketchWidth               float64        `json:"SketchWidth"`
+	SketchHeight              float64        `json:"SketchHeight"`
+	ControlWidth              float64        `json:"ControlWidth"`
+	ControlBackgroundColor    string         `json:"ControlBackgroundColor"`
+	ControlOutlineColor       string         `json:"ControlOutlineColor"`
+	SketchBackgroundColor     string         `json:"SketchBackgroundColor"`
+	SketchOutlineColor        string         `json:"SketchOutlineColor"`
+	DisableClearBetweenFrames bool           `json:"DisableClearBetweenFrames"`
+	RandomSeed                int64          `json:"RandomSeed"`
+	Controls                  []Slider       `json:"Controls"`
+	Updater                   SketchUpdater  `json:"-"`
+	Drawer                    SketchDrawer   `json:"-"`
+	DidControlsChange         bool           `json:"-"`
+	Rand                      Rng            `json:"-"`
+	controlMap                map[string]int `json:"-"`
+	controlColorConfig        ColorConfig    `json:"-"`
+	sketchColorConfig         ColorConfig    `json:"-"`
+	isSavingPNG               bool           `json:"-"`
+	needToClear               bool           `json:"-"`
 }
 
 func NewSketchFromFile(fname string) (*Sketch, error) {
@@ -68,8 +69,14 @@ func (s *Sketch) Init() {
 	s.buildMaps()
 	s.parseColors()
 	s.Rand = NewRng(s.RandomSeed)
-	ctx := gg.NewContext(int(s.ControlWidth), int(s.SketchHeight))
+	W := int(s.ControlWidth + s.SketchWidth)
+	H := int(s.SketchHeight)
+	ctx := gg.NewContext(W, H)
 	s.PlaceControls(s.ControlWidth, s.SketchHeight, ctx)
+	s.needToClear = true
+	if s.DisableClearBetweenFrames {
+		ebiten.SetScreenClearedEveryFrame(false)
+	}
 }
 
 func (s *Sketch) Var(name string) float64 {
@@ -136,17 +143,21 @@ func (s *Sketch) Update() error {
 	return nil
 }
 
+func (s *Sketch) Clear() {
+	s.needToClear = true
+}
+
 func (s *Sketch) Draw(screen *ebiten.Image) {
 	W := int(s.ControlWidth + s.SketchWidth)
 	H := int(s.SketchHeight)
 	cc := gg.NewContext(W, H)
-	cc.DrawRectangle(0, 0, s.ControlWidth, s.SketchHeight)
-	cc.SetColor(color.White)
-	cc.Fill()
 	s.DrawControls(cc)
-	cc.SetColor(s.sketchColorConfig.Background)
-	cc.DrawRectangle(s.ControlWidth, 0, s.SketchWidth, s.SketchHeight)
-	cc.Fill()
+	if !s.DisableClearBetweenFrames || s.needToClear {
+		cc.SetColor(s.sketchColorConfig.Background)
+		cc.DrawRectangle(s.ControlWidth, 0, s.SketchWidth, s.SketchHeight)
+		cc.Fill()
+		s.needToClear = false
+	}
 	cc.SetColor(s.sketchColorConfig.Outline)
 	cc.DrawRectangle(s.ControlWidth+2.5, 2.5, s.SketchWidth-5, s.SketchHeight-5)
 	cc.Stroke()
