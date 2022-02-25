@@ -2,6 +2,9 @@ package sketchy
 
 import "math"
 
+// Generates a Chaikin curve given a set of control points,
+// a cutoff ratio, and the number of steps to use in the
+// calculation.
 func Chaikin(c Curve, q float64, n int) Curve {
 	points := []Point{}
 	// Start with control points
@@ -42,6 +45,7 @@ func Chaikin(c Curve, q float64, n int) Curve {
 	return Curve{Points: points, Closed: c.Closed}
 }
 
+// Core parametrers for a 2D Lissajous curve
 type Lissajous struct {
 	Nx int
 	Ny int
@@ -49,6 +53,9 @@ type Lissajous struct {
 	Py float64
 }
 
+// Generates a Lissajous curve given parameters, a number of points
+// to use (i.e. resolution), and an offset and scale (typically to convert
+// to screen coordinates)
 func GenLissajous(l Lissajous, n int, offset Point, s float64) Curve {
 	curve := Curve{}
 	maxPhase := Tau / float64(Gcd(l.Nx, l.Ny))
@@ -62,6 +69,10 @@ func GenLissajous(l Lissajous, n int, offset Point, s float64) Curve {
 	return curve
 }
 
+// Calculates Padua points for a certain class of Lissajous curves,
+// where Nx = Ny +/- 1. The correspond to intersection points and
+// some of the outside points on the curve
+// See https://en.wikipedia.org/wiki/Padua_points for more details.
 func PaduaPoints(n int) []Point {
 	points := []Point{}
 	for i := 0; i <= n; i++ {
