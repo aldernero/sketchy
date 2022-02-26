@@ -3,6 +3,9 @@ package sketchy
 import (
 	"encoding/json"
 	"fmt"
+	"image"
+	"image/color"
+	"image/png"
 	"io/ioutil"
 	"log"
 	"os"
@@ -13,10 +16,11 @@ import (
 )
 
 const (
-	DefaultTitle           = "Sketch"
-	DefaultPrefix          = "sketch"
-	DefaultBackgroundColor = "#1e1e1e"
-	DefaultOutlineColor    = "#ffdb00"
+	DefaultTitle              = "Sketch"
+	DefaultPrefix             = "sketch"
+	DefaultBackgroundColor    = "#1e1e1e"
+	DefaultOutlineColor       = "#ffdb00"
+	DefaultSketchOutlineColor = ""
 )
 
 type SketchUpdater func(s *Sketch)
@@ -43,6 +47,7 @@ type Sketch struct {
 	controlColorConfig        ColorConfig    `json:"-"`
 	sketchColorConfig         ColorConfig    `json:"-"`
 	isSavingPNG               bool           `json:"-"`
+	isSavingScreen            bool           `json:"-"`
 	needToClear               bool           `json:"-"`
 }
 
@@ -77,6 +82,7 @@ func (s *Sketch) Init() {
 	if s.DisableClearBetweenFrames {
 		ebiten.SetScreenClearedEveryFrame(false)
 	}
+	os.Setenv("EBITEN_SCREENSHOT_KEY", "escape")
 }
 
 func (s *Sketch) Var(name string) float64 {
@@ -91,6 +97,9 @@ func (s *Sketch) UpdateControls() {
 	controlsChanged := false
 	if inpututil.IsKeyJustReleased(ebiten.KeyS) {
 		s.isSavingPNG = true
+	}
+	if inpututil.IsKeyJustReleased(ebiten.KeyQ) {
+		s.isSavingScreen = true
 	}
 	if inpututil.IsKeyJustReleased(ebiten.KeyC) {
 		s.saveConfig()
@@ -158,9 +167,11 @@ func (s *Sketch) Draw(screen *ebiten.Image) {
 		cc.Fill()
 		s.needToClear = false
 	}
-	cc.SetColor(s.sketchColorConfig.Outline)
-	cc.DrawRectangle(s.ControlWidth+2.5, 2.5, s.SketchWidth-5, s.SketchHeight-5)
-	cc.Stroke()
+	if s.sketchColorConfig.Outline != color.Transparent {
+		cc.SetColor(s.sketchColorConfig.Outline)
+		cc.DrawRectangle(s.ControlWidth+2.5, 2.5, s.SketchWidth-5, s.SketchHeight-5)
+		cc.Stroke()
+	}
 	screen.DrawImage(ebiten.NewImageFromImage(cc.Image()), nil)
 	ctx := gg.NewContext(int(s.SketchWidth), H)
 	ctx.Push()
@@ -171,6 +182,23 @@ func (s *Sketch) Draw(screen *ebiten.Image) {
 		ctx.SavePNG(fname)
 		fmt.Println("Saved ", fname)
 		s.isSavingPNG = false
+	}
+	if s.isSavingScreen {
+		fname := s.Prefix + "_" + GetTimestampString() + ".png"
+		sketchImage := screen.SubImage(s.getSketchImageRect())
+		f, err := os.Create(fname)
+		if err != nil {
+			log.Fatal("error while trying to create screenshot file", err)
+		}
+		if err := png.Encode(f, sketchImage); err != nil {
+			f.Close()
+			log.Fatal("error while trying to encode screenshot image", err)
+		}
+		if err := f.Close(); err != nil {
+			log.Fatal("error while trying to close screenshot file", err)
+		}
+		fmt.Println("Saved ", fname)
+		s.isSavingScreen = false
 	}
 	op := &ebiten.DrawImageOptions{}
 	op.GeoM.Translate(s.ControlWidth, 0)
@@ -196,7 +224,7 @@ func (s *Sketch) parseColors() {
 	s.controlColorConfig.Set(s.ControlBackgroundColor, BackgroundColorType, DefaultBackgroundColor)
 	s.controlColorConfig.Set(s.ControlOutlineColor, OutlineColorType, DefaultOutlineColor)
 	s.sketchColorConfig.Set(s.SketchBackgroundColor, BackgroundColorType, DefaultBackgroundColor)
-	s.sketchColorConfig.Set(s.SketchOutlineColor, OutlineColorType, DefaultOutlineColor)
+	s.sketchColorConfig.Set(s.SketchOutlineColor, OutlineColorType, DefaultSketchOutlineColor)
 	for i := range s.Controls {
 		s.Controls[i].parseColors()
 	}
@@ -210,4 +238,12 @@ func (s *Sketch) saveConfig() {
 		fmt.Println(err)
 	}
 	fmt.Println("Saved config ", fname)
+}
+
+func (s *Sketch) getSketchImageRect() image.Rectangle {
+	left := int(s.ControlWidth)
+	top := 0
+	right := left + int(s.SketchWidth)
+	bottom := int(s.SketchHeight)
+	return image.Rect(left, top, right, bottom)
 }
