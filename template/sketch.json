@@ -17,5 +17,9 @@
             "Val": 0.9,
             "Incr": 0.01
         }
-    ]
+    ],
+    "SketchBackgroundColor": "#1e1e1e",
+    "SketchOutlineColor": "#ffdb00",
+    "ControlBackgroundColor": "#1e1e1e",
+    "ControlOutlineColor": "#ffdb00"
 }

@@ -24,12 +24,18 @@ type ColorConfig struct {
 
 func (cc *ColorConfig) Set(hexString string, colorType ColorType, defaultString string) {
 	colorHexString := defaultString
+	var c color.Color
 	if hexString != "" {
 		colorHexString = hexString
 	}
-	c, err := colorful.Hex(colorHexString)
-	if err != nil {
-		panic(err)
+	if colorHexString == "" {
+		c = color.Transparent
+	} else {
+		d, err := colorful.Hex(colorHexString)
+		if err != nil {
+			panic(err)
+		}
+		c = d
 	}
 	switch colorType {
 	case BackgroundColorType:
