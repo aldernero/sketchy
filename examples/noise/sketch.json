@@ -2,7 +2,7 @@
     "SketchWidth": 1080,
     "SketchHeight": 1080,
     "ControlWidth": 240,
-    "Controls": [
+    "Sliders": [
         {
             "Name": "cellSize",
             "MinVal": 1,
@@ -65,6 +65,12 @@
             "MaxVal": 1000,
             "Val": 0,
             "Incr": 1
+        }
+    ],
+    "Checkboxes": [
+        {
+            "Name": "animate",
+            "Checked": false
         }
     ]
 }

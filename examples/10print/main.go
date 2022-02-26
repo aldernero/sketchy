@@ -58,15 +58,15 @@ func (t *Truchet) flip(r int, c int) {
 }
 
 func reset(s *sketchy.Sketch) {
-	cellSize := s.Var("cellSize")
-	board.rng.SetSeed(int64(s.Var("seed")))
-	board.rng.SetNoiseOctaves(int(s.Var("octaves")))
-	board.rng.SetNoisePersistence(s.Var("persistence"))
-	board.rng.SetNoiseLacunarity(s.Var("lacunarity"))
-	board.rng.SetNoiseScaleX(s.Var("xscale"))
-	board.rng.SetNoiseScaleY(s.Var("yscale"))
-	board.rng.SetNoiseOffsetX(s.Var("xoffset"))
-	board.rng.SetNoiseOffsetY(s.Var("yoffset"))
+	cellSize := s.Slider("cellSize")
+	board.rng.SetSeed(int64(s.Slider("seed")))
+	board.rng.SetNoiseOctaves(int(s.Slider("octaves")))
+	board.rng.SetNoisePersistence(s.Slider("persistence"))
+	board.rng.SetNoiseLacunarity(s.Slider("lacunarity"))
+	board.rng.SetNoiseScaleX(s.Slider("xscale"))
+	board.rng.SetNoiseScaleY(s.Slider("yscale"))
+	board.rng.SetNoiseOffsetX(s.Slider("xoffset"))
+	board.rng.SetNoiseOffsetY(s.Slider("yoffset"))
 	board.init(int(s.SketchWidth/cellSize), int(s.SketchHeight/cellSize))
 }
 

@@ -8,7 +8,7 @@ Each sketch is accompanied by a JSON configuration file. Although everything cou
     "SketchWidth": 800,
     "SketchHeight": 800,
     "ControlWidth": 240,
-    "Controls": [
+    "Sliders": [
         {
             "Name": "control1",
             "MinVal": 1,
@@ -55,7 +55,7 @@ There are other parameters not listed in the template. Here are the missing para
 
 # Referencing Sketch Parameters in Code
 
-The Sketch parameters can be referenced like `s.<ParameterName>` in the `update` and `draw` functions. The value of each control can be referenced via `s.Var("<control name>")`, where `<control name>` is the name you used in the JSON configuration file.
+The Sketch parameters can be referenced like `s.<ParameterName>` in the `update` and `draw` functions. The value of each control can be referenced via `s.Slider("<control name>")`, where `<control name>` is the name you used in the JSON configuration file.
 
 
 # Command Line Parameters

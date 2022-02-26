@@ -6,6 +6,7 @@ import (
 
 	"github.com/fogleman/gg"
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/inpututil"
 )
 
 const (
@@ -17,6 +18,13 @@ const (
 	SliderOutlineColor        = "#ffdb00"
 	SliderFillColor           = "#ffdb00"
 	SliderTextColor           = "#ffffff"
+	CheckboxHeight            = 15.0
+	CheckboxHPadding          = 12.0
+	CheckboxVPadding          = 7.0
+	CheckboxBackgroundColor   = "#1e1e1e"
+	CheckboxOutlineColor      = "#ffdb00"
+	CheckboxFillColor         = "#ffdb00"
+	CheckboxTextColor         = "#ffffff"
 )
 
 type Slider struct {
@@ -28,6 +36,20 @@ type Slider struct {
 	MaxVal          float64     `json:"MaxVal"`
 	Val             float64     `json:"Val"`
 	Incr            float64     `json:"Incr"`
+	OutlineColor    string      `json:"OutlineColor"`
+	BackgroundColor string      `json:"BackgroundColor"`
+	FillColor       string      `json:"FillColor"`
+	TextColor       string      `json:"TextColor"`
+	colors          ColorConfig `json:"-"`
+	DidJustChange   bool        `json:"-"`
+}
+
+type Checkbox struct {
+	Name            string      `json:"Name"`
+	Pos             Point       `json:"-"`
+	Width           float64     `json:"Width"`
+	Height          float64     `json:"Height"`
+	Checked         bool        `json:"Checked"`
 	OutlineColor    string      `json:"OutlineColor"`
 	BackgroundColor string      `json:"BackgroundColor"`
 	FillColor       string      `json:"FillColor"`
@@ -137,9 +159,69 @@ func NewRadiansSlider(name string, steps int) Slider {
 	return s
 }
 
+func (c *Checkbox) GetRect(ctx *gg.Context) Rect {
+	x := c.Pos.X - CheckboxHPadding
+	y := c.Pos.Y - CheckboxVPadding
+	w := c.Width + 2*CheckboxHPadding
+	h := c.Height + CheckboxVPadding
+	return Rect{X: x, Y: y, W: w, H: h}
+}
+
+func (c *Checkbox) AutoHeight(ctx *gg.Context) {
+	c.Height = ctx.FontHeight()
+}
+
+func (c *Checkbox) IsInside(x float64, y float64) bool {
+	return x >= c.Pos.X &&
+		x <= c.Pos.X+c.Height && y >= c.Pos.Y && y <= c.Pos.Y+c.Height
+}
+
+func (c *Checkbox) Update() {
+	c.Checked = !c.Checked
+}
+
+func (c *Checkbox) CheckAndUpdate() (bool, error) {
+	didChange := false
+	x, y := ebiten.CursorPosition()
+	if inpututil.IsMouseButtonJustReleased(ebiten.MouseButtonLeft) {
+		if c.IsInside(float64(x), float64(y)) {
+			c.Update()
+			didChange = true
+		}
+	}
+	c.DidJustChange = didChange
+	return didChange, nil
+}
+
+func (c *Checkbox) Draw(ctx *gg.Context) {
+	ctx.SetLineCapButt()
+	ctx.SetLineWidth(1.5)
+	ctx.SetColor(c.colors.Background)
+	ctx.DrawRectangle(c.Pos.X, c.Pos.Y, c.Height, c.Height)
+	ctx.Fill()
+	if c.Checked {
+		ctx.SetColor(c.colors.Fill)
+		ctx.DrawLine(c.Pos.X, c.Pos.Y, c.Pos.X+c.Height, c.Pos.Y+c.Height)
+		ctx.DrawLine(c.Pos.X, c.Pos.Y+c.Height, c.Pos.X+c.Height, c.Pos.Y)
+		ctx.Stroke()
+	}
+	ctx.SetColor(c.colors.Outline)
+	ctx.DrawRectangle(c.Pos.X, c.Pos.Y, c.Height, c.Height)
+	ctx.Stroke()
+	ctx.SetColor(c.colors.Text)
+	ctx.DrawStringWrapped(c.Name, c.Pos.X, c.Pos.Y, 0, 0, c.Width, 1, gg.AlignRight)
+}
+
 func (s *Slider) parseColors() {
 	s.colors.Set(s.BackgroundColor, BackgroundColorType, SliderBackgroundColor)
 	s.colors.Set(s.OutlineColor, OutlineColorType, SliderOutlineColor)
 	s.colors.Set(s.TextColor, TextColorType, SliderTextColor)
 	s.colors.Set(s.FillColor, FillColorType, SliderFillColor)
+}
+
+func (c *Checkbox) parseColors() {
+	c.colors.Set(c.BackgroundColor, BackgroundColorType, CheckboxBackgroundColor)
+	c.colors.Set(c.OutlineColor, OutlineColorType, CheckboxOutlineColor)
+	c.colors.Set(c.TextColor, TextColorType, CheckboxTextColor)
+	c.colors.Set(c.FillColor, FillColorType, CheckboxFillColor)
 }

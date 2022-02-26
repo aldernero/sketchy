@@ -9,7 +9,7 @@
     "SketchBackgroundColor": "#1e1e1e",
     "SketchOutlineColor": "#1e1e1e",
     "RandomSeed": 0,
-    "Controls": [
+    "Sliders": [
         {
             "Name": "cellSize",
             "Width": 226,

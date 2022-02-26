@@ -20,10 +20,10 @@ func update(s *sketchy.Sketch) {
 
 func draw(s *sketchy.Sketch, c *gg.Context) {
 	// Drawing code goes here
-	N := int(s.Var("N"))
-	sides := int(s.Var("sides"))
-	rotate := sketchy.Deg2Rad(s.Var("rotate"))
-	scale := s.Var("scale")
+	N := int(s.Slider("N"))
+	sides := int(s.Slider("sides"))
+	rotate := sketchy.Deg2Rad(s.Slider("rotate"))
+	scale := s.Slider("scale")
 	c.SetColor(color.CMYK{
 		C: 200,
 		M: 0,

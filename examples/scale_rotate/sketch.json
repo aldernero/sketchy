@@ -5,7 +5,7 @@
     "SketchHeight": 800,
     "ControlWidth": 240,
     "DisableClearBetweenFrames": true,
-    "Controls": [
+    "Sliders": [
         {
             "Name": "N",
             "MinVal": 1,

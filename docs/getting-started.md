@@ -73,7 +73,7 @@ So far this is identical to the previous section. Let's look at the contents of 
     "SketchWidth": 800,
     "SketchHeight": 800,
     "ControlWidth": 240,
-    "Controls": [
+    "Sliders": [
         {
             "Name": "control1",
             "MinVal": 1,
@@ -97,7 +97,7 @@ This is the default configuration with 2 example controls. The first 3 lines def
     "SketchWidth": 800,
     "SketchHeight": 800,
     "ControlWidth": 240,
-    "Controls": [
+    "Sliders": [
         {
             "Name": "radius",
             "MinVal": 1,
@@ -139,13 +139,13 @@ func draw(s *sketchy.Sketch, c *gg.Context) {
 Notice that the `draw` function takes two arguments. The first argument stores the Sketch struct used to store our sketch information, including the two slider controls. Here is how you get the value from a slider:
 
 ```go
-val := s.Var("slider name")
+val := s.Slider("slider name")
 ```
 
 The value will be a float64. For our case we could define two variables that are tied to the controls we defined earlier:
 ```go
-radius := s.Var("radius")
-thickness := s.Var("thickness")
+radius := s.Slider("radius")
+thickness := s.Slider("thickness")
 ```
 Notice the argument to `Var` is the same name we used in `sketch.json`.
 
@@ -153,8 +153,8 @@ The other argument to `draw` is a `gg` drawing context. See the [gg](https://git
 ```go
 func draw(s *sketchy.Sketch, c *gg.Context) {
 	// Drawing code goes here
-	radius := s.Var("radius")
-	thickness := s.Var("thickness")
+	radius := s.Slider("radius")
+	thickness := s.Slider("thickness")
 	c.SetColor(color.White)
 	c.SetLineWidth(thickness)
 	c.DrawCircle(s.SketchWidth/2, s.SketchHeight/2, radius)
