@@ -13,14 +13,14 @@ import (
 var lissa sketchy.Lissajous = sketchy.Lissajous{Nx: 3, Ny: 2}
 
 func update(s *sketchy.Sketch) {
-	lissa.Nx = int(s.Var("nx"))
-	lissa.Ny = int(s.Var("ny"))
-	lissa.Px += s.Var("phaseChange")
-	lissa.Py = sketchy.Deg2Rad(s.Var("yphase"))
+	lissa.Nx = int(s.Slider("nx"))
+	lissa.Ny = int(s.Slider("ny"))
+	lissa.Px += s.Slider("phaseChange")
+	lissa.Py = sketchy.Deg2Rad(s.Slider("yphase"))
 }
 
 func draw(s *sketchy.Sketch, c *gg.Context) {
-	radius := s.Var("radius")
+	radius := s.Slider("radius")
 	origin := sketchy.Point{X: s.SketchWidth / 2, Y: s.SketchHeight / 2}
 	curve := sketchy.GenLissajous(lissa, 1000, origin, radius)
 	c.SetColor(color.CMYK{C: 200})

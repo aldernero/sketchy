@@ -13,21 +13,23 @@ import (
 var tick int64
 
 func update(s *sketchy.Sketch) {
-	s.Rand.SetSeed(int64(s.Var("seed")))
-	s.Rand.SetNoiseOctaves(int(s.Var("octaves")))
-	s.Rand.SetNoisePersistence(s.Var("persistence"))
-	s.Rand.SetNoiseLacunarity(s.Var("lacunarity"))
-	s.Rand.SetNoiseScaleX(s.Var("xscale"))
-	s.Rand.SetNoiseScaleY(s.Var("yscale"))
-	s.Rand.SetNoiseOffsetX(s.Var("xoffset"))
-	s.Rand.SetNoiseOffsetY(s.Var("yoffset"))
+	s.Rand.SetSeed(int64(s.Slider("seed")))
+	s.Rand.SetNoiseOctaves(int(s.Slider("octaves")))
+	s.Rand.SetNoisePersistence(s.Slider("persistence"))
+	s.Rand.SetNoiseLacunarity(s.Slider("lacunarity"))
+	s.Rand.SetNoiseScaleX(s.Slider("xscale"))
+	s.Rand.SetNoiseScaleY(s.Slider("yscale"))
+	s.Rand.SetNoiseOffsetX(s.Slider("xoffset"))
+	s.Rand.SetNoiseOffsetY(s.Slider("yoffset"))
 	s.Rand.SetNoiseScaleZ(0.005)
 	s.Rand.SetNoiseOffsetZ(float64(tick))
-	tick++
+	if s.Checkbox("animate") {
+		tick++
+	}
 }
 
 func draw(s *sketchy.Sketch, c *gg.Context) {
-	cellSize := s.Var("cellSize")
+	cellSize := s.Slider("cellSize")
 	c.SetLineWidth(0)
 	for x := 0.0; x < s.SketchWidth; x += cellSize {
 		for y := 0.0; y < s.SketchHeight; y += cellSize {

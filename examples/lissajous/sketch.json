@@ -2,7 +2,7 @@
     "SketchWidth": 1080,
     "SketchHeight": 1080,
     "ControlWidth": 240,
-    "Controls": [
+    "Sliders": [
         {
             "Name": "nx",
             "MinVal": 1,
