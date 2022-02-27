@@ -25,6 +25,7 @@ const (
 	CheckboxOutlineColor      = "#ffdb00"
 	CheckboxFillColor         = "#ffdb00"
 	CheckboxTextColor         = "#ffffff"
+	ButtonHeight              = 20.0
 )
 
 type Slider struct {
@@ -45,17 +46,19 @@ type Slider struct {
 }
 
 type Checkbox struct {
-	Name            string      `json:"Name"`
-	Pos             Point       `json:"-"`
-	Width           float64     `json:"Width"`
-	Height          float64     `json:"Height"`
-	Checked         bool        `json:"Checked"`
-	OutlineColor    string      `json:"OutlineColor"`
-	BackgroundColor string      `json:"BackgroundColor"`
-	FillColor       string      `json:"FillColor"`
-	TextColor       string      `json:"TextColor"`
-	colors          ColorConfig `json:"-"`
-	DidJustChange   bool        `json:"-"`
+	Name            string  `json:"Name"`
+	Pos             Point   `json:"-"`
+	Width           float64 `json:"Width"`
+	Height          float64 `json:"Height"`
+	Checked         bool    `json:"Checked"`
+	IsButton        bool    `json:"IsButton"`
+	OutlineColor    string  `json:"OutlineColor"`
+	BackgroundColor string  `json:"BackgroundColor"`
+	FillColor       string  `json:"FillColor"`
+	TextColor       string  `json:"TextColor"`
+	colors          ColorConfig
+	DidJustChange   bool `json:"-"`
+	wasPressed      bool
 }
 
 func (s *Slider) GetPercentage() float64 {
@@ -172,24 +175,35 @@ func (c *Checkbox) AutoHeight(ctx *gg.Context) {
 }
 
 func (c *Checkbox) IsInside(x float64, y float64) bool {
+	right := c.Pos.X + c.Height
+	if c.IsButton {
+		right = c.Pos.X + c.Width
+	}
 	return x >= c.Pos.X &&
-		x <= c.Pos.X+c.Height && y >= c.Pos.Y && y <= c.Pos.Y+c.Height
+		x <= c.Pos.X+right && y >= c.Pos.Y && y <= c.Pos.Y+c.Height
 }
 
 func (c *Checkbox) Update() {
 	c.Checked = !c.Checked
+	if c.Checked {
+		c.wasPressed = true
+	}
 }
 
 func (c *Checkbox) CheckAndUpdate() (bool, error) {
 	didChange := false
 	x, y := ebiten.CursorPosition()
-	if inpututil.IsMouseButtonJustReleased(ebiten.MouseButtonLeft) {
+	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
 		if c.IsInside(float64(x), float64(y)) {
 			c.Update()
 			didChange = true
 		}
 	}
 	c.DidJustChange = didChange
+	if c.IsButton && !didChange && c.wasPressed {
+		c.wasPressed = false
+		c.Checked = false
+	}
 	return didChange, nil
 }
 
@@ -197,19 +211,37 @@ func (c *Checkbox) Draw(ctx *gg.Context) {
 	ctx.SetLineCapButt()
 	ctx.SetLineWidth(1.5)
 	ctx.SetColor(c.colors.Background)
-	ctx.DrawRectangle(c.Pos.X, c.Pos.Y, c.Height, c.Height)
+	if c.IsButton {
+		ctx.DrawRectangle(c.Pos.X, c.Pos.Y, c.Width, c.Height)
+	} else {
+		ctx.DrawRectangle(c.Pos.X, c.Pos.Y, c.Height, c.Height)
+	}
 	ctx.Fill()
 	if c.Checked {
-		ctx.SetColor(c.colors.Fill)
-		ctx.DrawLine(c.Pos.X, c.Pos.Y, c.Pos.X+c.Height, c.Pos.Y+c.Height)
-		ctx.DrawLine(c.Pos.X, c.Pos.Y+c.Height, c.Pos.X+c.Height, c.Pos.Y)
-		ctx.Stroke()
+		if c.IsButton {
+			ctx.SetColor(c.colors.Fill)
+			ctx.DrawRectangle(c.Pos.X, c.Pos.Y, c.Width, c.Height)
+			ctx.Fill()
+		} else {
+			ctx.SetColor(c.colors.Fill)
+			ctx.DrawLine(c.Pos.X, c.Pos.Y, c.Pos.X+c.Height, c.Pos.Y+c.Height)
+			ctx.DrawLine(c.Pos.X, c.Pos.Y+c.Height, c.Pos.X+c.Height, c.Pos.Y)
+			ctx.Stroke()
+		}
 	}
 	ctx.SetColor(c.colors.Outline)
-	ctx.DrawRectangle(c.Pos.X, c.Pos.Y, c.Height, c.Height)
+	if c.IsButton {
+		ctx.DrawRectangle(c.Pos.X, c.Pos.Y, c.Width, c.Height)
+	} else {
+		ctx.DrawRectangle(c.Pos.X, c.Pos.Y, c.Height, c.Height)
+	}
 	ctx.Stroke()
 	ctx.SetColor(c.colors.Text)
-	ctx.DrawStringWrapped(c.Name, c.Pos.X, c.Pos.Y, 0, 0, c.Width, 1, gg.AlignRight)
+	if c.IsButton {
+		ctx.DrawStringWrapped(c.Name, c.Pos.X, c.Pos.Y, 0, 0, c.Width, 1, gg.AlignCenter)
+	} else {
+		ctx.DrawStringWrapped(c.Name, c.Pos.X, c.Pos.Y, 0, 0, c.Width, 1, gg.AlignRight)
+	}
 }
 
 func (s *Slider) parseColors() {

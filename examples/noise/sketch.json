@@ -71,6 +71,11 @@
         {
             "Name": "animate",
             "Checked": false
+        },
+        {
+            "Name": "reset",
+            "Checked": false,
+            "IsButton": true
         }
     ]
 }

@@ -26,6 +26,9 @@ func update(s *sketchy.Sketch) {
 	if s.Checkbox("animate") {
 		tick++
 	}
+	if s.Checkbox("reset") {
+		tick = 0
+	}
 }
 
 func draw(s *sketchy.Sketch, c *gg.Context) {

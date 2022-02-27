@@ -152,7 +152,11 @@ func (s *Sketch) PlaceControls(w float64, h float64, ctx *gg.Context) {
 	startY := lastRect.Y + lastRect.H
 	for i := range s.Checkboxes {
 		if s.Checkboxes[i].Height == 0 {
-			s.Checkboxes[i].Height = CheckboxHeight
+			if s.Checkboxes[i].IsButton {
+				s.Checkboxes[i].Height = ButtonHeight
+			} else {
+				s.Checkboxes[i].Height = CheckboxHeight
+			}
 		}
 		s.Checkboxes[i].Width = s.ControlWidth - 2*CheckboxHPadding
 		rect := s.Checkboxes[i].GetRect(ctx)
