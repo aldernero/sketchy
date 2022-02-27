@@ -23,10 +23,10 @@ func update(s *sketchy.Sketch) {
 	s.Rand.SetNoiseOffsetY(s.Slider("yoffset"))
 	s.Rand.SetNoiseScaleZ(0.005)
 	s.Rand.SetNoiseOffsetZ(float64(tick))
-	if s.Checkbox("animate") {
+	if s.Toggle("animate") {
 		tick++
 	}
-	if s.Checkbox("reset") {
+	if s.Toggle("reset") {
 		tick = 0
 	}
 }

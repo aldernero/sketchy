@@ -18,34 +18,34 @@ const (
 	SliderOutlineColor        = "#ffdb00"
 	SliderFillColor           = "#ffdb00"
 	SliderTextColor           = "#ffffff"
-	CheckboxHeight            = 15.0
-	CheckboxHPadding          = 12.0
-	CheckboxVPadding          = 7.0
-	CheckboxBackgroundColor   = "#1e1e1e"
-	CheckboxOutlineColor      = "#ffdb00"
-	CheckboxFillColor         = "#ffdb00"
-	CheckboxTextColor         = "#ffffff"
+	ToggleHeight              = 15.0
+	ToggleHPadding            = 12.0
+	ToggleVPadding            = 7.0
+	ToggleBackgroundColor     = "#1e1e1e"
+	ToggleOutlineColor        = "#ffdb00"
+	ToggleFillColor           = "#ffdb00"
+	ToggleTextColor           = "#ffffff"
 	ButtonHeight              = 20.0
 )
 
 type Slider struct {
-	Name            string      `json:"Name"`
-	Pos             Point       `json:"-"`
-	Width           float64     `json:"Width"`
-	Height          float64     `json:"Height"`
-	MinVal          float64     `json:"MinVal"`
-	MaxVal          float64     `json:"MaxVal"`
-	Val             float64     `json:"Val"`
-	Incr            float64     `json:"Incr"`
-	OutlineColor    string      `json:"OutlineColor"`
-	BackgroundColor string      `json:"BackgroundColor"`
-	FillColor       string      `json:"FillColor"`
-	TextColor       string      `json:"TextColor"`
-	colors          ColorConfig `json:"-"`
-	DidJustChange   bool        `json:"-"`
+	Name            string  `json:"Name"`
+	Pos             Point   `json:"-"`
+	Width           float64 `json:"Width"`
+	Height          float64 `json:"Height"`
+	MinVal          float64 `json:"MinVal"`
+	MaxVal          float64 `json:"MaxVal"`
+	Val             float64 `json:"Val"`
+	Incr            float64 `json:"Incr"`
+	OutlineColor    string  `json:"OutlineColor"`
+	BackgroundColor string  `json:"BackgroundColor"`
+	FillColor       string  `json:"FillColor"`
+	TextColor       string  `json:"TextColor"`
+	colors          ColorConfig
+	DidJustChange   bool `json:"-"`
 }
 
-type Checkbox struct {
+type Toggle struct {
 	Name            string  `json:"Name"`
 	Pos             Point   `json:"-"`
 	Width           float64 `json:"Width"`
@@ -162,19 +162,19 @@ func NewRadiansSlider(name string, steps int) Slider {
 	return s
 }
 
-func (c *Checkbox) GetRect(ctx *gg.Context) Rect {
-	x := c.Pos.X - CheckboxHPadding
-	y := c.Pos.Y - CheckboxVPadding
-	w := c.Width + 2*CheckboxHPadding
-	h := c.Height + CheckboxVPadding
+func (c *Toggle) GetRect(ctx *gg.Context) Rect {
+	x := c.Pos.X - ToggleHPadding
+	y := c.Pos.Y - ToggleVPadding
+	w := c.Width + 2*ToggleHPadding
+	h := c.Height + ToggleVPadding
 	return Rect{X: x, Y: y, W: w, H: h}
 }
 
-func (c *Checkbox) AutoHeight(ctx *gg.Context) {
+func (c *Toggle) AutoHeight(ctx *gg.Context) {
 	c.Height = ctx.FontHeight()
 }
 
-func (c *Checkbox) IsInside(x float64, y float64) bool {
+func (c *Toggle) IsInside(x float64, y float64) bool {
 	right := c.Pos.X + c.Height
 	if c.IsButton {
 		right = c.Pos.X + c.Width
@@ -183,14 +183,14 @@ func (c *Checkbox) IsInside(x float64, y float64) bool {
 		x <= c.Pos.X+right && y >= c.Pos.Y && y <= c.Pos.Y+c.Height
 }
 
-func (c *Checkbox) Update() {
+func (c *Toggle) Update() {
 	c.Checked = !c.Checked
 	if c.Checked {
 		c.wasPressed = true
 	}
 }
 
-func (c *Checkbox) CheckAndUpdate() (bool, error) {
+func (c *Toggle) CheckAndUpdate() (bool, error) {
 	didChange := false
 	x, y := ebiten.CursorPosition()
 	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
@@ -207,7 +207,7 @@ func (c *Checkbox) CheckAndUpdate() (bool, error) {
 	return didChange, nil
 }
 
-func (c *Checkbox) Draw(ctx *gg.Context) {
+func (c *Toggle) Draw(ctx *gg.Context) {
 	ctx.SetLineCapButt()
 	ctx.SetLineWidth(1.5)
 	ctx.SetColor(c.colors.Background)
@@ -251,9 +251,9 @@ func (s *Slider) parseColors() {
 	s.colors.Set(s.FillColor, FillColorType, SliderFillColor)
 }
 
-func (c *Checkbox) parseColors() {
-	c.colors.Set(c.BackgroundColor, BackgroundColorType, CheckboxBackgroundColor)
-	c.colors.Set(c.OutlineColor, OutlineColorType, CheckboxOutlineColor)
-	c.colors.Set(c.TextColor, TextColorType, CheckboxTextColor)
-	c.colors.Set(c.FillColor, FillColorType, CheckboxFillColor)
+func (c *Toggle) parseColors() {
+	c.colors.Set(c.BackgroundColor, BackgroundColorType, ToggleBackgroundColor)
+	c.colors.Set(c.OutlineColor, OutlineColorType, ToggleOutlineColor)
+	c.colors.Set(c.TextColor, TextColorType, ToggleTextColor)
+	c.colors.Set(c.FillColor, FillColorType, ToggleFillColor)
 }

@@ -27,30 +27,30 @@ type SketchUpdater func(s *Sketch)
 type SketchDrawer func(s *Sketch, c *gg.Context)
 
 type Sketch struct {
-	Title                     string         `json:"Title"`
-	Prefix                    string         `json:"Prefix"`
-	SketchWidth               float64        `json:"SketchWidth"`
-	SketchHeight              float64        `json:"SketchHeight"`
-	ControlWidth              float64        `json:"ControlWidth"`
-	ControlBackgroundColor    string         `json:"ControlBackgroundColor"`
-	ControlOutlineColor       string         `json:"ControlOutlineColor"`
-	SketchBackgroundColor     string         `json:"SketchBackgroundColor"`
-	SketchOutlineColor        string         `json:"SketchOutlineColor"`
-	DisableClearBetweenFrames bool           `json:"DisableClearBetweenFrames"`
-	RandomSeed                int64          `json:"RandomSeed"`
-	Sliders                   []Slider       `json:"Sliders"`
-	Checkboxes                []Checkbox     `json:"Checkboxes"`
-	Updater                   SketchUpdater  `json:"-"`
-	Drawer                    SketchDrawer   `json:"-"`
-	DidControlsChange         bool           `json:"-"`
-	Rand                      Rng            `json:"-"`
-	sliderControlMap          map[string]int `json:"-"`
-	checkboxControlMap        map[string]int `json:"-"`
-	controlColorConfig        ColorConfig    `json:"-"`
-	sketchColorConfig         ColorConfig    `json:"-"`
-	isSavingPNG               bool           `json:"-"`
-	isSavingScreen            bool           `json:"-"`
-	needToClear               bool           `json:"-"`
+	Title                     string        `json:"Title"`
+	Prefix                    string        `json:"Prefix"`
+	SketchWidth               float64       `json:"SketchWidth"`
+	SketchHeight              float64       `json:"SketchHeight"`
+	ControlWidth              float64       `json:"ControlWidth"`
+	ControlBackgroundColor    string        `json:"ControlBackgroundColor"`
+	ControlOutlineColor       string        `json:"ControlOutlineColor"`
+	SketchBackgroundColor     string        `json:"SketchBackgroundColor"`
+	SketchOutlineColor        string        `json:"SketchOutlineColor"`
+	DisableClearBetweenFrames bool          `json:"DisableClearBetweenFrames"`
+	RandomSeed                int64         `json:"RandomSeed"`
+	Sliders                   []Slider      `json:"Sliders"`
+	Toggles                   []Toggle      `json:"Toggles"`
+	Updater                   SketchUpdater `json:"-"`
+	Drawer                    SketchDrawer  `json:"-"`
+	DidControlsChange         bool          `json:"-"`
+	Rand                      Rng           `json:"-"`
+	sliderControlMap          map[string]int
+	ToggleControlMap          map[string]int `json:"-"`
+	controlColorConfig        ColorConfig
+	sketchColorConfig         ColorConfig
+	isSavingPNG               bool
+	isSavingScreen            bool
+	needToClear               bool
 }
 
 func NewSketchFromFile(fname string) (*Sketch, error) {
@@ -84,7 +84,10 @@ func (s *Sketch) Init() {
 	if s.DisableClearBetweenFrames {
 		ebiten.SetScreenClearedEveryFrame(false)
 	}
-	os.Setenv("EBITEN_SCREENSHOT_KEY", "escape")
+	err := os.Setenv("EBITEN_SCREENSHOT_KEY", "escape")
+	if err != nil {
+		log.Fatal("error while setting ebiten screenshot key: ", err)
+	}
 }
 
 func (s *Sketch) Slider(name string) float64 {
@@ -95,12 +98,12 @@ func (s *Sketch) Slider(name string) float64 {
 	return s.Sliders[i].Val
 }
 
-func (s *Sketch) Checkbox(name string) bool {
-	i, ok := s.checkboxControlMap[name]
+func (s *Sketch) Toggle(name string) bool {
+	i, ok := s.ToggleControlMap[name]
 	if !ok {
 		log.Fatalf("%s not a valid control name", name)
 	}
-	return s.Checkboxes[i].Checked
+	return s.Toggles[i].Checked
 }
 
 func (s *Sketch) UpdateControls() {
@@ -123,8 +126,8 @@ func (s *Sketch) UpdateControls() {
 			controlsChanged = true
 		}
 	}
-	for i := range s.Checkboxes {
-		didChange, err := s.Checkboxes[i].CheckAndUpdate()
+	for i := range s.Toggles {
+		didChange, err := s.Toggles[i].CheckAndUpdate()
 		if err != nil {
 			panic(err)
 		}
@@ -150,19 +153,19 @@ func (s *Sketch) PlaceControls(w float64, h float64, ctx *gg.Context) {
 		lastRect = s.Sliders[i].GetRect(ctx)
 	}
 	startY := lastRect.Y + lastRect.H
-	for i := range s.Checkboxes {
-		if s.Checkboxes[i].Height == 0 {
-			if s.Checkboxes[i].IsButton {
-				s.Checkboxes[i].Height = ButtonHeight
+	for i := range s.Toggles {
+		if s.Toggles[i].Height == 0 {
+			if s.Toggles[i].IsButton {
+				s.Toggles[i].Height = ButtonHeight
 			} else {
-				s.Checkboxes[i].Height = CheckboxHeight
+				s.Toggles[i].Height = ToggleHeight
 			}
 		}
-		s.Checkboxes[i].Width = s.ControlWidth - 2*CheckboxHPadding
-		rect := s.Checkboxes[i].GetRect(ctx)
-		s.Checkboxes[i].Pos = Point{
-			X: CheckboxHPadding,
-			Y: startY + float64(i)*rect.H + s.Checkboxes[i].Height + CheckboxVPadding,
+		s.Toggles[i].Width = s.ControlWidth - 2*ToggleHPadding
+		rect := s.Toggles[i].GetRect(ctx)
+		s.Toggles[i].Pos = Point{
+			X: ToggleHPadding,
+			Y: startY + float64(i)*rect.H + s.Toggles[i].Height + ToggleVPadding,
 		}
 	}
 }
@@ -177,8 +180,8 @@ func (s *Sketch) DrawControls(ctx *gg.Context) {
 	for i := range s.Sliders {
 		s.Sliders[i].Draw(ctx)
 	}
-	for i := range s.Checkboxes {
-		s.Checkboxes[i].Draw(ctx)
+	for i := range s.Toggles {
+		s.Toggles[i].Draw(ctx)
 	}
 }
 
@@ -258,9 +261,9 @@ func (s *Sketch) buildMaps() {
 	for i := range s.Sliders {
 		s.sliderControlMap[s.Sliders[i].Name] = i
 	}
-	s.checkboxControlMap = make(map[string]int)
-	for i := range s.Checkboxes {
-		s.checkboxControlMap[s.Checkboxes[i].Name] = i
+	s.ToggleControlMap = make(map[string]int)
+	for i := range s.Toggles {
+		s.ToggleControlMap[s.Toggles[i].Name] = i
 	}
 }
 
@@ -272,8 +275,8 @@ func (s *Sketch) parseColors() {
 	for i := range s.Sliders {
 		s.Sliders[i].parseColors()
 	}
-	for i := range s.Checkboxes {
-		s.Checkboxes[i].parseColors()
+	for i := range s.Toggles {
+		s.Toggles[i].parseColors()
 	}
 }
 

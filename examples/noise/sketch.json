@@ -67,7 +67,7 @@
             "Incr": 1
         }
     ],
-    "Checkboxes": [
+    "Toggles": [
         {
             "Name": "animate",
             "Checked": false
