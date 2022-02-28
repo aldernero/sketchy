@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"image/color"
 	"log"
 
 	"github.com/aldernero/sketchy"
@@ -13,7 +14,7 @@ import (
 var tick int64
 
 func update(s *sketchy.Sketch) {
-	s.Rand.SetSeed(int64(s.Slider("seed")))
+	s.Rand.SetSeed(s.RandomSeed)
 	s.Rand.SetNoiseOctaves(int(s.Slider("octaves")))
 	s.Rand.SetNoisePersistence(s.Slider("persistence"))
 	s.Rand.SetNoiseLacunarity(s.Slider("lacunarity"))
@@ -37,9 +38,15 @@ func draw(s *sketchy.Sketch, c *gg.Context) {
 	for x := 0.0; x < s.SketchWidth; x += cellSize {
 		for y := 0.0; y < s.SketchHeight; y += cellSize {
 			noise := s.Rand.Noise3D(x, y, 0)
-			hue := sketchy.Map(0, 1, 0, 360, noise)
-			cellColor := colorful.Hsl(hue, 0.5, 0.5)
-			c.SetColor(cellColor)
+			if !s.Toggle("monochrome") {
+				hue := sketchy.Map(0, 1, 0, 360, noise)
+				cellColor := colorful.Hsl(hue, 0.5, 0.5)
+				c.SetColor(cellColor)
+			} else {
+				gray := sketchy.Map(0, 1, 0, 255, noise)
+				cellColor := color.Gray{Y: uint8(gray)}
+				c.SetColor(cellColor)
+			}
 			c.DrawRectangle(x, y, cellSize, cellSize)
 			c.Fill()
 		}

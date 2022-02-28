@@ -1,20 +1,13 @@
 {
-    "SketchWidth": 1080,
-    "SketchHeight": 1080,
-    "ControlWidth": 240,
+    "SketchWidth": 800,
+    "SketchHeight": 800,
+    "ControlWidth": 200,
     "Sliders": [
         {
             "Name": "cellSize",
             "MinVal": 1,
             "MaxVal": 100,
             "Val": 10,
-            "Incr": 1
-        },
-        {
-            "Name": "seed",
-            "MinVal": -10000,
-            "MaxVal": 10000,
-            "Val": 0,
             "Incr": 1
         },
         {
@@ -70,6 +63,10 @@
     "Toggles": [
         {
             "Name": "animate",
+            "Checked": false
+        },
+        {
+            "Name": "monochrome",
             "Checked": false
         },
         {
