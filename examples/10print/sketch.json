@@ -24,19 +24,6 @@
             "TextColor": ""
         },
         {
-            "Name": "seed",
-            "Width": 226,
-            "Height": 15,
-            "MinVal": -10000,
-            "MaxVal": 10000,
-            "Val": -4,
-            "Incr": 1,
-            "OutlineColor": "",
-            "BackgroundColor": "",
-            "FillColor": "",
-            "TextColor": ""
-        },
-        {
             "Name": "octaves",
             "Width": 226,
             "Height": 15,

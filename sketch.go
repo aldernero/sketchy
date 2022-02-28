@@ -3,16 +3,16 @@ package sketchy
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/fogleman/gg"
+	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"image"
 	"image/color"
 	"image/png"
 	"io/ioutil"
 	"log"
+	"math/rand"
 	"os"
-
-	"github.com/fogleman/gg"
-	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/hajimehoshi/ebiten/v2/inpututil"
 )
 
 const (
@@ -51,6 +51,7 @@ type Sketch struct {
 	isSavingPNG               bool
 	isSavingScreen            bool
 	needToClear               bool
+	Tick                      int64 `json:"-"`
 }
 
 func NewSketchFromFile(fname string) (*Sketch, error) {
@@ -116,6 +117,27 @@ func (s *Sketch) UpdateControls() {
 	}
 	if inpututil.IsKeyJustReleased(ebiten.KeyC) {
 		s.saveConfig()
+	}
+	if inpututil.IsKeyJustReleased(ebiten.KeyUp) {
+		s.RandomSeed++
+		s.Rand.SetSeed(s.RandomSeed)
+		controlsChanged = true
+		fmt.Println("RandomSeed incremented: ", s.RandomSeed)
+	}
+	if inpututil.IsKeyJustReleased(ebiten.KeyDown) {
+		s.RandomSeed--
+		s.Rand.SetSeed(s.RandomSeed)
+		controlsChanged = true
+		fmt.Println("RandomSeed decremented: ", s.RandomSeed)
+	}
+	if inpututil.IsKeyJustReleased(ebiten.KeyNumpadDecimal) {
+		s.RandomSeed = rand.Int63()
+		s.Rand.SetSeed(s.RandomSeed)
+		controlsChanged = true
+		fmt.Println("RandomSeed changed: ", s.RandomSeed)
+	}
+	if inpututil.IsKeyJustReleased(ebiten.KeySpace) {
+		s.DumpState()
 	}
 	for i := range s.Sliders {
 		didChange, err := s.Sliders[i].CheckAndUpdate()
@@ -192,6 +214,7 @@ func (s *Sketch) Layout(outsideWidth, outsideHeight int) (int, int) {
 func (s *Sketch) Update() error {
 	s.UpdateControls()
 	s.Updater(s)
+	s.Tick++
 	return nil
 }
 
@@ -249,11 +272,23 @@ func (s *Sketch) Draw(screen *ebiten.Image) {
 }
 
 func (s *Sketch) SketchCoords(x, y float64) Point {
-	return Point{X: float64(x) - s.ControlWidth, Y: float64(y)}
+	return Point{X: x - s.ControlWidth, Y: y}
 }
 
 func (s *Sketch) PointInSketchArea(x, y float64) bool {
 	return x > s.ControlWidth && x <= (s.ControlWidth+s.SketchWidth) && y >= 0 && y <= s.SketchHeight
+}
+
+func (s *Sketch) DumpState() {
+	for i := range s.Sliders {
+		fmt.Printf("%s: %s\n", s.Sliders[i].Name, s.Sliders[i].StringVal())
+	}
+	for i := range s.Toggles {
+		if !s.Toggles[i].IsButton {
+			fmt.Printf("%s: %t\n", s.Toggles[i].Name, s.Toggles[i].Checked)
+		}
+	}
+	fmt.Println("RandomSeed: ", s.RandomSeed)
 }
 
 func (s *Sketch) buildMaps() {

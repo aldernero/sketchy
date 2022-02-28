@@ -59,7 +59,7 @@ func (t *Truchet) flip(r int, c int) {
 
 func reset(s *sketchy.Sketch) {
 	cellSize := s.Slider("cellSize")
-	board.rng.SetSeed(int64(s.Slider("seed")))
+	board.rng.SetSeed(s.RandomSeed)
 	board.rng.SetNoiseOctaves(int(s.Slider("octaves")))
 	board.rng.SetNoisePersistence(s.Slider("persistence"))
 	board.rng.SetNoiseLacunarity(s.Slider("lacunarity"))

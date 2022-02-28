@@ -114,6 +114,14 @@ func (s *Slider) CheckAndUpdate() (bool, error) {
 	return didChange, nil
 }
 
+func (s *Slider) StringVal() string {
+	digits := 0
+	if s.Incr < 1 {
+		digits = int(math.Ceil(math.Abs(math.Log10(s.Incr))))
+	}
+	return strconv.FormatFloat(s.Val, 'f', digits, 64)
+}
+
 func (s *Slider) Draw(ctx *gg.Context) {
 	ctx.SetColor(s.colors.Background)
 	ctx.DrawRectangle(s.Pos.X, s.Pos.Y, s.Width, SliderHeight)
@@ -124,14 +132,10 @@ func (s *Slider) Draw(ctx *gg.Context) {
 	ctx.SetColor(s.colors.Outline)
 	ctx.DrawRectangle(s.Pos.X, s.Pos.Y, s.Width, SliderHeight)
 	ctx.Stroke()
-	digits := 0
-	if s.Incr < 1 {
-		digits = int(math.Ceil(math.Abs(math.Log10(s.Incr))))
-	}
 	ctx.SetColor(s.colors.Text)
 	ctx.DrawStringWrapped(s.Name, s.Pos.X, s.Pos.Y-ctx.FontHeight()-SliderVPadding, 0, 0, s.Width, 1, gg.AlignLeft)
 	ctx.DrawStringWrapped(
-		strconv.FormatFloat(s.Val, 'f', digits, 64),
+		s.StringVal(),
 		s.Pos.X, s.Pos.Y-ctx.FontHeight()-SliderVPadding,
 		0, 0, s.Width, 1, gg.AlignRight)
 }
