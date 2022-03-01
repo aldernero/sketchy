@@ -18,6 +18,16 @@
             "Incr": 0.01
         }
     ],
+    "Toggles": [
+        {
+            "Name": "checkbox",
+            "Checked": false
+        },
+        {
+            "Name": "button",
+            "IsButton": true
+        }
+    ],
     "SketchBackgroundColor": "#1e1e1e",
     "SketchOutlineColor": "#ffdb00",
     "ControlBackgroundColor": "#1e1e1e",

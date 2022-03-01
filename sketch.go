@@ -160,7 +160,7 @@ func (s *Sketch) UpdateControls() {
 	s.DidControlsChange = controlsChanged
 }
 
-func (s *Sketch) PlaceControls(w float64, h float64, ctx *gg.Context) {
+func (s *Sketch) PlaceControls(_ float64, _ float64, ctx *gg.Context) {
 	var lastRect Rect
 	for i := range s.Sliders {
 		if s.Sliders[i].Height == 0 {
@@ -207,7 +207,10 @@ func (s *Sketch) DrawControls(ctx *gg.Context) {
 	}
 }
 
-func (s *Sketch) Layout(outsideWidth, outsideHeight int) (int, int) {
+func (s *Sketch) Layout(
+	int,
+	int,
+) (int, int) {
 	return int(s.ControlWidth + s.SketchWidth), int(s.SketchHeight)
 }
 
@@ -245,7 +248,10 @@ func (s *Sketch) Draw(screen *ebiten.Image) {
 	ctx.Pop()
 	if s.isSavingPNG {
 		fname := s.Prefix + "_" + GetTimestampString() + ".png"
-		ctx.SavePNG(fname)
+		err := ctx.SavePNG(fname)
+		if err != nil {
+			panic(err)
+		}
 		fmt.Println("Saved ", fname)
 		s.isSavingPNG = false
 	}
@@ -257,7 +263,10 @@ func (s *Sketch) Draw(screen *ebiten.Image) {
 			log.Fatal("error while trying to create screenshot file", err)
 		}
 		if err := png.Encode(f, sketchImage); err != nil {
-			f.Close()
+			err := f.Close()
+			if err != nil {
+				panic(err)
+			}
 			log.Fatal("error while trying to encode screenshot image", err)
 		}
 		if err := f.Close(); err != nil {
