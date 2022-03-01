@@ -6,8 +6,7 @@ The [Getting Started](docs/getting-started.md) guide is a good place to start, a
 
 Sketchy is still very much in the alpha stage. Below is an example of what the framework looks like while running the "noise" example.
 
-![Screenshot_20220216_204611](https://user-images.githubusercontent.com/96601789/154401686-2cf1e26a-e94e-46b5-a022-9002c4b723d5.png)
-
+![Screenshot_20220228_214943](https://user-images.githubusercontent.com/96601789/156106899-b9db1eb6-2d60-424b-b2df-5bce4582a9b5.png)
 
 # Installation
 
