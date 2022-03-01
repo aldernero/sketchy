@@ -3,34 +3,29 @@ package sketchy
 import (
 	"math"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestGcd(t *testing.T) {
+	assert := assert.New(t)
 	a := 60
 	b := 15
 	c := Gcd(a, b)
-	if c != 15 {
-		t.Errorf("Incorrect gcd, expected 15 got %d", c)
-	}
+	assert.Equal(15, c)
 	b = 25
 	c = Gcd(a, b)
-	if c != 5 {
-		t.Errorf("Incorrect gcd, expected 5 got %d", c)
-	}
+	assert.Equal(5, c)
 	a = 71
 	b = 73
 	c = Gcd(a, b)
-	if c != 1 {
-		t.Errorf("Incorrect gcd, expected 1, got %d", c)
-	}
+	assert.Equal(1, c)
 }
 
 func TestPointString(t *testing.T) {
 	p := Point{X: 1, Y: 2}
 	s := p.String()
-	if s != "(1.000000, 2.000000)" {
-		t.Errorf("Incorrect point string, expected (1.000000, 2.000000), got %s", s)
-	}
+	assert.Equal(t, "(1.000000, 2.000000)", s)
 }
 
 func TestLineString(t *testing.T) {
@@ -40,9 +35,7 @@ func TestLineString(t *testing.T) {
 	}
 	s := l.String()
 	c := "(0.000000, 0.000000) -> (1.000000, 1.000000)"
-	if s != c {
-		t.Errorf("Incorrect pline string, expected %s, got %s", c, s)
-	}
+	assert.Equal(t, c, s)
 }
 
 func TestLerp(t *testing.T) {
@@ -50,9 +43,7 @@ func TestLerp(t *testing.T) {
 	b := 100.0
 	i := 0.3
 	l := Lerp(a, b, i)
-	if l != 37.0 {
-		t.Errorf("Lerp was incorrect, expected 37.0, got %f", l)
-	}
+	assert.Equal(t, 37.0, l)
 }
 
 func TestMap(t *testing.T) {
@@ -62,44 +53,31 @@ func TestMap(t *testing.T) {
 	d := 360.0
 	i := 75.0
 	l := Map(a, b, c, d, i)
-	if l != 270.0 {
-		t.Errorf("Map was incorrect, expected 270.0, got %f", l)
-	}
+	assert.Equal(t, 270.0, l)
 }
 
 func TestLinspace(t *testing.T) {
+	assert := assert.New(t)
 	l := Linspace(0, Tau, 10, false)
-	if len(l) != 9 {
-		t.Errorf("Incorrect linspace length, expected 9, got %d", len(l))
-	}
-	if l[len(l)-1] >= Tau {
-		t.Errorf("Last element too large, expected %f, got %f", Tau, l[len(l)-1])
-	}
+	assert.Equal(9, len(l))
+	assert.LessOrEqual(l[len(l)-1], Tau)
 	l = Linspace(0, Tau, 10, true)
-	if len(l) != 10 {
-		t.Errorf("Incorrect linspace length, expected 10, got %d", len(l))
-	}
-	if l[len(l)-1] != Tau {
-		t.Errorf("Incorrect last element, expected %f, got %f", Tau, l[len(l)-1])
-	}
+	assert.Equal(10, len(l))
+	assert.Equal(Tau, l[len(l)-1])
 }
 
 func TestDistance(t *testing.T) {
 	p := Point{X: 0, Y: 0}
 	q := Point{X: 1, Y: 1}
 	d := Distance(p, q)
-	if d != math.Sqrt2 {
-		t.Errorf("Distance was incorrect, expected %f, got %f", d, math.Sqrt2)
-	}
+	assert.Equal(t, Sqrt2, d)
 }
 
 func TestSquaredDistance(t *testing.T) {
 	p := Point{X: 0, Y: 0}
 	q := Point{X: 1, Y: 1}
 	d := SquaredDistance(p, q)
-	if d != 2.0 {
-		t.Errorf("Squared distance was incorrect, expected %f, got %f", d, 2.0)
-	}
+	assert.Equal(t, 2.0, d)
 }
 
 func TestMidpoint(t *testing.T) {
@@ -128,9 +106,7 @@ func TestLineLength(t *testing.T) {
 		Q: Point{X: 1, Y: 1},
 	}
 	d := l.Length()
-	if d != math.Sqrt2 {
-		t.Errorf("Line length was incorrect, expected %f, got %f", d, math.Sqrt2)
-	}
+	assert.Equal(t, Sqrt2, d)
 }
 
 func TestCurveLength(t *testing.T) {
@@ -150,15 +126,11 @@ func TestCurveLength(t *testing.T) {
 func TestDeg2Rad(t *testing.T) {
 	d := 90.0
 	r := Deg2Rad(d)
-	if r != Tau/4 {
-		t.Errorf("Radians not correct, expected %f, got %f", Tau/4, r)
-	}
+	assert.Equal(t, Tau/4, r)
 }
 
 func TestRad2Deg(t *testing.T) {
 	r := Tau / 4
 	d := Rad2Deg(r)
-	if d != 90.0 {
-		t.Errorf("Degrees not correct, expected %f, got %f", 90.0, d)
-	}
+	assert.Equal(t, 90.0, d)
 }
