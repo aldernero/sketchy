@@ -53,6 +53,10 @@ func (r *Rng) SetSeed(i int64) {
 	r.noise = opensimplex.New(i)
 }
 
+func (r *Rng) Gaussian(mean float64, stdev float64) float64 {
+	return rand.NormFloat64()*stdev + mean
+}
+
 // The noise scale functions scale the position values passed into the
 // noise PRNG. Typically for screen coordinates scale values in the
 // range of 0.001 to 0.01 produce visually appealing noise

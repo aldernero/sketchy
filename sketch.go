@@ -300,6 +300,14 @@ func (s *Sketch) DumpState() {
 	fmt.Println("RandomSeed: ", s.RandomSeed)
 }
 
+func (s *Sketch) RandomWidth() float64 {
+	return rand.Float64() * s.SketchWidth
+}
+
+func (s *Sketch) RandomHeight() float64 {
+	return rand.Float64() * s.SketchHeight
+}
+
 func (s *Sketch) buildMaps() {
 	s.sliderControlMap = make(map[string]int)
 	for i := range s.Sliders {
