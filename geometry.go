@@ -79,6 +79,27 @@ func (l Line) InvertedSlope() float64 {
 	return -1 / slope
 }
 
+func (l Line) PerpendicularBisector(length float64) Line {
+	dy := l.Q.Y - l.P.Y
+	dx := l.Q.X - l.P.X
+	angle := math.Atan(dy / dx)
+	midpoint := l.Midpoint()
+	sinOffset := 0.5 * length * math.Sin(angle)
+	cosOffset := 0.5 * length * math.Cos(angle)
+	p := Point{
+		X: NoTinyVals(midpoint.X - sinOffset),
+		Y: NoTinyVals(midpoint.Y + cosOffset),
+	}
+	q := Point{
+		X: NoTinyVals(midpoint.X + sinOffset),
+		Y: NoTinyVals(midpoint.Y - cosOffset),
+	}
+	return Line{
+		P: p,
+		Q: q,
+	}
+}
+
 // Lerp is an interpolation between the two points of a line
 func (l Line) Lerp(i float64) Point {
 	return Point{

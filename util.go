@@ -46,6 +46,14 @@ func Clamp(a float64, b float64, c float64) float64 {
 	return c
 }
 
+// NoTinyVals sets values very close to zero to zero
+func NoTinyVals(a float64) float64 {
+	if math.Abs(a) < Smol {
+		return 0
+	}
+	return a
+}
+
 // Creates a slice of linearly distributed values in a range
 func Linspace(i float64, j float64, n int, b bool) []float64 {
 	d := (j - i) / float64(n-1)
