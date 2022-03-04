@@ -86,10 +86,17 @@ func TestCurveLerp(t *testing.T) {
 		{X: 10, Y: 0},
 	}
 	curve.Points = points
-	lerp := curve.Lerp(0.0)
-	assert.Equal(Point{X: 0, Y: 0}, lerp)
-	lerp = curve.Lerp(1.0)
-	assert.Equal(Point{X: 10, Y: 0}, lerp)
-	lerp = curve.Lerp(0.25)
-	assert.Equal(Point{X: 2.5, Y: 0}, lerp)
+	assert.Equal(Point{X: 0, Y: 0}, curve.Lerp(0.0))
+	assert.Equal(Point{X: 10, Y: 0}, curve.Lerp(1.0))
+	assert.Equal(Point{X: 2.5, Y: 0}, curve.Lerp(0.25))
+	points = []Point{
+		{X: 0, Y: 0},
+		{X: 1, Y: 0},
+		{X: 1, Y: 1},
+		{X: 0, Y: 1},
+	}
+	curve.Points = points
+	curve.Closed = true
+	assert.Equal(Point{X: 0, Y: 1}, curve.Lerp(0.75))
+	assert.Equal(Point{X: 0, Y: 0.5}, curve.Lerp(0.875))
 }
