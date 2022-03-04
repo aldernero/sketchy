@@ -2,6 +2,7 @@ package sketchy
 
 import (
 	"fmt"
+	"log"
 	"math"
 )
 
@@ -158,7 +159,51 @@ func (c *Curve) Last() Point {
 	case 1:
 		return c.Points[0]
 	}
+	if c.Closed {
+		return c.Points[0]
+	}
 	return c.Points[n-1]
+}
+
+// Lerp calculates a point a given percentage along a curve
+func (c *Curve) Lerp(perc float64) Point {
+	var point Point
+	if perc < 0 || perc > 1 {
+		log.Fatalf("percentage in Lerp not between 0 and 1: %v\n", perc)
+	}
+	if NoTinyVals(perc) == 0 {
+		return c.Points[0]
+	}
+	if math.Abs(perc-1) < Smol {
+		return c.Last()
+	}
+	totalDist := c.Length()
+	targetDist := perc * totalDist
+	partialDist := 0.0
+	var foundPoint bool
+	n := len(c.Points)
+	for i := 0; i < n-1; i++ {
+		dist := Distance(c.Points[i], c.Points[i+1])
+		if partialDist+dist >= targetDist {
+			remainderDist := targetDist - partialDist
+			pct := remainderDist / dist
+			point = c.Points[i].Lerp(c.Points[i+1], pct)
+			foundPoint = true
+			break
+		}
+		partialDist += dist
+	}
+	if !foundPoint {
+		if c.Closed {
+			dist := Distance(c.Points[n-1], c.Points[0])
+			remainderDist := targetDist - partialDist
+			pct := remainderDist / dist
+			point = c.Points[n-1].Lerp(c.Points[0], pct)
+		} else {
+			panic("couldn't find curve lerp point")
+		}
+	}
+	return point
 }
 
 // ContainsPoint determines if a point lies within a rectangle

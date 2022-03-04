@@ -75,3 +75,21 @@ func TestPerpendicularBisector(t *testing.T) {
 		pb,
 	)
 }
+
+func TestCurveLerp(t *testing.T) {
+	assert := assert.New(t)
+	var curve Curve
+	points := []Point{
+		{X: 0, Y: 0},
+		{X: 1, Y: 0},
+		{X: 2, Y: 0},
+		{X: 10, Y: 0},
+	}
+	curve.Points = points
+	lerp := curve.Lerp(0.0)
+	assert.Equal(Point{X: 0, Y: 0}, lerp)
+	lerp = curve.Lerp(1.0)
+	assert.Equal(Point{X: 10, Y: 0}, lerp)
+	lerp = curve.Lerp(0.25)
+	assert.Equal(Point{X: 2.5, Y: 0}, lerp)
+}
