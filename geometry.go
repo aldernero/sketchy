@@ -166,19 +166,19 @@ func (c *Curve) Last() Point {
 }
 
 // Lerp calculates a point a given percentage along a curve
-func (c *Curve) Lerp(perc float64) Point {
+func (c *Curve) Lerp(percentage float64) Point {
 	var point Point
-	if perc < 0 || perc > 1 {
-		log.Fatalf("percentage in Lerp not between 0 and 1: %v\n", perc)
+	if percentage < 0 || percentage > 1 {
+		log.Fatalf("percentage in Lerp not between 0 and 1: %v\n", percentage)
 	}
-	if NoTinyVals(perc) == 0 {
+	if NoTinyVals(percentage) == 0 {
 		return c.Points[0]
 	}
-	if math.Abs(perc-1) < Smol {
+	if math.Abs(percentage-1) < Smol {
 		return c.Last()
 	}
 	totalDist := c.Length()
-	targetDist := perc * totalDist
+	targetDist := percentage * totalDist
 	partialDist := 0.0
 	var foundPoint bool
 	n := len(c.Points)
