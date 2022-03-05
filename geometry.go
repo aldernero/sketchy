@@ -50,6 +50,13 @@ func (l Line) String() string {
 	return fmt.Sprintf("(%f, %f) -> (%f, %f)", l.P.X, l.P.Y, l.Q.X, l.Q.Y)
 }
 
+func (l Line) Angle() float64 {
+	dy := l.Q.Y - l.P.Y
+	dx := l.Q.X - l.P.X
+	angle := math.Atan(dy / dx)
+	return angle
+}
+
 // Slope computes the slope of the line
 func (l Line) Slope() float64 {
 	dy := l.Q.Y - l.P.Y
@@ -80,25 +87,27 @@ func (l Line) InvertedSlope() float64 {
 	return -1 / slope
 }
 
-func (l Line) PerpendicularBisector(length float64) Line {
-	dy := l.Q.Y - l.P.Y
-	dx := l.Q.X - l.P.X
-	angle := math.Atan(dy / dx)
-	midpoint := l.Midpoint()
+func (l Line) PerpendicularAt(percentage float64, length float64) Line {
+	angle := l.Angle()
+	point := l.P.Lerp(l.Q, percentage)
 	sinOffset := 0.5 * length * math.Sin(angle)
 	cosOffset := 0.5 * length * math.Cos(angle)
 	p := Point{
-		X: NoTinyVals(midpoint.X - sinOffset),
-		Y: NoTinyVals(midpoint.Y + cosOffset),
+		X: NoTinyVals(point.X - sinOffset),
+		Y: NoTinyVals(point.Y + cosOffset),
 	}
 	q := Point{
-		X: NoTinyVals(midpoint.X + sinOffset),
-		Y: NoTinyVals(midpoint.Y - cosOffset),
+		X: NoTinyVals(point.X + sinOffset),
+		Y: NoTinyVals(point.Y - cosOffset),
 	}
 	return Line{
 		P: p,
 		Q: q,
 	}
+}
+
+func (l Line) PerpendicularBisector(length float64) Line {
+	return l.PerpendicularAt(0.5, length)
 }
 
 // Lerp is an interpolation between the two points of a line
@@ -165,6 +174,32 @@ func (c *Curve) Last() Point {
 	return c.Points[n-1]
 }
 
+func (c *Curve) LastLine() Line {
+	n := len(c.Points)
+	switch n {
+	case 0:
+		return Line{
+			P: Point{X: 0, Y: 0},
+			Q: Point{X: 0, Y: 0},
+		}
+	case 1:
+		return Line{
+			P: c.Points[0],
+			Q: c.Points[0],
+		}
+	}
+	if c.Closed {
+		return Line{
+			P: c.Points[n-1],
+			Q: c.Points[0],
+		}
+	}
+	return Line{
+		P: c.Points[n-2],
+		Q: c.Points[n-1],
+	}
+}
+
 // Lerp calculates a point a given percentage along a curve
 func (c *Curve) Lerp(percentage float64) Point {
 	var point Point
@@ -204,6 +239,54 @@ func (c *Curve) Lerp(percentage float64) Point {
 		}
 	}
 	return point
+}
+
+func (c *Curve) LineAt(percentage float64) (Line, float64) {
+	var line Line
+	var linePct float64
+	if percentage < 0 || percentage > 1 {
+		log.Fatalf("percentage in Lerp not between 0 and 1: %v\n", percentage)
+	}
+	if NoTinyVals(percentage) == 0 {
+		return Line{P: c.Points[0], Q: c.Points[1]}, 0
+	}
+	if math.Abs(percentage-1) < Smol {
+		return c.LastLine(), 1
+	}
+	totalDist := c.Length()
+	targetDist := percentage * totalDist
+	partialDist := 0.0
+	var foundPoint bool
+	n := len(c.Points)
+	for i := 0; i < n-1; i++ {
+		dist := Distance(c.Points[i], c.Points[i+1])
+		if partialDist+dist >= targetDist {
+			remainderDist := targetDist - partialDist
+			linePct = remainderDist / dist
+			line.P = c.Points[i]
+			line.Q = c.Points[i+1]
+			foundPoint = true
+			break
+		}
+		partialDist += dist
+	}
+	if !foundPoint {
+		if c.Closed {
+			dist := Distance(c.Points[n-1], c.Points[0])
+			remainderDist := targetDist - partialDist
+			linePct = remainderDist / dist
+			line.P = c.Points[n-1]
+			line.Q = c.Points[0]
+		} else {
+			panic("couldn't find curve lerp point")
+		}
+	}
+	return line, linePct
+}
+
+func (c *Curve) PerpendicularAt(percentage float64, length float64) Line {
+	line, linePct := c.LineAt(percentage)
+	return line.PerpendicularAt(linePct, length)
 }
 
 // ContainsPoint determines if a point lies within a rectangle
