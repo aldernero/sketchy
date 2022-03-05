@@ -56,19 +56,14 @@ func NoTinyVals(a float64) float64 {
 
 // Creates a slice of linearly distributed values in a range
 func Linspace(i float64, j float64, n int, b bool) []float64 {
-	d := (j - i) / float64(n-1)
 	var result []float64
-	m := j - d
+	N := float64(n)
 	if b {
-		m = j
+		N -= 1
 	}
-	k := i
-	for {
-		result = append(result, k)
-		k += d
-		if k > m {
-			break
-		}
+	d := (j - i) / N
+	for k := 0; k < n; k++ {
+		result = append(result, i+float64(k)*d)
 	}
 	return result
 }

@@ -59,7 +59,7 @@ func TestMap(t *testing.T) {
 func TestLinspace(t *testing.T) {
 	assert := assert.New(t)
 	l := Linspace(0, Tau, 10, false)
-	assert.Equal(9, len(l))
+	assert.Equal(10, len(l))
 	assert.LessOrEqual(l[len(l)-1], Tau)
 	l = Linspace(0, Tau, 10, true)
 	assert.Equal(10, len(l))

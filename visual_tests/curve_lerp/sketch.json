@@ -1,0 +1,14 @@
+{
+  "SketchWidth": 800,
+  "SketchHeight": 800,
+  "ControlWidth": 240,
+  "Sliders": [
+    {
+      "Name": "num_points",
+      "MinVal": 1,
+      "MaxVal": 100,
+      "Val": 10,
+      "Incr": 1
+    }
+  ]
+}

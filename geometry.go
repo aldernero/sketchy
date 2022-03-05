@@ -2,6 +2,7 @@ package sketchy
 
 import (
 	"fmt"
+	"github.com/fogleman/gg"
 	"log"
 	"math"
 )
@@ -116,6 +117,10 @@ func (l Line) Lerp(i float64) Point {
 		X: Lerp(l.P.X, l.Q.X, i),
 		Y: Lerp(l.P.Y, l.Q.Y, i),
 	}
+}
+
+func (l Line) Draw(ctx *gg.Context) {
+	ctx.DrawLine(l.P.X, l.P.Y, l.Q.X, l.Q.Y)
 }
 
 // Distance between two points
@@ -287,6 +292,16 @@ func (c *Curve) LineAt(percentage float64) (Line, float64) {
 func (c *Curve) PerpendicularAt(percentage float64, length float64) Line {
 	line, linePct := c.LineAt(percentage)
 	return line.PerpendicularAt(linePct, length)
+}
+
+func (c *Curve) Draw(ctx *gg.Context) {
+	n := len(c.Points)
+	for i := 0; i < n-1; i++ {
+		ctx.DrawLine(c.Points[i].X, c.Points[i].Y, c.Points[i+1].X, c.Points[i+1].Y)
+	}
+	if c.Closed {
+		ctx.DrawLine(c.Points[n-1].X, c.Points[n-1].Y, c.Points[0].X, c.Points[0].Y)
+	}
 }
 
 // ContainsPoint determines if a point lies within a rectangle
