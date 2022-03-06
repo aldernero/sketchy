@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"image/color"
 	"log"
 
 	"github.com/aldernero/sketchy"
@@ -9,7 +10,8 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
-var cg sketchy.SimpleGradient
+var cg1 sketchy.SimpleGradient
+var cg2 sketchy.Gradient
 
 func update(s *sketchy.Sketch) {
 	// Update logic goes here
@@ -24,15 +26,29 @@ func draw(s *sketchy.Sketch, c *gg.Context) {
 	dx := 1.10 * (right - left) / float64(N)
 	dy := 20.0
 	c.SetLineCapButt()
-	c.SetLineWidth(0)
+	c.SetLineWidth(1)
 	for _, i := range x {
 		p := sketchy.Map(0.05*s.SketchWidth, 0.95*s.SketchWidth, 0, 1, i)
-		c.SetColor(cg.Color(p))
+		c.SetColor(cg1.Color(p))
 		c.DrawRectangle(i, 20, dx, dy)
 		c.Fill()
+		c.SetColor(cg2.Color(p))
+		c.DrawRectangle(i, 120, dx, dy)
+		c.Fill()
 	}
-	c.SetColor(cg.Color(s.Slider("percentage")))
-	c.DrawCircle(s.SketchWidth/2, s.SketchHeight/2, 100)
+	p := s.Slider("percentage")
+	xPos := sketchy.Map(0, 1, 0.05*s.SketchWidth, 0.95*s.SketchWidth, p)
+	c.SetColor(color.White)
+	c.DrawLine(xPos, 42, xPos, 58)
+	c.Stroke()
+	c.DrawRectangle(xPos-10, 60, 20, 20)
+	c.SetColor(cg1.Color(p))
+	c.Fill()
+	c.SetColor(color.White)
+	c.DrawLine(xPos, 142, xPos, 158)
+	c.Stroke()
+	c.DrawRectangle(xPos-10, 160, 20, 20)
+	c.SetColor(cg2.Color(p))
 	c.Fill()
 }
 
@@ -52,7 +68,8 @@ func main() {
 	s.Updater = update
 	s.Drawer = draw
 	s.Init()
-	cg = sketchy.NewSimpleGradientFromNamed("cyan", "magenta")
+	cg1 = sketchy.NewSimpleGradientFromNamed("cyan", "magenta")
+	cg2 = sketchy.NewGradientFromNamed([]string{"blue", "green", "yellow", "red"})
 	ebiten.SetWindowSize(int(s.ControlWidth+s.SketchWidth), int(s.SketchHeight))
 	ebiten.SetWindowTitle("Sketchy - " + s.Title)
 	ebiten.SetWindowResizable(false)

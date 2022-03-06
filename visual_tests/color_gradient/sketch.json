@@ -8,7 +8,11 @@
             "MinVal": 0,
             "MaxVal": 1,
             "Val": 0.5,
-            "Incr": 0.01
+            "Incr": 0.01,
+            "UseGradientFill": true,
+            "OutlineColor": "yellow"
         }
-    ]
+    ],
+    "ControlOutlineColor": "darkcyan",
+    "SketchOutlineColor": "darkmagenta"
 }

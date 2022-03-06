@@ -18,6 +18,8 @@ const (
 	SliderOutlineColor        = "#ffdb00"
 	SliderFillColor           = "#ffdb00"
 	SliderTextColor           = "#ffffff"
+	SliderGradientStart       = "cyan"
+	SliderGradientEnd         = "magenta"
 	ToggleHeight              = 15.0
 	ToggleHPadding            = 12.0
 	ToggleVPadding            = 7.0
@@ -29,20 +31,23 @@ const (
 )
 
 type Slider struct {
-	Name            string  `json:"Name"`
-	Pos             Point   `json:"-"`
-	Width           float64 `json:"Width"`
-	Height          float64 `json:"Height"`
-	MinVal          float64 `json:"MinVal"`
-	MaxVal          float64 `json:"MaxVal"`
-	Val             float64 `json:"Val"`
-	Incr            float64 `json:"Incr"`
-	OutlineColor    string  `json:"OutlineColor"`
-	BackgroundColor string  `json:"BackgroundColor"`
-	FillColor       string  `json:"FillColor"`
-	TextColor       string  `json:"TextColor"`
-	colors          ColorConfig
-	DidJustChange   bool `json:"-"`
+	Name               string  `json:"Name"`
+	Pos                Point   `json:"-"`
+	Width              float64 `json:"Width"`
+	Height             float64 `json:"Height"`
+	MinVal             float64 `json:"MinVal"`
+	MaxVal             float64 `json:"MaxVal"`
+	Val                float64 `json:"Val"`
+	Incr               float64 `json:"Incr"`
+	OutlineColor       string  `json:"OutlineColor"`
+	BackgroundColor    string  `json:"BackgroundColor"`
+	FillColor          string  `json:"FillColor"`
+	UseGradientFill    bool    `json:"UseGradientFill"`
+	GradientStartColor string  `json:"GradientStartColor"`
+	GradientEndColor   string  `json:"GradientEndColor"`
+	TextColor          string  `json:"TextColor"`
+	colors             ColorConfig
+	DidJustChange      bool `json:"-"`
 }
 
 type Toggle struct {
@@ -126,7 +131,11 @@ func (s *Slider) Draw(ctx *gg.Context) {
 	ctx.SetColor(s.colors.Background)
 	ctx.DrawRectangle(s.Pos.X, s.Pos.Y, s.Width, SliderHeight)
 	ctx.Fill()
-	ctx.SetColor(s.colors.Fill)
+	fillColor := s.colors.Fill
+	if s.UseGradientFill {
+		fillColor = s.colors.Gradient.Color(s.GetPercentage())
+	}
+	ctx.SetColor(fillColor)
 	ctx.DrawRectangle(s.Pos.X, s.Pos.Y, s.Width*s.GetPercentage(), SliderHeight)
 	ctx.Fill()
 	ctx.SetColor(s.colors.Outline)
@@ -253,6 +262,17 @@ func (s *Slider) parseColors() {
 	s.colors.Set(s.OutlineColor, OutlineColorType, SliderOutlineColor)
 	s.colors.Set(s.TextColor, TextColorType, SliderTextColor)
 	s.colors.Set(s.FillColor, FillColorType, SliderFillColor)
+	if s.UseGradientFill {
+		c1 := SliderGradientStart
+		c2 := SliderGradientEnd
+		if s.GradientStartColor != "" {
+			c1 = s.GradientStartColor
+		}
+		if s.GradientEndColor != "" {
+			c2 = s.GradientEndColor
+		}
+		s.colors.Gradient = NewSimpleGradientFromNamed(c1, c2)
+	}
 }
 
 func (c *Toggle) parseColors() {
