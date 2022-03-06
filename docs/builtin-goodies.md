@@ -54,7 +54,7 @@ Noise3D(x float64, y float64, z float64) float64
 There are 3 builtin keybindings to control the seed:
 - "Up Arrow": increments the seed
 - "Down Arrow": decrements the seed
-- "Num Pad .": sets a random seed
+- "/": sets a random seed
 
 This builtin capability was inspired by [vsketch](https://github.com/abey79/vsketch), which has a GUI control with
 similar functionality that I found invaluable when experimenting with designs.

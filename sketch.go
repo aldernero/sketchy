@@ -130,7 +130,7 @@ func (s *Sketch) UpdateControls() {
 		controlsChanged = true
 		fmt.Println("RandomSeed decremented: ", s.RandomSeed)
 	}
-	if inpututil.IsKeyJustReleased(ebiten.KeyNumpadDecimal) {
+	if inpututil.IsKeyJustReleased(ebiten.KeySlash) {
 		s.RandomSeed = rand.Int63()
 		s.Rand.SetSeed(s.RandomSeed)
 		controlsChanged = true
