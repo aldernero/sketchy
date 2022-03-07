@@ -49,6 +49,7 @@ func main() {
 	flag.StringVar(&configFile, "c", "sketch.json", "Sketch config file")
 	flag.StringVar(&prefix, "p", "sketch", "Output file prefix")
 	flag.Int64Var(&randomSeed, "s", 0, "Random number generator seed")
+	flag.Parse()
 	s, err := sketchy.NewSketchFromFile(configFile)
 	if err != nil {
 		log.Fatal(err)
