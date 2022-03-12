@@ -100,29 +100,29 @@ This is the default configuration with 2 example controls. The first 3 lines def
     "Sliders": [
         {
             "Name": "radius",
-            "MinVal": 1,
-            "MaxVal": 350,
-            "Val": 200,
-            "Incr": 1
+            "MinVal": 0,
+            "MaxVal": 80,
+            "Val": 40,
+            "Incr": 0.5
         },
         {
             "Name": "thickness",
-            "MinVal": 0.5,
+            "MinVal": 0,
             "MaxVal": 10,
-            "Val": 1,
-            "Incr": 0.5
+            "Val": 2,
+            "Incr": 0.1
         }
     ]
 }
 ```
-Notice that the radius can vary from 1 to 350 pixels and the line thickness can vary from 0.5 to 10 pixels.
+Notice that the radius can vary from 0 to 80 mm and the line thickness can vary from 0 to 10 mm.
 
 Run the sketch to see the controls in action:
 You can run `sketchy run hello_circle` from sketchy's base directory, or if you are inside the project directory, you can use go directly:
 ```shell
 go run main.go
 ```
-![Screenshot_20220222_212504](https://user-images.githubusercontent.com/96601789/155263278-221a2e98-f48e-4300-a07b-4c6c844d3aeb.png)
+![hello_circle_blank](../assets/images/hello_circle_blank.png)
 
 You should see 2 sliders in the control area on the left. You can change the values by clicking or dragging within the slider bar area. You can also use the mouse wheel to increment and decrement the value. The sketch area is blank at the moment, let's change that!
 
@@ -132,7 +132,7 @@ func update(s *sketchy.Sketch) {
 	// Update logic goes here
 }
 
-func draw(s *sketchy.Sketch, c *gg.Context) {
+func draw(s *sketchy.Sketch, c *canvas.Context) {
 	// Drawing code goes here
 }
 ```
@@ -149,26 +149,27 @@ thickness := s.Slider("thickness")
 ```
 Notice the argument to `Var` is the same name we used in `sketch.json`.
 
-The other argument to `draw` is a `gg` drawing context. See the [gg](https://github.com/fogleman/gg) documentation for full details. For this example we will simply 1) set a drawing color, 2) set the line thickness, 3) define the circle object, and 4) draw the circle.  Here is the entire draw function:
+The other argument to `draw` is a `canvas` drawing context. See the [canvas](https://github.com/tdewolff/canvas) documentation for full details. For this example we will simply 1) set a drawing color, 2) set the line thickness, 3) define the circle object, and 4) draw the circle.  Here is the entire draw function:
 ```go
-func draw(s *sketchy.Sketch, c *gg.Context) {
+func draw(s *sketchy.Sketch, c *canvas.Context) {
 	// Drawing code goes here
 	radius := s.Slider("radius")
 	thickness := s.Slider("thickness")
-	c.SetColor(color.White)
-	c.SetLineWidth(thickness)
-	c.DrawCircle(s.SketchWidth/2, s.SketchHeight/2, radius)
-	c.Stroke()
+	c.SetStrokeColor(color.White)
+	c.SetStrokeWidth(thickness)
+    circle := canvas.Circle(radius)
+    c.DrawPath(c.Width()/2, c.Height()/2, circle)
 }
 ```
-The `DrawCircle` gg function takes 3 arguments: an x and y positions for the center of the circle and a radius. We can reference the `SketchWidth` and `SketchHeight` arguments directly on the sketch struct. Halving these values places the circle at the center of the drawing area.
+The `canvas.Circle` creates a circular path with a given radius. The `DrawPath` function draws a path at a given (x, y) position. We can reference the canvas width and height values using the context functions. Halving these values places the circle at the center of the drawing area.
 
 Run the sketch again, and you should see a white circle in the sketch area, and you should be able to vary the radius and thickness with the sliders. 
-![Screenshot_20220222_214157](https://user-images.githubusercontent.com/96601789/155263315-a90d8730-e049-4005-bf06-9bc5c0cc27f4.png)
+![simple_example_screenshot](../assets/images/simple_example_screenshot.png)
 Congratulations, you made your first sketch!
 
 # Saving sketches and configurations
 
-There are two builtin keyboard shortcuts for saving sketch images and configurations:
-- "s" key - saves the current frame as a PNG. The filename has the format `<prefix>_<timestamp>.png`, where `<prefix>` by default is the project name (what you used during `sketchy init project_name`)
+There are three builtin keyboard shortcuts for saving sketch images and configurations:
+- "s" key - saves the current frame as an SVG file. The filename has the format `<prefix>_<timestamp>.svg`, where `<prefix>` by default is the project name (what you used during `sketchy init project_name`)
+- "p" key - same as above but saves the current frame as a PNG image.
 - "c" key - saves the configuration (control values and sketch parameters) as JSON. The filename has the format `<prefix>_config_<timestamp>.json`, where `<prefix>` by default is the project name (what you used during `sketchy init project_name`)

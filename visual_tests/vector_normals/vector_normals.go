@@ -2,35 +2,49 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"github.com/tdewolff/canvas"
 	"image/color"
 	"log"
+	"math"
 
 	"github.com/aldernero/sketchy"
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
-var lissa = sketchy.Lissajous{Nx: 3, Ny: 2}
-
 func update(s *sketchy.Sketch) {
-	lissa.Nx = int(s.Slider("nx"))
-	lissa.Ny = int(s.Slider("ny"))
-	lissa.Px += s.Slider("phaseChange")
-	lissa.Py = sketchy.Deg2Rad(s.Slider("yphase"))
+	// Update logic goes here
 }
 
 func draw(s *sketchy.Sketch, c *canvas.Context) {
-	radius := s.Slider("radius")
-	origin := sketchy.Point{X: c.Width() / 2, Y: c.Height() / 2}
-	curve := sketchy.GenLissajous(lissa, 1000, origin, radius)
-	c.SetStrokeColor(color.CMYK{C: 200})
-	c.SetStrokeWidth(1)
-	c.MoveTo(curve.Points[0].X, curve.Points[0].Y)
-	for _, p := range curve.Points {
-		c.LineTo(p.X, p.Y)
+	// Drawing code goes here
+	var points []sketchy.Point
+	ls := sketchy.Linspace(0, sketchy.Tau, int(s.Slider("num_points"))+1, true)
+	for _, i := range ls {
+		x := 0.5*c.Width() + 50*math.Cos(i)
+		y := 0.5*c.Height() + 50*math.Sin(i)
+		points = append(points, sketchy.Point{X: x, Y: y})
 	}
-	c.LineTo(curve.Points[0].X, curve.Points[0].Y)
-	c.Stroke()
+	curve := sketchy.Curve{Points: points, Closed: true}
+	c.SetStrokeColor(color.White)
+	curve.Draw(c)
+	c.SetStrokeColor(sketchy.StringToColor("magenta"))
+	c.SetStrokeWidth(0.3)
+	for i := 0; i < len(points)-1; i++ {
+		p := points[i]
+		q := points[i+1]
+		l := sketchy.Line{P: p, Q: q}
+		m := l.Midpoint()
+		vec := sketchy.Vec2{X: q.X - p.X, Y: q.Y - p.Y}
+		norm := vec.UnitNormal()
+		norm = norm.Scale(s.Slider("scale"))
+		if s.Tick == 1 {
+			fmt.Println(m.X, m.Y, norm.X, norm.Y)
+		}
+		c.MoveTo(m.X, m.Y)
+		c.LineTo(m.X+norm.X, m.Y+norm.Y)
+		c.Stroke()
+	}
 }
 
 func main() {

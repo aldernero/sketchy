@@ -13,8 +13,8 @@
         {
             "Name": "scale",
             "MinVal": 0,
-            "MaxVal": 50,
-            "Val": 20,
+            "MaxVal": 15,
+            "Val": 5,
             "Incr": 0.1
         }
     ]

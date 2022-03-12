@@ -7,16 +7,15 @@ document covers those builtin features.
 
 There are 3 different kinds of screenshots, each with a builtin keybinding:
 
-- "s" key: saves the current frame as a PNG
-- "q" key: saves the sketch area as a PNG
+- "s" key: saves the current frame as SVG
+- "p" key: saves the current frame as PNG
+- "q" key: saves the sketch area as PNG
 - "Esc" key: saves the entire Sketchy window as a PNG.
 
 The first two options create a file with the format `"<prefix>_<timestamp>.png"`. The last one use a builtin Ebiten 
 screenshot feature and creates a file with the format `"screenshot_<timestamp>.png"`
 
-Most of the time you would use the first option, the "s" key. This saves the current `gg` context as a png image.
-The `gg` context is created each frame, so this would save the current frame and ignore things like the sketch
-area outline (if there is one) and keep transparency.
+Most of the time you would use the first two options, the "s" or "p" keys. This saves the current `canvas` context as a png image.
 
 The second option, the "q" key, is useful when you want to capture the all the drawing done so far, i.e. if you
 are using the `DisableClearBetweenFrames` feature. In this case you should also set `SketchOutlineColor` to `""` or

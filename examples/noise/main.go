@@ -2,11 +2,11 @@ package main
 
 import (
 	"flag"
+	"github.com/tdewolff/canvas"
 	"image/color"
 	"log"
 
 	"github.com/aldernero/sketchy"
-	"github.com/fogleman/gg"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/lucasb-eyer/go-colorful"
 )
@@ -23,7 +23,7 @@ func update(s *sketchy.Sketch) {
 	s.Rand.SetNoiseOffsetX(s.Slider("xoffset"))
 	s.Rand.SetNoiseOffsetY(s.Slider("yoffset"))
 	s.Rand.SetNoiseScaleZ(0.005)
-	s.Rand.SetNoiseOffsetZ(float64(tick))
+	s.Rand.SetNoiseOffsetZ(3 * float64(tick))
 	if s.Toggle("animate") {
 		tick++
 	}
@@ -32,23 +32,24 @@ func update(s *sketchy.Sketch) {
 	}
 }
 
-func draw(s *sketchy.Sketch, c *gg.Context) {
+func draw(s *sketchy.Sketch, c *canvas.Context) {
 	cellSize := s.Slider("cellSize")
-	c.SetLineWidth(0)
+	//c.SetStrokeWidth(1)
 	for x := 0.0; x < s.SketchWidth; x += cellSize {
 		for y := 0.0; y < s.SketchHeight; y += cellSize {
 			noise := s.Rand.Noise3D(x, y, 0)
 			if !s.Toggle("monochrome") {
 				hue := sketchy.Map(0, 1, 0, 360, noise)
 				cellColor := colorful.Hsl(hue, 0.5, 0.5)
-				c.SetColor(cellColor)
+				c.SetFillColor(cellColor)
+				c.SetStrokeColor(cellColor)
 			} else {
 				gray := sketchy.Map(0, 1, 0, 255, noise)
 				cellColor := color.Gray{Y: uint8(gray)}
-				c.SetColor(cellColor)
+				c.SetFillColor(cellColor)
+				c.SetStrokeColor(cellColor)
 			}
-			c.DrawRectangle(x, y, cellSize, cellSize)
-			c.Fill()
+			c.DrawPath(x, y, canvas.Rectangle(cellSize, cellSize))
 		}
 	}
 }

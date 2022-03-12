@@ -5,7 +5,7 @@
     "Sliders": [
         {
             "Name": "num_lines",
-            "MinVal": 1,
+            "MinVal": 2,
             "MaxVal": 200,
             "Val": 10,
             "Incr": 1

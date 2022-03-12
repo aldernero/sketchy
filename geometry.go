@@ -2,7 +2,7 @@ package sketchy
 
 import (
 	"fmt"
-	"github.com/fogleman/gg"
+	"github.com/tdewolff/canvas"
 	"log"
 	"math"
 )
@@ -119,8 +119,10 @@ func (l Line) Lerp(i float64) Point {
 	}
 }
 
-func (l Line) Draw(ctx *gg.Context) {
-	ctx.DrawLine(l.P.X, l.P.Y, l.Q.X, l.Q.Y)
+func (l Line) Draw(ctx *canvas.Context) {
+	ctx.MoveTo(l.P.X, l.P.Y)
+	ctx.LineTo(l.Q.X, l.Q.Y)
+	ctx.Stroke()
 }
 
 // Distance between two points
@@ -294,14 +296,17 @@ func (c *Curve) PerpendicularAt(percentage float64, length float64) Line {
 	return line.PerpendicularAt(linePct, length)
 }
 
-func (c *Curve) Draw(ctx *gg.Context) {
+func (c *Curve) Draw(ctx *canvas.Context) {
 	n := len(c.Points)
 	for i := 0; i < n-1; i++ {
-		ctx.DrawLine(c.Points[i].X, c.Points[i].Y, c.Points[i+1].X, c.Points[i+1].Y)
+		ctx.MoveTo(c.Points[i].X, c.Points[i].Y)
+		ctx.LineTo(c.Points[i+1].X, c.Points[i+1].Y)
 	}
 	if c.Closed {
-		ctx.DrawLine(c.Points[n-1].X, c.Points[n-1].Y, c.Points[0].X, c.Points[0].Y)
+		ctx.MoveTo(c.Points[n-1].X, c.Points[n-1].Y)
+		ctx.LineTo(c.Points[0].X, c.Points[0].Y)
 	}
+	ctx.Stroke()
 }
 
 // ContainsPoint determines if a point lies within a rectangle

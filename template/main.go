@@ -2,10 +2,10 @@ package main
 
 import (
 	"flag"
+	"github.com/tdewolff/canvas"
 	"log"
 
 	"github.com/aldernero/sketchy"
-	"github.com/fogleman/gg"
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
@@ -13,7 +13,7 @@ func update(s *sketchy.Sketch) {
 	// Update logic goes here
 }
 
-func draw(s *sketchy.Sketch, c *gg.Context) {
+func draw(s *sketchy.Sketch, c *canvas.Context) {
 	// Drawing code goes here
 }
 
@@ -37,6 +37,8 @@ func main() {
 	ebiten.SetWindowSize(int(s.ControlWidth+s.SketchWidth), int(s.SketchHeight))
 	ebiten.SetWindowTitle("Sketchy - " + s.Title)
 	ebiten.SetWindowResizable(false)
+	ebiten.SetFPSMode(ebiten.FPSModeVsyncOffMaximum)
+	ebiten.SetMaxTPS(ebiten.SyncWithFPS)
 	if err := ebiten.RunGame(s); err != nil {
 		log.Fatal(err)
 	}

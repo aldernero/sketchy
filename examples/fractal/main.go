@@ -2,16 +2,16 @@ package main
 
 import (
 	"flag"
+	"github.com/tdewolff/canvas"
 	"log"
 
 	"github.com/aldernero/sketchy"
-	"github.com/fogleman/gg"
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
 var synthwavePalette sketchy.Gradient
 
-func drawLines(l sketchy.Line, n int, p float64, ctx *gg.Context) {
+func drawLines(l sketchy.Line, n int, p float64, ctx *canvas.Context) {
 	if n == 0 {
 		return
 	}
@@ -20,11 +20,11 @@ func drawLines(l sketchy.Line, n int, p float64, ctx *gg.Context) {
 	right := l.Q
 	L := l.Length()
 	pb := l.PerpendicularBisector(p * L)
-	colorPercent := sketchy.Map(2, 100, 0, 1, L)
+	colorPercent := sketchy.Clamp(0, 1, sketchy.Map(0.5, 25, 0, 1, L))
 	if n%2 == 0 {
 		colorPercent = 1 - colorPercent
 	}
-	ctx.SetColor(synthwavePalette.Color(colorPercent))
+	ctx.SetStrokeColor(synthwavePalette.Color(colorPercent))
 	pb.Draw(ctx)
 	ctx.Stroke()
 	drawLines(sketchy.Line{P: middle, Q: pb.P}, n-1, p, ctx)
@@ -37,13 +37,12 @@ func update(s *sketchy.Sketch) {
 	// Update logic goes here
 }
 
-func draw(s *sketchy.Sketch, c *gg.Context) {
+func draw(s *sketchy.Sketch, c *canvas.Context) {
 	// Drawing code goes here
-	c.SetLineCapButt()
-	c.SetLineWidth(1.5)
+	c.SetStrokeWidth(0.5)
 	line := sketchy.Line{
-		P: sketchy.Point{X: 20, Y: s.SketchHeight / 2},
-		Q: sketchy.Point{X: s.SketchWidth - 20, Y: s.SketchHeight / 2},
+		P: sketchy.Point{X: 10, Y: c.Height() / 2},
+		Q: sketchy.Point{X: c.Width() - 10, Y: c.Height() / 2},
 	}
 	line.Draw(c)
 	drawLines(line, int(s.Slider("depth")), s.Slider("persistence"), c)

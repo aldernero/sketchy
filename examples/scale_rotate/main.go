@@ -2,40 +2,45 @@ package main
 
 import (
 	"flag"
+	"github.com/tdewolff/canvas"
 	"image/color"
 	"log"
 	"math"
 
 	"github.com/aldernero/sketchy"
-	"github.com/fogleman/gg"
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
-const radius = 300.0
+const radius = 80.0
 
 func update(s *sketchy.Sketch) {
 	// Update logic goes here
 	// Not needed for this example
 }
 
-func draw(s *sketchy.Sketch, c *gg.Context) {
+func draw(s *sketchy.Sketch, c *canvas.Context) {
 	// Drawing code goes here
 	N := int(s.Slider("N"))
 	sides := int(s.Slider("sides"))
-	rotate := sketchy.Deg2Rad(s.Slider("rotate"))
+	rotate := s.Slider("rotate")
 	scale := s.Slider("scale")
-	c.SetColor(color.CMYK{
+	c.SetStrokeColor(color.CMYK{
 		C: 200,
 		M: 0,
 		Y: 0,
 		K: 0,
 	})
+	c.SetStrokeWidth(0.5)
 	for i := 0; i < N; i++ {
-		x := s.SketchWidth / 2
-		y := s.SketchHeight / 2
+		x := c.Width() / 2
+		y := c.Height() / 2
 		r := math.Pow(scale, float64(i)) * radius
-		c.DrawRegularPolygon(sides, x, y, r, float64(i)*rotate)
-		c.Stroke()
+		c.Push()
+		c.Translate(x, y)
+		c.Rotate(float64(i) * rotate)
+		path := canvas.RegularPolygon(sides, r, true)
+		c.DrawPath(0, 0, path)
+		c.Pop()
 	}
 }
 
