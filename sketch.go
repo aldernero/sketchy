@@ -25,6 +25,7 @@ const (
 	DefaultSketchOutlineColor = ""
 	ControlAreaMargin         = 1.0
 	MmPerPx                   = 0.26458333
+	DefaultDPI                = 96.0
 )
 
 type SketchUpdater func(s *Sketch)
@@ -41,6 +42,7 @@ type Sketch struct {
 	SketchBackgroundColor     string        `json:"SketchBackgroundColor"`
 	SketchOutlineColor        string        `json:"SketchOutlineColor"`
 	DisableClearBetweenFrames bool          `json:"DisableClearBetweenFrames"`
+	RasterDPI                 float64       `json:"RasterDPI"`
 	RandomSeed                int64         `json:"RandomSeed"`
 	Sliders                   []Slider      `json:"Sliders"`
 	Toggles                   []Toggle      `json:"Toggles"`
@@ -98,6 +100,9 @@ func (s *Sketch) Init() {
 	}
 	if s.Prefix == "" {
 		s.Prefix = DefaultPrefix
+	}
+	if s.RasterDPI <= 0 {
+		s.RasterDPI = DefaultDPI
 	}
 	s.FontFamily = canvas.NewFontFamily("DejaVu Sans")
 	if err := s.FontFamily.LoadLocalFont("DejaVuSans", canvas.FontRegular); err != nil {
@@ -281,7 +286,7 @@ func (s *Sketch) Draw(screen *ebiten.Image) {
 	s.Drawer(s, ctx)
 	if s.isSavingPNG {
 		fname := s.Prefix + "_" + GetTimestampString() + ".png"
-		err := renderers.Write(fname, s.SketchCanvas)
+		err := renderers.Write(fname, s.SketchCanvas, canvas.DPI(s.RasterDPI))
 		if err != nil {
 			panic(err)
 		}
