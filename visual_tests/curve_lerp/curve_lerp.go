@@ -2,12 +2,12 @@ package main
 
 import (
 	"flag"
+	"github.com/tdewolff/canvas"
 	"image/color"
 	"log"
 	"math"
 
 	"github.com/aldernero/sketchy"
-	"github.com/fogleman/gg"
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
@@ -18,16 +18,17 @@ func update(s *sketchy.Sketch) {
 	// Update logic goes here
 }
 
-func draw(s *sketchy.Sketch, c *gg.Context) {
+func draw(s *sketchy.Sketch, c *canvas.Context) {
 	// Drawing code goes here
-	c.SetColor(color.White)
+	c.SetFillColor(color.Transparent)
+	c.SetStrokeColor(color.White)
 	line.Draw(c)
 	for _, p := range curve1.Points {
-		c.DrawCircle(p.X, p.Y, 10)
+		c.DrawPath(p.X, p.Y, canvas.Circle(10))
 	}
 	curve1.Draw(c)
 	for _, p := range curve2.Points {
-		c.DrawCircle(p.X, p.Y, 10)
+		c.DrawPath(p.X, p.Y, canvas.Circle(10))
 	}
 	curve2.Draw(c)
 	//for _, p := range curve3.Points {
@@ -35,17 +36,17 @@ func draw(s *sketchy.Sketch, c *gg.Context) {
 	//}
 	curve3.Draw(c)
 	c.Stroke()
-	c.SetColor(color.CMYK{M: 255})
+	c.SetStrokeColor(color.CMYK{M: 255})
 	percs := sketchy.Linspace(0, 1, int(s.Slider("num_points")), true)
 	for _, p := range percs {
 		point := line.Lerp(p)
-		c.DrawCircle(point.X, point.Y, 3)
+		c.DrawPath(point.X, point.Y, canvas.Circle(3))
 		point = curve1.Lerp(p)
-		c.DrawCircle(point.X, point.Y, 3)
+		c.DrawPath(point.X, point.Y, canvas.Circle(3))
 		point = curve2.Lerp(p)
-		c.DrawCircle(point.X, point.Y, 3)
+		c.DrawPath(point.X, point.Y, canvas.Circle(3))
 		point = curve3.Lerp(p)
-		c.DrawCircle(point.X, point.Y, 3)
+		c.DrawPath(point.X, point.Y, canvas.Circle(3))
 	}
 	c.Fill()
 }
@@ -68,32 +69,32 @@ func main() {
 	s.Drawer = draw
 	s.Init()
 	// Setup lines and curves
-	w := s.SketchWidth
-	h := s.SketchHeight
+	w := s.SketchCanvas.W
+	h := s.SketchCanvas.H
 	line = sketchy.Line{
 		P: sketchy.Point{X: 20, Y: 20},
 		Q: sketchy.Point{X: w - 20, Y: 20},
 	}
 	curve1.Points = []sketchy.Point{
-		{X: w/2 - 200, Y: h/2 - 250},
-		{X: w/2 - 100, Y: h/2 - 250},
-		{X: w / 2, Y: h/2 - 250},
-		{X: w/2 + 100, Y: h/2 - 250},
-		{X: w/2 + 200, Y: h/2 - 250},
+		{X: w/2 - 50, Y: h/2 - 60},
+		{X: w/2 - 25, Y: h/2 - 60},
+		{X: w / 2, Y: h/2 - 60},
+		{X: w/2 + 25, Y: h/2 - 60},
+		{X: w/2 + 50, Y: h/2 - 60},
 	}
 	curve2.Points = []sketchy.Point{
-		{X: w/2 - 100, Y: h/2 - 100},
-		{X: w/2 + 100, Y: h/2 - 100},
-		{X: w/2 + 100, Y: h/2 + 100},
-		{X: w/2 - 100, Y: h/2 + 100},
+		{X: w/2 - 25, Y: h/2 - 25},
+		{X: w/2 + 25, Y: h/2 - 25},
+		{X: w/2 + 25, Y: h/2 + 25},
+		{X: w/2 - 25, Y: h/2 + 25},
 	}
 	curve2.Closed = true
 	angles := sketchy.Linspace(0, sketchy.Tau, 60, false)
-	radius := 100.0
+	radius := 25.0
 	for _, a := range angles {
 		p := sketchy.Point{
 			X: radius*math.Cos(a) + w/2,
-			Y: radius*math.Sin(a) + h/2 + 250,
+			Y: radius*math.Sin(a) + h/2 + 60,
 		}
 		curve3.Points = append(curve3.Points, p)
 	}

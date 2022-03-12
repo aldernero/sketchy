@@ -2,12 +2,12 @@ package main
 
 import (
 	"flag"
+	"github.com/tdewolff/canvas"
 	"image/color"
 	"log"
 	"math"
 
 	"github.com/aldernero/sketchy"
-	"github.com/fogleman/gg"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 )
@@ -67,7 +67,7 @@ func reset(s *sketchy.Sketch) {
 	board.rng.SetNoiseScaleY(s.Slider("yscale"))
 	board.rng.SetNoiseOffsetX(s.Slider("xoffset"))
 	board.rng.SetNoiseOffsetY(s.Slider("yoffset"))
-	board.init(int(s.SketchWidth/cellSize), int(s.SketchHeight/cellSize))
+	board.init(int(s.SketchCanvas.W/cellSize), int(s.SketchCanvas.H/cellSize))
 }
 
 func update(s *sketchy.Sketch) {
@@ -80,29 +80,30 @@ func update(s *sketchy.Sketch) {
 	if inpututil.IsMouseButtonJustReleased(ebiten.MouseButtonLeft) {
 		x, y := ebiten.CursorPosition()
 		if s.PointInSketchArea(float64(x), float64(y)) {
-			p := s.SketchCoords(float64(x), float64(y))
-			c := int(math.Floor(float64(board.rows) * p.X / s.SketchWidth))
-			r := int(math.Floor(float64(board.cols) * p.Y / s.SketchHeight))
+			p := s.CanvasCoords(float64(x), float64(y))
+			c := int(math.Floor(float64(board.rows) * p.X / s.SketchCanvas.W))
+			r := int(math.Floor(float64(board.cols) * p.Y / s.SketchCanvas.H))
 			board.flip(r, c)
 		}
 	}
 }
 
-func draw(s *sketchy.Sketch, c *gg.Context) {
+func draw(s *sketchy.Sketch, c *canvas.Context) {
 	// Drawing code goes here
-	c.SetColor(color.White)
-	c.SetLineCap(gg.LineCapButt)
-	c.SetLineWidth(2)
-	dx := s.SketchWidth / float64(board.cols)
-	dy := s.SketchHeight / float64(board.rows)
+	c.SetStrokeColor(color.White)
+	c.SetStrokeWidth(0.7)
+	dx := c.Width() / float64(board.cols)
+	dy := c.Height() / float64(board.rows)
 	for i, t := range board.tiles {
 		x := dx * float64(i%board.cols)
 		y := dy * float64(i/board.rows)
 		switch t {
 		case BackSlash:
-			c.DrawLine(x, y, x+dx, y+dy)
+			c.MoveTo(x, y)
+			c.LineTo(x+dx, y+dy)
 		case ForwardSlash:
-			c.DrawLine(x, y+dy, x+dx, y)
+			c.MoveTo(x, y+dy)
+			c.LineTo(x+dx, y)
 		}
 	}
 	c.Stroke()

@@ -1,5 +1,5 @@
 {
-    "Title": "Sketch",
+    "Title": "10PRINT Interaction",
     "Prefix": "sketch",
     "SketchWidth": 800,
     "SketchHeight": 800,
@@ -12,12 +12,10 @@
     "Sliders": [
         {
             "Name": "cellSize",
-            "Width": 226,
-            "Height": 15,
-            "MinVal": 4,
-            "MaxVal": 100,
-            "Val": 18,
-            "Incr": 1,
+            "MinVal": 1,
+            "MaxVal": 60,
+            "Val": 5,
+            "Incr": 0.5,
             "OutlineColor": "",
             "BackgroundColor": "",
             "FillColor": "",
@@ -25,8 +23,6 @@
         },
         {
             "Name": "octaves",
-            "Width": 226,
-            "Height": 15,
             "MinVal": 1,
             "MaxVal": 10,
             "Val": 2,
@@ -38,8 +34,6 @@
         },
         {
             "Name": "persistence",
-            "Width": 226,
-            "Height": 15,
             "MinVal": 0,
             "MaxVal": 2,
             "Val": 0.8672566371681416,
@@ -51,8 +45,6 @@
         },
         {
             "Name": "lacunarity",
-            "Width": 226,
-            "Height": 15,
             "MinVal": 0,
             "MaxVal": 10,
             "Val": 0.2884955752212389,
@@ -64,8 +56,6 @@
         },
         {
             "Name": "xscale",
-            "Width": 226,
-            "Height": 15,
             "MinVal": 0,
             "MaxVal": 0.1,
             "Val": 0.003099999999999999,
@@ -77,8 +67,6 @@
         },
         {
             "Name": "yscale",
-            "Width": 226,
-            "Height": 15,
             "MinVal": 0,
             "MaxVal": 0.1,
             "Val": 0.0033999999999999985,
@@ -90,8 +78,6 @@
         },
         {
             "Name": "xoffset",
-            "Width": 226,
-            "Height": 15,
             "MinVal": -1000,
             "MaxVal": 1000,
             "Val": 0,
@@ -103,8 +89,6 @@
         },
         {
             "Name": "yoffset",
-            "Width": 226,
-            "Height": 15,
             "MinVal": -1000,
             "MaxVal": 1000,
             "Val": 0,

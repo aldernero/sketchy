@@ -1,7 +1,8 @@
 {
-    "SketchWidth": 1080,
-    "SketchHeight": 1080,
-    "ControlWidth": 240,
+    "Title": "Lissajous Curve Example",
+    "SketchWidth": 800,
+    "SketchHeight": 800,
+    "ControlWidth": 200,
     "Sliders": [
         {
             "Name": "nx",
@@ -20,9 +21,9 @@
         {
             "Name": "radius",
             "MinVal": 0,
-            "MaxVal": 500,
-            "Val": 240,
-            "Incr": 1
+            "MaxVal": 100,
+            "Val": 50,
+            "Incr": 0.5
         },
         {
             "Name": "yphase",

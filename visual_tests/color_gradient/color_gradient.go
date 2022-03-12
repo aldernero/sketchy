@@ -2,11 +2,10 @@ package main
 
 import (
 	"flag"
-	"image/color"
+	"github.com/tdewolff/canvas"
 	"log"
 
 	"github.com/aldernero/sketchy"
-	"github.com/fogleman/gg"
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
@@ -17,39 +16,36 @@ func update(s *sketchy.Sketch) {
 	// Update logic goes here
 }
 
-func draw(s *sketchy.Sketch, c *gg.Context) {
+func draw(s *sketchy.Sketch, c *canvas.Context) {
 	// Drawing code goes here
-	left := 0.05 * s.SketchWidth
-	right := 0.95 * s.SketchWidth
+	W := c.Width()
+	H := c.Height()
+	left := 0.05 * W
+	right := 0.95 * W
 	N := 100
 	x := sketchy.Linspace(left, right, N, true)
 	dx := 1.10 * (right - left) / float64(N)
-	dy := 20.0
-	c.SetLineCapButt()
-	c.SetLineWidth(1)
+	dy := 5.0
+	c.SetStrokeWidth(1)
+	c.SetStrokeCapper(canvas.ButtCap)
+	c.SetStrokeJoiner(canvas.MiterJoin)
 	for _, i := range x {
-		p := sketchy.Map(0.05*s.SketchWidth, 0.95*s.SketchWidth, 0, 1, i)
-		c.SetColor(cg1.Color(p))
-		c.DrawRectangle(i, 20, dx, dy)
-		c.Fill()
-		c.SetColor(cg2.Color(p))
-		c.DrawRectangle(i, 120, dx, dy)
-		c.Fill()
+		p := sketchy.Map(0.05*W, 0.95*W, 0, 1, i)
+		c.SetFillColor(cg1.Color(p))
+		c.SetStrokeColor(cg1.Color(p))
+		c.DrawPath(i, H-7, canvas.Rectangle(dx, dy))
+		c.SetFillColor(cg2.Color(p))
+		c.SetStrokeColor(cg2.Color(p))
+		c.DrawPath(i, H-30, canvas.Rectangle(dx, dy))
 	}
 	p := s.Slider("percentage")
-	xPos := sketchy.Map(0, 1, 0.05*s.SketchWidth, 0.95*s.SketchWidth, p)
-	c.SetColor(color.White)
-	c.DrawLine(xPos, 42, xPos, 58)
-	c.Stroke()
-	c.DrawRectangle(xPos-10, 60, 20, 20)
-	c.SetColor(cg1.Color(p))
-	c.Fill()
-	c.SetColor(color.White)
-	c.DrawLine(xPos, 142, xPos, 158)
-	c.Stroke()
-	c.DrawRectangle(xPos-10, 160, 20, 20)
-	c.SetColor(cg2.Color(p))
-	c.Fill()
+	xPos := sketchy.Map(0, 1, 0.05*W, 0.95*W, p)
+	c.SetFillColor(cg1.Color(p))
+	c.SetStrokeColor(cg1.Color(p))
+	c.DrawPath(xPos-2.5, H-17, canvas.Rectangle(5, 5))
+	c.SetFillColor(cg2.Color(p))
+	c.SetStrokeColor(cg2.Color(p))
+	c.DrawPath(xPos-2.5, H-40, canvas.Rectangle(5, 5))
 }
 
 func main() {

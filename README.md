@@ -1,12 +1,19 @@
 ![sketchy_logo_002](https://user-images.githubusercontent.com/96601789/154788295-49904170-fc0f-4de0-8e70-2c9093fdd6f1.png)
 
-Sketchy is a framework for making generative art in Go. It is inspired by [vsketch](https://github.com/abey79/vsketch) and [openFrameworks](https://github.com/openframeworks/openFrameworks). It uses [gg](https://github.com/fogleman/gg) for drawing and the [ebiten](https://github.com/hajimehoshi/ebiten) game engine for the GUI. It's designed to provide controls (sliders) via simple JSON that can be used within a familiar `update()` and `draw()` framework to enable quick iteration on designs.
+Sketchy is a framework for making generative art in Go. It is inspired by [vsketch](https://github.com/abey79/vsketch) and [openFrameworks](https://github.com/openframeworks/openFrameworks). It uses [canvas](https://github.com/tdewolff/canvas) for drawing and the [ebiten](https://github.com/hajimehoshi/ebiten) game engine for the GUI. It's designed to provide controls (sliders) via simple JSON that can be used within a familiar `update()` and `draw()` framework to enable quick iteration on designs.
 
 The [Getting Started](docs/getting-started.md) guide is a good place to start, and even walk through creating a "Hello Circle" sketch from scratch.
 
-Sketchy is still very much in the alpha stage. Below is an example of what the framework looks like while running the "noise" example.
+Below are a couple of screenshots from the example sketches:
 
-![Screenshot_20220228_214943](https://user-images.githubusercontent.com/96601789/156106899-b9db1eb6-2d60-424b-b2df-5bce4582a9b5.png)
+### Fractal
+![fractal_example](assets/images/fractal_example_screenshot.png)
+### Noise
+
+![noise_example](assets/images/opensimplex_example_screenshot.png)
+
+### 10PRINT
+![10print_example](assets/images/10print_example_screenshot.png)
 
 # Installation
 
@@ -71,6 +78,22 @@ The syntax for running a sketch is `sketchy run project_name`. This is just a wr
 
 # Saving sketches and configurations
 
-There are two builtin keyboard shortcuts for saving sketch images and configurations:
-- "s" key - saves the current frame as a PNG. The filename has the format `<prefix>_<timestamp>.png`, where `<prefix>` by default is the project name (what you used during `sketchy init project_name`)
+There are three builtin keyboard shortcuts for saving sketch images and configurations:
+- "s" key - saves the current frame as an SVG file. The filename has the format `<prefix>_<timestamp>.svg`, where `<prefix>` by default is the project name (what you used during `sketchy init project_name`)
+- "p" key - same as above but saves the current frame as a PNG image.
 - "c" key - saves the configuration (control values and sketch parameters) as JSON. The filename has the format `<prefix>_config_<timestamp>.json`, where `<prefix>` by default is the project name (what you used during `sketchy init project_name`)
+
+# "Expert" Mode
+
+If you are already familiar with Go, you have probably realized you can just copy the template files into a new directory and run typical Go commands to build and run the sketch:
+
+```shell
+cp sketchy/template/* ~/my_sketch_dir/
+cd ~/my_sketch_dir
+go mod init sketch
+go mod tidy
+```
+Make your file edits, then
+```shell
+go run main.go
+```
