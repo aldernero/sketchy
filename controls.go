@@ -146,7 +146,7 @@ func (s *Slider) Draw(ctx *canvas.Context) {
 	ctx.SetStrokeColor(color.Transparent)
 	ctx.DrawPath(s.Pos.X, s.Pos.Y, canvas.Rectangle(s.GetPercentage()*s.Width, SliderHeight))
 	ctx.SetStrokeColor(s.colors.Outline)
-	ff := s.fontFamily.Face(FontSize, color.White, canvas.FontRegular, canvas.FontNormal)
+	ff := s.fontFamily.Face(FontSize, s.colors.Text, canvas.FontRegular, canvas.FontNormal)
 	titleText := canvas.NewTextBox(
 		ff,
 		s.Name,
