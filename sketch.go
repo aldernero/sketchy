@@ -278,7 +278,7 @@ func (s *Sketch) Draw(screen *ebiten.Image) {
 	ctx := canvas.NewContext(s.SketchCanvas)
 	if !s.DisableClearBetweenFrames || s.needToClear {
 		ctx.SetFillColor(s.sketchColorConfig.Background)
-		ctx.SetStrokeColor(s.sketchColorConfig.Outline)
+		ctx.SetStrokeColor(color.Transparent)
 		ctx.DrawPath(0, 0, canvas.Rectangle(ctx.Width(), ctx.Height()))
 		ctx.Close()
 		s.needToClear = false
