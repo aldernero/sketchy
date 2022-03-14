@@ -29,7 +29,7 @@
         }
     ],
     "SketchBackgroundColor": "#1e1e1e",
-    "SketchOutlineColor": "#ffdb00",
+    "SketchOutlineColor": "",
     "ControlBackgroundColor": "#1e1e1e",
     "ControlOutlineColor": "#ffdb00"
 }
