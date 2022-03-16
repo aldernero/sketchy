@@ -107,3 +107,7 @@ func GetTimestampString() string {
 		now.Year(), now.Month(), now.Day(), now.Hour(),
 		now.Minute(), now.Second())
 }
+
+func Equalf(a, b float64) bool {
+	return math.Abs(b-a) <= Smol
+}

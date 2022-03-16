@@ -309,6 +309,34 @@ func (c *Curve) Draw(ctx *canvas.Context) {
 	ctx.Stroke()
 }
 
+type Circle struct {
+	Center Point
+	Radius float64
+}
+
+func (c *Circle) Draw(ctx *canvas.Context) {
+	ctx.DrawPath(c.Center.X, c.Center.Y, canvas.Circle(c.Radius))
+}
+
+func (c *Circle) ToCurve(resolution int) Curve {
+	points := make([]Point, resolution)
+	theta := Linspace(0, Tau, resolution, false)
+	for i, t := range theta {
+		x := c.Center.X + c.Radius*math.Cos(t)
+		y := c.Center.Y + c.Radius*math.Sin(t)
+		points[i] = Point{X: x, Y: y}
+	}
+	return Curve{Points: points, Closed: true}
+}
+
+func (c *Circle) ContainsPoint(p Point) bool {
+	return Distance(c.Center, p) <= c.Radius
+}
+
+func (c *Circle) PointOnEdge(p Point) bool {
+	return Equalf(Distance(c.Center, p), c.Radius)
+}
+
 // ContainsPoint determines if a point lies within a rectangle
 func (r *Rect) ContainsPoint(p Point) bool {
 	return p.X >= r.X && p.X <= r.X+r.W && p.Y >= r.Y && p.Y <= r.Y+r.H
