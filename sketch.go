@@ -202,6 +202,20 @@ func (s *Sketch) UpdateControls() {
 	s.DidControlsChange = controlsChanged
 }
 
+func (s *Sketch) RandomizeSliders() {
+	for i := range s.Sliders {
+		s.Sliders[i].Randomize()
+	}
+}
+
+func (s *Sketch) RandomizeSlider(name string) {
+	i, ok := s.sliderControlMap[name]
+	if !ok {
+		log.Fatalf("%s not a valid control name", name)
+	}
+	s.Sliders[i].Randomize()
+}
+
 func (s *Sketch) PlaceControls(_ float64, _ float64, ctx *canvas.Context) {
 	var lastRect Rect
 	for i := range s.Sliders {
