@@ -243,7 +243,7 @@ func (s *Sketch) PlaceControls(_ float64, _ float64, ctx *canvas.Context) {
 		rect := s.Toggles[i].GetRect()
 		s.Toggles[i].Pos = Point{
 			X: ToggleHPadding,
-			Y: startY + float64(i)*rect.H + s.Toggles[i].Height + ToggleVPadding,
+			Y: startY - (float64(i)*rect.H + s.Toggles[i].Height + ToggleVPadding),
 		}
 	}
 }
