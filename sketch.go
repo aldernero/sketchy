@@ -15,6 +15,7 @@ import (
 	"log"
 	"math/rand"
 	"os"
+	"time"
 )
 
 const (
@@ -103,6 +104,9 @@ func (s *Sketch) Init() {
 	}
 	if s.RasterDPI <= 0 {
 		s.RasterDPI = DefaultDPI
+	}
+	if s.RandomSeed == 0 {
+		s.RandomSeed = time.Now().UnixNano()
 	}
 	s.FontFamily = canvas.NewFontFamily("DejaVu Sans")
 	if err := s.FontFamily.LoadLocalFont("DejaVuSans", canvas.FontRegular); err != nil {

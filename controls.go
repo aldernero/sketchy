@@ -4,6 +4,7 @@ import (
 	"github.com/tdewolff/canvas"
 	"image/color"
 	"math"
+	"math/rand"
 	"strconv"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -123,6 +124,11 @@ func (s *Slider) CheckAndUpdate(ctx *canvas.Canvas) (bool, error) {
 	}
 	s.DidJustChange = didChange
 	return didChange, nil
+}
+
+func (s *Slider) Randomize() {
+	val := Map(0, 1, s.MinVal, s.MaxVal, rand.Float64())
+	s.Val = val
 }
 
 func (s *Slider) StringVal() string {
