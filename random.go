@@ -109,22 +109,32 @@ func (r *Rng) SetNoiseLacunarity(l float64) {
 	r.lacunarity = l
 }
 
-// Returns noise values in the range of [-1, 1]
+// Returns 1D noise values in the range of [-1, 1]
+func (r *Rng) SignedNoise1D(x float64) float64 {
+	return r.calcNoise(x, 0, 0)
+}
+
+// Returns 2D noise values in the range of [-1, 1]
 func (r *Rng) SignedNoise2D(x float64, y float64) float64 {
 	return r.calcNoise(x, y, 0)
 }
 
-// Returns noise values in the range of [-1, 1]
+// Returns 3D noise values in the range of [-1, 1]
 func (r *Rng) SignedNoise3D(x float64, y float64, z float64) float64 {
 	return r.calcNoise(x, y, z)
 }
 
-// Returns noise values in the range of [0, 1]
+// Returns 1D noise values in the range of [0, 1]
+func (r *Rng) Noise1D(x float64) float64 {
+	return Map(-1, 1, 0, 1, r.calcNoise(x, 0, 0))
+}
+
+// Returns 2D noise values in the range of [0, 1]
 func (r *Rng) Noise2D(x float64, y float64) float64 {
 	return Map(-1, 1, 0, 1, r.calcNoise(x, y, 0))
 }
 
-// Returns noise values in the range of [0, 1]
+// Returns 3D noise values in the range of [0, 1]
 func (r *Rng) Noise3D(x float64, y float64, z float64) float64 {
 	return Map(-1, 1, 0, 1, r.calcNoise(x, y, z))
 }
