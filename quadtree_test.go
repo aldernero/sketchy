@@ -30,14 +30,21 @@ func TestQuadTree_Insert(t *testing.T) {
 }
 
 func BenchmarkQuadTree_Insert(b *testing.B) {
-	var seed int64 = 421
+	var seed int64 = 42
 	rand.Seed(seed)
 	w := 210.0
 	h := 297.0
-	qt := NewQuadTree(Rect{X: 0, Y: 0, W: w, H: h})
-	for i := 0; i < b.N; i++ {
+	points := make([]Point, 1000)
+	for i := 0; i < 1000; i++ {
 		x := rand.Float64() * w
 		y := rand.Float64() * h
-		qt.Insert(Point{X: x, Y: y})
+		points[i] = Point{X: x, Y: y}
+	}
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		qt := NewQuadTreeWithCapacity(Rect{X: 0, Y: 0, W: w, H: h}, 4)
+		for _, p := range points {
+			qt.Insert(p)
+		}
 	}
 }

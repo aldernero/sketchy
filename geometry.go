@@ -46,6 +46,10 @@ func (p Point) Lerp(a Point, i float64) Point {
 	}
 }
 
+func (p Point) Draw(size float64, ctx *canvas.Context) {
+	ctx.DrawPath(p.X, p.Y, canvas.Circle(size))
+}
+
 // String representation of a line, useful for debugging
 func (l Line) String() string {
 	return fmt.Sprintf("(%f, %f) -> (%f, %f)", l.P.X, l.P.Y, l.Q.X, l.Q.Y)
@@ -357,4 +361,9 @@ func (r *Rect) Intersects(rect Rect) bool {
 	}
 
 	return true
+}
+
+func (r *Rect) Draw(ctx *canvas.Context) {
+	rect := canvas.Rectangle(r.W, r.H)
+	ctx.DrawPath(r.X, r.Y, rect)
 }

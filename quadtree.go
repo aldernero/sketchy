@@ -1,5 +1,7 @@
 package sketchy
 
+import "github.com/tdewolff/canvas"
+
 const defaultCapacity = 8
 
 type QuadTree struct {
@@ -16,6 +18,13 @@ type QuadTree struct {
 func NewQuadTree(r Rect) *QuadTree {
 	return &QuadTree{
 		capacity: defaultCapacity,
+		boundary: r,
+	}
+}
+
+func NewQuadTreeWithCapacity(r Rect, c int) *QuadTree {
+	return &QuadTree{
+		capacity: c,
 		boundary: r,
 	}
 }
@@ -96,4 +105,32 @@ func (q *QuadTree) Size() int {
 	count += q.sw.Size()
 	count += q.nw.Size()
 	return count
+}
+
+func (q *QuadTree) Draw(ctx *canvas.Context) {
+	q.boundary.Draw(ctx)
+
+	if q.ne == nil {
+		return
+	}
+
+	q.ne.Draw(ctx)
+	q.se.Draw(ctx)
+	q.sw.Draw(ctx)
+	q.nw.Draw(ctx)
+}
+
+func (q *QuadTree) DrawWithPoints(size float64, ctx *canvas.Context) {
+	q.boundary.Draw(ctx)
+	for _, p := range q.points {
+		p.Draw(size, ctx)
+	}
+	if q.ne == nil {
+		return
+	}
+
+	q.ne.Draw(ctx)
+	q.se.Draw(ctx)
+	q.sw.Draw(ctx)
+	q.nw.Draw(ctx)
 }
