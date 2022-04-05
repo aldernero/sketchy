@@ -46,8 +46,8 @@ func (p Point) Lerp(a Point, i float64) Point {
 	}
 }
 
-func (p Point) Draw(size float64, ctx *canvas.Context) {
-	ctx.DrawPath(p.X, p.Y, canvas.Circle(size))
+func (p Point) Draw(s float64, ctx *canvas.Context) {
+	ctx.DrawPath(p.X, p.Y, canvas.Circle(s))
 }
 
 // String representation of a line, useful for debugging

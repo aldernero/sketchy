@@ -1,8 +1,10 @@
 package sketchy
 
-import "github.com/tdewolff/canvas"
+import (
+	"github.com/tdewolff/canvas"
+)
 
-const defaultCapacity = 8
+const defaultCapacity = 4
 
 type QuadTree struct {
 	capacity int
@@ -58,17 +60,6 @@ func (q *QuadTree) Insert(p Point) bool {
 	return false
 }
 
-func (q *QuadTree) subdivide() {
-	x := q.boundary.X
-	y := q.boundary.Y
-	w := q.boundary.W / 2
-	h := q.boundary.H / 2
-	q.ne = NewQuadTree(Rect{X: x + w, Y: y, W: w, H: h})
-	q.se = NewQuadTree(Rect{X: x + w, Y: y + h, W: w, H: h})
-	q.sw = NewQuadTree(Rect{X: x, Y: y + h, W: w, H: h})
-	q.nw = NewQuadTree(Rect{X: x, Y: y, W: w, H: h})
-}
-
 func (q *QuadTree) Query(r Rect) []Point {
 	var results = []Point{}
 
@@ -92,6 +83,14 @@ func (q *QuadTree) Query(r Rect) []Point {
 	results = append(results, q.nw.Query(r)...)
 
 	return results
+}
+
+func (q *QuadTree) Clear() {
+	q.points = []Point{}
+	q.ne = nil
+	q.se = nil
+	q.sw = nil
+	q.nw = nil
 }
 
 func (q *QuadTree) Size() int {
@@ -120,17 +119,28 @@ func (q *QuadTree) Draw(ctx *canvas.Context) {
 	q.nw.Draw(ctx)
 }
 
-func (q *QuadTree) DrawWithPoints(size float64, ctx *canvas.Context) {
-	q.boundary.Draw(ctx)
+func (q *QuadTree) DrawWithPoints(s float64, ctx *canvas.Context) {
 	for _, p := range q.points {
-		p.Draw(size, ctx)
+		p.Draw(s, ctx)
 	}
+	q.boundary.Draw(ctx)
 	if q.ne == nil {
 		return
 	}
 
-	q.ne.Draw(ctx)
-	q.se.Draw(ctx)
-	q.sw.Draw(ctx)
-	q.nw.Draw(ctx)
+	q.ne.DrawWithPoints(s, ctx)
+	q.se.DrawWithPoints(s, ctx)
+	q.sw.DrawWithPoints(s, ctx)
+	q.nw.DrawWithPoints(s, ctx)
+}
+
+func (q *QuadTree) subdivide() {
+	x := q.boundary.X
+	y := q.boundary.Y
+	w := q.boundary.W / 2
+	h := q.boundary.H / 2
+	q.ne = NewQuadTree(Rect{X: x + w, Y: y, W: w, H: h})
+	q.se = NewQuadTree(Rect{X: x + w, Y: y + h, W: w, H: h})
+	q.sw = NewQuadTree(Rect{X: x, Y: y + h, W: w, H: h})
+	q.nw = NewQuadTree(Rect{X: x, Y: y, W: w, H: h})
 }
