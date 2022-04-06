@@ -3,15 +3,24 @@ package sketchy
 import "github.com/tdewolff/canvas"
 
 type KDTree struct {
-	point  Point
+	point  *Point
 	region Rect
 	left   *KDTree
 	right  *KDTree
 }
 
-func NewKDTree(p Point, r Rect) *KDTree {
+func NewKDTree(r Rect) *KDTree {
 	return &KDTree{
-		point:  p,
+		point:  nil,
+		region: r,
+		left:   nil,
+		right:  nil,
+	}
+}
+
+func NewKDTreeWithPoint(p Point, r Rect) *KDTree {
+	return &KDTree{
+		point:  &p,
 		region: r,
 		left:   nil,
 		right:  nil,
@@ -29,8 +38,8 @@ func (k *KDTree) Insert(p Point) {
 func (k *KDTree) Query(r Rect) []Point {
 	var results []Point
 	if k.IsLeaf() {
-		if r.ContainsPoint(k.point) {
-			results = append(results, k.point)
+		if r.ContainsPoint(*k.point) {
+			results = append(results, *k.point)
 		}
 		return results
 	}
@@ -77,11 +86,16 @@ func (k *KDTree) DrawWithPoints(s float64, ctx *canvas.Context) {
 }
 
 func (k *KDTree) Clear() {
+	k.point = nil
 	k.left = nil
 	k.right = nil
 }
 
 func (k *KDTree) insert(p Point, d int) {
+	if k.point == nil {
+		k.point = &p
+		return
+	}
 	if d%2 == 0 { // compare x value
 		if p.X < k.point.X {
 			if k.left == nil {
@@ -91,7 +105,7 @@ func (k *KDTree) insert(p Point, d int) {
 					W: k.point.X - k.region.X,
 					H: k.region.H,
 				}
-				k.left = NewKDTree(p, rect)
+				k.left = NewKDTreeWithPoint(p, rect)
 			} else {
 				k.left.insert(p, d+1)
 			}
@@ -103,7 +117,7 @@ func (k *KDTree) insert(p Point, d int) {
 					W: k.region.W - (k.point.X - k.region.X),
 					H: k.region.H,
 				}
-				k.right = NewKDTree(p, rect)
+				k.right = NewKDTreeWithPoint(p, rect)
 			} else {
 				k.right.insert(p, d+1)
 			}
@@ -117,7 +131,7 @@ func (k *KDTree) insert(p Point, d int) {
 					W: k.region.W,
 					H: k.point.Y - k.region.Y,
 				}
-				k.left = NewKDTree(p, rect)
+				k.left = NewKDTreeWithPoint(p, rect)
 			} else {
 				k.left.insert(p, d+1)
 			}
@@ -129,7 +143,7 @@ func (k *KDTree) insert(p Point, d int) {
 					W: k.region.W,
 					H: k.region.H - (k.point.Y - k.region.Y),
 				}
-				k.right = NewKDTree(p, rect)
+				k.right = NewKDTreeWithPoint(p, rect)
 			} else {
 				k.right.insert(p, d+1)
 			}
@@ -139,7 +153,7 @@ func (k *KDTree) insert(p Point, d int) {
 
 func (k *KDTree) reportSubtree() []Point {
 	var results []Point
-	results = append(results, k.point)
+	results = append(results, *k.point)
 	if k.left != nil {
 		results = append(results, k.left.reportSubtree()...)
 	}
@@ -150,6 +164,9 @@ func (k *KDTree) reportSubtree() []Point {
 }
 
 func (k *KDTree) draw(ctx *canvas.Context, depth int, pointSize float64) {
+	if k.point == nil {
+		return
+	}
 	if depth%2 == 0 {
 		ctx.MoveTo(k.point.X, k.region.Y)
 		ctx.LineTo(k.point.X, k.region.Y+k.region.H)

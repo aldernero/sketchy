@@ -8,7 +8,7 @@ import (
 
 func TestKDTree_Insert(t *testing.T) {
 	assert := assert.New(t)
-	tree := NewKDTree(Point{X: 50, Y: 50}, Rect{X: 0, Y: 0, W: 100, H: 100})
+	tree := NewKDTreeWithPoint(Point{X: 50, Y: 50}, Rect{X: 0, Y: 0, W: 100, H: 100})
 	assert.Equal(1, tree.Size())
 }
 
@@ -25,9 +25,9 @@ func BenchmarkKDTree_Insert(b *testing.B) {
 	}
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		tree := NewKDTree(points[0], Rect{X: 0, Y: 0, W: w, H: h})
-		for j := 1; j < len(points); j++ {
-			tree.Insert(points[j])
+		tree := NewKDTree(Rect{X: 0, Y: 0, W: w, H: h})
+		for _, p := range points {
+			tree.Insert(p)
 		}
 	}
 }

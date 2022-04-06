@@ -2,14 +2,12 @@ package main
 
 import (
 	"flag"
+	"github.com/aldernero/sketchy"
+	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"github.com/tdewolff/canvas"
 	"image/color"
 	"log"
-	"math/rand"
-
-	"github.com/aldernero/sketchy"
-	"github.com/hajimehoshi/ebiten/v2"
 )
 
 var kdtree *sketchy.KDTree
@@ -62,17 +60,13 @@ func main() {
 	s.Init()
 	w := s.Width()
 	h := s.Height()
-	point := sketchy.Point{
-		X: sketchy.Map(0, 1, 0.4*w, 0.6*w, rand.Float64()),
-		Y: sketchy.Map(0, 1, 0.4*h, 0.6*h, rand.Float64()),
-	}
 	rect := sketchy.Rect{
 		X: 0,
 		Y: 0,
 		W: w,
 		H: h,
 	}
-	kdtree = sketchy.NewKDTree(point, rect)
+	kdtree = sketchy.NewKDTree(rect)
 	ebiten.SetWindowSize(int(s.ControlWidth+s.SketchWidth), int(s.SketchHeight))
 	ebiten.SetWindowTitle("Sketchy - " + s.Title)
 	ebiten.SetWindowResizable(false)
