@@ -346,6 +346,14 @@ func (r *Rect) ContainsPoint(p Point) bool {
 	return p.X >= r.X && p.X <= r.X+r.W && p.Y >= r.Y && p.Y <= r.Y+r.H
 }
 
+func (r *Rect) Contains(rect Rect) bool {
+	a := Point{X: r.X, Y: r.Y}
+	b := Point{X: r.X + r.W, Y: r.Y + r.H}
+	c := Point{X: rect.X, Y: rect.Y}
+	d := Point{X: rect.X + rect.W, Y: rect.Y + rect.H}
+	return a.X < c.X && a.Y < c.Y && b.X > d.X && b.Y > d.Y
+}
+
 func (r *Rect) Intersects(rect Rect) bool {
 	a := Point{X: r.X, Y: r.Y}
 	b := Point{X: r.X + r.W, Y: r.Y + r.H}

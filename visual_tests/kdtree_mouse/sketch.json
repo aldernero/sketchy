@@ -1,0 +1,36 @@
+{
+    "Title": "QuadTree Interaction Test",
+    "SketchWidth": 800,
+    "SketchHeight": 800,
+    "ControlWidth": 240,
+    "Sliders": [
+        {
+            "Name": "Line Thickness",
+            "MinVal": 0.05,
+            "MaxVal": 2,
+            "Val": 0.3,
+            "Incr": 0.05
+        },
+        {
+            "Name": "Point Size",
+            "MinVal": 0,
+            "MaxVal": 5,
+            "Val": 0.5,
+            "Incr": 0.1
+        }
+    ],
+    "Toggles": [
+        {
+            "Name": "Show Points",
+            "Checked": false
+        },
+        {
+            "Name": "Clear",
+            "IsButton": true
+        }
+    ],
+    "SketchBackgroundColor": "#1e1e1e",
+    "SketchOutlineColor": "",
+    "ControlBackgroundColor": "#1e1e1e",
+    "ControlOutlineColor": "#ffdb00"
+}
