@@ -354,6 +354,26 @@ func (r *Rect) Contains(rect Rect) bool {
 	return a.X < c.X && a.Y < c.Y && b.X > d.X && b.Y > d.Y
 }
 
+func (r *Rect) IsDisjoint(rect Rect) bool {
+	aLeft := r.X
+	aRight := r.X + r.W
+	aTop := r.Y + r.H
+	aBottom := r.Y
+	bLeft := rect.X
+	bRight := rect.X + rect.W
+	bTop := rect.Y + rect.H
+	bBottom := rect.Y
+
+	if aLeft > bRight || aBottom > bTop || aRight < bLeft || aTop < bBottom {
+		return true
+	}
+	return false
+}
+
+func (r *Rect) Overlaps(rect Rect) bool {
+	return !r.IsDisjoint(rect)
+}
+
 func (r *Rect) Intersects(rect Rect) bool {
 	a := Point{X: r.X, Y: r.Y}
 	b := Point{X: r.X + r.W, Y: r.Y + r.H}

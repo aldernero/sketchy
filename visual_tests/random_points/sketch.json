@@ -1,0 +1,68 @@
+{
+    "Title": "Random Points",
+    "SketchWidth": 800,
+    "SketchHeight": 800,
+    "ControlWidth": 200,
+    "Sliders": [
+        {
+            "Name": "points",
+            "MinVal": 0,
+            "MaxVal": 10000,
+            "Val": 1000,
+            "Incr": 100
+        },
+        {
+            "Name": "threshold",
+            "MinVal": 0,
+            "MaxVal": 0.75,
+            "Val": 0.5,
+            "Incr": 0.01
+        },
+        {
+            "Name": "octaves",
+            "MinVal": 1,
+            "MaxVal": 10,
+            "Val": 1,
+            "Incr": 1,
+            "DrawRect": false
+        },
+        {
+            "Name": "persistence",
+            "MinVal": 0,
+            "MaxVal": 2,
+            "Val": 0.9,
+            "Incr": 0.01,
+            "DrawRect": false
+        },
+        {
+            "Name": "lacunarity",
+            "MinVal": 0,
+            "MaxVal": 10,
+            "Val": 2,
+            "Incr": 0.1,
+            "DrawRect": false
+        },
+        {
+            "Name": "xscale",
+            "MinVal": 0,
+            "MaxVal": 0.1,
+            "Val": 0.005,
+            "Incr": 0.0001,
+            "DrawRect": false
+        },
+        {
+            "Name": "yscale",
+            "MinVal": 0,
+            "MaxVal": 0.1,
+            "Val": 0.005,
+            "Incr": 0.0001,
+            "DrawRect": false
+        }
+    ],
+    "Toggles": [
+        {
+            "Name": "OpenSimplex",
+            "Checked": false
+        }
+    ]
+}

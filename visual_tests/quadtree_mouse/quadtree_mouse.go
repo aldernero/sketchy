@@ -2,9 +2,11 @@ package main
 
 import (
 	"flag"
+	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"github.com/tdewolff/canvas"
 	"image/color"
 	"log"
+	"strconv"
 
 	"github.com/aldernero/sketchy"
 	"github.com/hajimehoshi/ebiten/v2"
@@ -17,7 +19,7 @@ func update(s *sketchy.Sketch) {
 	if s.Toggle("Clear") {
 		qt.Clear()
 	}
-	if ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft) {
+	if inpututil.IsMouseButtonJustReleased(ebiten.MouseButtonLeft) {
 		x, y := ebiten.CursorPosition()
 		if s.PointInSketchArea(float64(x), float64(y)) {
 			p := s.CanvasCoords(float64(x), float64(y))
@@ -32,11 +34,27 @@ func draw(s *sketchy.Sketch, c *canvas.Context) {
 	c.SetFillColor(color.Transparent)
 	c.SetStrokeCapper(canvas.ButtCap)
 	c.SetStrokeWidth(s.Slider("Line Thickness"))
+	pointSize := s.Slider("Point Size")
 	if s.Toggle("Show Points") {
-		qt.DrawWithPoints(s.Slider("Point Size"), c)
+		qt.DrawWithPoints(pointSize, c)
 	} else {
 		qt.Draw(c)
 	}
+	queryRect := sketchy.Rect{
+		X: 0.4 * c.Width(),
+		Y: 0.4 * c.Height(),
+		W: 0.2 * c.Width(),
+		H: 0.2 * c.Height(),
+	}
+	foundPoints := qt.Query(queryRect)
+	c.SetStrokeColor(canvas.Blue)
+	c.DrawPath(queryRect.X, queryRect.Y, canvas.Rectangle(queryRect.W, queryRect.H))
+	for _, p := range foundPoints {
+		p.Draw(pointSize, c)
+	}
+	ff := s.FontFamily.Face(14, canvas.Red, canvas.FontRegular, canvas.FontNormal)
+	textBox := canvas.NewTextBox(ff, strconv.FormatInt(int64(len(foundPoints)), 10), 100, 20, canvas.Left, canvas.Bottom, 0, 0)
+	c.DrawText(0.1*c.Width(), 0.95*c.Height(), textBox)
 }
 
 func main() {

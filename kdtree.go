@@ -37,29 +37,30 @@ func (k *KDTree) Insert(p Point) {
 
 func (k *KDTree) Query(r Rect) []Point {
 	var results []Point
-	if k.IsLeaf() {
-		if r.ContainsPoint(*k.point) {
-			results = append(results, *k.point)
-		}
-		return results
+	if k.point != nil && r.ContainsPoint(*k.point) {
+		results = append(results, *k.point)
 	}
-	if r.Contains(k.left.region) {
-		results = append(results, k.left.reportSubtree()...)
-	} else {
-		if r.Intersects(k.left.region) {
-			query := k.left.Query(r)
-			if len(query) > 0 {
-				results = append(results, query...)
+	if k.left != nil {
+		if r.Contains(k.left.region) {
+			results = append(results, k.left.reportSubtree()...)
+		} else {
+			if r.Overlaps(k.left.region) {
+				query := k.left.Query(r)
+				if len(query) > 0 {
+					results = append(results, query...)
+				}
 			}
 		}
 	}
-	if r.Contains(k.right.region) {
-		results = append(results, k.right.reportSubtree()...)
-	} else {
-		if r.Intersects(k.right.region) {
-			query := k.right.Query(r)
-			if len(query) > 0 {
-				results = append(results, query...)
+	if k.right != nil {
+		if r.Contains(k.right.region) {
+			results = append(results, k.right.reportSubtree()...)
+		} else {
+			if r.Overlaps(k.right.region) {
+				query := k.right.Query(r)
+				if len(query) > 0 {
+					results = append(results, query...)
+				}
 			}
 		}
 	}

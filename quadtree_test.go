@@ -31,20 +31,49 @@ func TestQuadTree_Insert(t *testing.T) {
 
 func BenchmarkQuadTree_Insert(b *testing.B) {
 	var seed int64 = 42
-	rand.Seed(seed)
 	w := 210.0
 	h := 297.0
-	points := make([]Point, 1000)
-	for i := 0; i < 1000; i++ {
-		x := rand.Float64() * w
-		y := rand.Float64() * h
-		points[i] = Point{X: x, Y: y}
-	}
+	n := 1000
+	rng := NewRng(seed)
+	rng.SetNoiseOctaves(2)
+	rng.SetNoiseLacunarity(2)
+	rng.SetNoisePersistence(0.8)
+	rng.SetNoiseScaleX(0.02)
+	rng.SetNoiseScaleY(0.02)
+	points := rng.NoisyRandomPoints(n, 0.4, Rect{X: 0, Y: 0, W: w, H: h})
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		qt := NewQuadTreeWithCapacity(Rect{X: 0, Y: 0, W: w, H: h}, 4)
 		for _, p := range points {
 			qt.Insert(p)
 		}
+	}
+}
+
+func BenchmarkQuadTree_Query(b *testing.B) {
+	var seed int64 = 42
+	w := 210.0
+	h := 297.0
+	n := 1000
+	rng := NewRng(seed)
+	rng.SetNoiseOctaves(2)
+	rng.SetNoiseLacunarity(2)
+	rng.SetNoisePersistence(0.8)
+	rng.SetNoiseScaleX(0.02)
+	rng.SetNoiseScaleY(0.02)
+	//points := rng.NoisyRandomPoints(n, 0.4, Rect{X: 0, Y: 0, W: w, H: h})
+	points := rng.UniformRandomPoints(n, Rect{X: 0, Y: 0, W: w, H: h})
+	qt := NewQuadTreeWithCapacity(Rect{X: 0, Y: 0, W: w, H: h}, 4)
+	for _, p := range points {
+		qt.Insert(p)
+	}
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_ = qt.Query(Rect{
+			X: 0.4 * w,
+			Y: 0.4 * h,
+			W: 0.2 * w,
+			H: 0.2 * h,
+		})
 	}
 }

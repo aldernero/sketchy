@@ -63,7 +63,7 @@ func (q *QuadTree) Insert(p Point) bool {
 func (q *QuadTree) Query(r Rect) []Point {
 	var results = []Point{}
 
-	if !q.boundary.Intersects(r) {
+	if q.boundary.IsDisjoint(r) {
 		return results
 	}
 

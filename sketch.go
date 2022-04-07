@@ -361,6 +361,10 @@ func (s *Sketch) PointInSketchArea(x, y float64) bool {
 	return x > s.ControlWidth && x <= s.ControlWidth+s.SketchWidth && y >= 0 && y <= s.SketchHeight
 }
 
+func (s *Sketch) CanvasRect() Rect {
+	return Rect{X: 0, Y: 0, W: s.Width(), H: s.Height()}
+}
+
 func (s *Sketch) DumpState() {
 	for i := range s.Sliders {
 		fmt.Printf("%s: %s\n", s.Sliders[i].Name, s.Sliders[i].StringVal())

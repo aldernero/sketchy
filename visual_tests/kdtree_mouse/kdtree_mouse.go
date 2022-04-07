@@ -8,6 +8,7 @@ import (
 	"github.com/tdewolff/canvas"
 	"image/color"
 	"log"
+	"strconv"
 )
 
 var kdtree *sketchy.KDTree
@@ -32,11 +33,27 @@ func draw(s *sketchy.Sketch, c *canvas.Context) {
 	c.SetFillColor(color.Transparent)
 	c.SetStrokeCapper(canvas.ButtCap)
 	c.SetStrokeWidth(s.Slider("Line Thickness"))
+	pointSize := s.Slider("Point Size")
 	if s.Toggle("Show Points") {
-		kdtree.DrawWithPoints(s.Slider("Point Size"), c)
+		kdtree.DrawWithPoints(pointSize, c)
 	} else {
 		kdtree.Draw(c)
 	}
+	queryRect := sketchy.Rect{
+		X: 0.4 * c.Width(),
+		Y: 0.4 * c.Height(),
+		W: 0.2 * c.Width(),
+		H: 0.2 * c.Height(),
+	}
+	foundPoints := kdtree.Query(queryRect)
+	c.SetStrokeColor(canvas.Blue)
+	c.DrawPath(queryRect.X, queryRect.Y, canvas.Rectangle(queryRect.W, queryRect.H))
+	for _, p := range foundPoints {
+		p.Draw(pointSize, c)
+	}
+	ff := s.FontFamily.Face(14, canvas.Red, canvas.FontRegular, canvas.FontNormal)
+	textBox := canvas.NewTextBox(ff, strconv.FormatInt(int64(len(foundPoints)), 10), 100, 20, canvas.Left, canvas.Bottom, 0, 0)
+	c.DrawText(0.1*c.Width(), 0.95*c.Height(), textBox)
 }
 
 func main() {

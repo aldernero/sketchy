@@ -109,34 +109,62 @@ func (r *Rng) SetNoiseLacunarity(l float64) {
 	r.lacunarity = l
 }
 
-// Returns 1D noise values in the range of [-1, 1]
+// SignedNoise1D generates 1D noise values in the range of [-1, 1]
 func (r *Rng) SignedNoise1D(x float64) float64 {
 	return r.calcNoise(x, 0, 0)
 }
 
-// Returns 2D noise values in the range of [-1, 1]
+// SignedNoise2D generates 2D noise values in the range of [-1, 1]
 func (r *Rng) SignedNoise2D(x float64, y float64) float64 {
 	return r.calcNoise(x, y, 0)
 }
 
-// Returns 3D noise values in the range of [-1, 1]
+// SignedNoise3D generates 3D noise values in the range of [-1, 1]
 func (r *Rng) SignedNoise3D(x float64, y float64, z float64) float64 {
 	return r.calcNoise(x, y, z)
 }
 
-// Returns 1D noise values in the range of [0, 1]
+// Noise1D 1D noise values in the range of [0, 1]
 func (r *Rng) Noise1D(x float64) float64 {
 	return Map(-1, 1, 0, 1, r.calcNoise(x, 0, 0))
 }
 
-// Returns 2D noise values in the range of [0, 1]
+// Noise2D generates 2D noise values in the range of [0, 1]
 func (r *Rng) Noise2D(x float64, y float64) float64 {
 	return Map(-1, 1, 0, 1, r.calcNoise(x, y, 0))
 }
 
-// Returns 3D noise values in the range of [0, 1]
+// Noise3D generates 3D noise values in the range of [0, 1]
 func (r *Rng) Noise3D(x float64, y float64, z float64) float64 {
 	return Map(-1, 1, 0, 1, r.calcNoise(x, y, z))
+}
+
+// UniformRandomPoints generates a list of points whose coordinates
+// follow a uniform random distribution within a rectangle
+func (r *Rng) UniformRandomPoints(num int, rect Rect) []Point {
+	points := make([]Point, num)
+	for i := 0; i < num; i++ {
+		x := rect.X + rand.Float64()*rect.W
+		y := rect.Y + rand.Float64()*rect.H
+		points[i] = Point{X: x, Y: y}
+	}
+	return points
+}
+
+func (r *Rng) NoisyRandomPoints(num int, threshold float64, rect Rect) []Point {
+	var points []Point
+	maxtries := 10 * num
+	i := 0
+	for len(points) < num && i < maxtries {
+		x := rect.X + rand.Float64()*rect.W
+		y := rect.Y + rand.Float64()*rect.H
+		noise := r.Noise2D(x, y)
+		if noise >= threshold {
+			points = append(points, Point{X: x, Y: y})
+		}
+		i++
+	}
+	return points
 }
 
 func (r *Rng) calcNoise(x, y, z float64) float64 {
