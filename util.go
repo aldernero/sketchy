@@ -78,17 +78,6 @@ func Rad2Deg(f float64) float64 {
 	return 180 * f / math.Pi
 }
 
-// Convert from cartesian coordinates to screen coordinates
-func CartesianToScreen(p []Point, o Point, s float64) []Point {
-	points := []Point{}
-	for _, i := range p {
-		x := s*i.X + o.X
-		y := -s*i.Y + o.Y
-		points = append(points, Point{X: x, Y: y})
-	}
-	return points
-}
-
 // Shuffle a slice of points
 func Shuffle(p *[]Point) {
 	rand.Seed(time.Now().UnixMicro())
@@ -110,4 +99,46 @@ func GetTimestampString() string {
 
 func Equalf(a, b float64) bool {
 	return math.Abs(b-a) <= Smol
+}
+
+type MetricPoint struct {
+	Metric float64
+	Point
+}
+
+// PointHeap implements a max heap of MetricPoint objects
+type PointHeap struct {
+	size   int
+	points []MetricPoint
+}
+
+func (h *PointHeap) Len() int {
+	return len(h.points)
+}
+
+func (h *PointHeap) Less(i, j int) bool {
+	return h.points[i].Metric > h.points[j].Metric
+}
+
+func (h *PointHeap) Swap(i, j int) {
+	h.points[i], h.points[j] = h.points[j], h.points[i]
+}
+
+func (h *PointHeap) Push(p MetricPoint) {
+	if h.Len() < h.size {
+		h.points = append(h.points, p)
+	} else {
+		if p.Metric < h.points[0].Metric {
+			h.Pop()
+			h.points = append(h.points, p)
+		}
+	}
+}
+
+func (h *PointHeap) Pop() MetricPoint {
+	old := *h
+	n := old.Len()
+	x := old.points[n-1]
+	h.points = old.points[0 : n-1]
+	return x
 }

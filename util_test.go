@@ -2,6 +2,7 @@ package sketchy
 
 import (
 	"math"
+	"math/rand"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -133,4 +134,29 @@ func TestRad2Deg(t *testing.T) {
 	r := Tau / 4
 	d := Rad2Deg(r)
 	assert.Equal(t, 90.0, d)
+}
+
+func TestPointHeap(t *testing.T) {
+	W := 420.0
+	H := 297.0
+	rand.Seed(42)
+	N := 100
+	k := 7
+	target := Point{X: rand.Float64() * W, Y: rand.Float64() * H}
+	points := make([]MetricPoint, N)
+	heap := PointHeap{
+		size:   k,
+		points: []MetricPoint{},
+	}
+	for i := 0; i < N; i++ {
+		point := Point{X: rand.Float64() * W, Y: rand.Float64() * H}
+		dist := SquaredDistance(target, point)
+		points[i] = MetricPoint{
+			Metric: dist,
+			Point:  point,
+		}
+		heap.Push(points[i])
+	}
+	assert.Equal(t, N, len(points))
+	assert.LessOrEqual(t, k, heap.Len())
 }
