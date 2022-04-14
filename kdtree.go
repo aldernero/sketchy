@@ -1,6 +1,9 @@
 package sketchy
 
-import "github.com/tdewolff/canvas"
+import (
+	"container/heap"
+	"github.com/tdewolff/canvas"
+)
 
 type KDTree struct {
 	point  *Point
@@ -67,6 +70,27 @@ func (k *KDTree) Query(r Rect) []Point {
 	return results
 }
 
+func (k *KDTree) NearestNeighbors(point Point, s int) []Point {
+	var result []Point
+	if s <= 0 {
+		return result
+	}
+	ph := &PointHeap{
+		size:   s,
+		points: []MetricPoint{},
+	}
+	heap.Init(ph)
+	k.pushOnHeap(point, ph)
+	result = ph.Report()
+	return result
+}
+
+func (k *KDTree) Clear() {
+	k.point = nil
+	k.left = nil
+	k.right = nil
+}
+
 func (k *KDTree) Size() int {
 	count := 1
 	if k.left != nil {
@@ -84,12 +108,6 @@ func (k *KDTree) Draw(ctx *canvas.Context) {
 
 func (k *KDTree) DrawWithPoints(s float64, ctx *canvas.Context) {
 	k.draw(ctx, 0, s)
-}
-
-func (k *KDTree) Clear() {
-	k.point = nil
-	k.left = nil
-	k.right = nil
 }
 
 func (k *KDTree) insert(p Point, d int) {
@@ -186,5 +204,20 @@ func (k *KDTree) draw(ctx *canvas.Context, depth int, pointSize float64) {
 	}
 	if k.right != nil {
 		k.right.draw(ctx, depth+1, pointSize)
+	}
+}
+
+func (k *KDTree) pushOnHeap(target Point, h *PointHeap) {
+	if k.point != nil {
+		heap.Push(h, MetricPoint{
+			Metric: SquaredDistance(target, *k.point),
+			Point:  *k.point,
+		})
+	}
+	if k.left != nil {
+		k.left.pushOnHeap(target, h)
+	}
+	if k.right != nil {
+		k.right.pushOnHeap(target, h)
 	}
 }

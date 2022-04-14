@@ -1,6 +1,7 @@
 package sketchy
 
 import (
+	"container/heap"
 	"github.com/tdewolff/canvas"
 )
 
@@ -85,6 +86,21 @@ func (q *QuadTree) Query(r Rect) []Point {
 	return results
 }
 
+func (q *QuadTree) NearestNeighbors(point Point, k int) []Point {
+	var result []Point
+	if k <= 0 {
+		return result
+	}
+	ph := &PointHeap{
+		size:   k,
+		points: []MetricPoint{},
+	}
+	heap.Init(ph)
+	q.pushOnHeap(point, ph)
+	result = ph.Report()
+	return result
+}
+
 func (q *QuadTree) Clear() {
 	q.points = []Point{}
 	q.ne = nil
@@ -143,4 +159,20 @@ func (q *QuadTree) subdivide() {
 	q.se = NewQuadTree(Rect{X: x + w, Y: y + h, W: w, H: h})
 	q.sw = NewQuadTree(Rect{X: x, Y: y + h, W: w, H: h})
 	q.nw = NewQuadTree(Rect{X: x, Y: y, W: w, H: h})
+}
+
+func (q *QuadTree) pushOnHeap(target Point, h *PointHeap) {
+	for _, p := range q.points {
+		heap.Push(h, MetricPoint{
+			Metric: SquaredDistance(target, p),
+			Point:  p,
+		})
+	}
+	if q.ne == nil {
+		return
+	}
+	q.ne.pushOnHeap(target, h)
+	q.se.pushOnHeap(target, h)
+	q.sw.pushOnHeap(target, h)
+	q.nw.pushOnHeap(target, h)
 }

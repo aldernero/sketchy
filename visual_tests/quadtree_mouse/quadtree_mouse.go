@@ -14,16 +14,25 @@ import (
 
 var qt *sketchy.QuadTree
 
+var nearestPoints []sketchy.Point
+
 func update(s *sketchy.Sketch) {
 	// Update logic goes here
 	if s.Toggle("Clear") {
 		qt.Clear()
 	}
+	nearestPoints = []sketchy.Point{}
 	if inpututil.IsMouseButtonJustReleased(ebiten.MouseButtonLeft) {
 		x, y := ebiten.CursorPosition()
 		if s.PointInSketchArea(float64(x), float64(y)) {
 			p := s.CanvasCoords(float64(x), float64(y))
 			qt.Insert(p)
+		}
+	} else {
+		x, y := ebiten.CursorPosition()
+		if s.PointInSketchArea(float64(x), float64(y)) {
+			p := s.CanvasCoords(float64(x), float64(y))
+			nearestPoints = qt.NearestNeighbors(p, int(s.Slider("Closest Neighbors")))
 		}
 	}
 }
@@ -51,6 +60,12 @@ func draw(s *sketchy.Sketch, c *canvas.Context) {
 	c.DrawPath(queryRect.X, queryRect.Y, canvas.Rectangle(queryRect.W, queryRect.H))
 	for _, p := range foundPoints {
 		p.Draw(pointSize, c)
+	}
+	c.SetStrokeColor(canvas.Magenta)
+	if len(nearestPoints) > 0 {
+		for _, p := range nearestPoints {
+			p.Draw(pointSize, c)
+		}
 	}
 	ff := s.FontFamily.Face(14, canvas.Red, canvas.FontRegular, canvas.FontNormal)
 	textBox := canvas.NewTextBox(ff, strconv.FormatInt(int64(len(foundPoints)), 10), 100, 20, canvas.Left, canvas.Bottom, 0, 0)

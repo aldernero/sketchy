@@ -1,6 +1,8 @@
 package sketchy
 
 import (
+	"container/heap"
+	_ "container/heap"
 	"fmt"
 	"math"
 	"math/rand"
@@ -112,33 +114,53 @@ type PointHeap struct {
 	points []MetricPoint
 }
 
-func (h *PointHeap) Len() int {
-	return len(h.points)
+func (p PointHeap) Len() int {
+	return len(p.points)
 }
 
-func (h *PointHeap) Less(i, j int) bool {
-	return h.points[i].Metric > h.points[j].Metric
+func (p PointHeap) Less(i, j int) bool {
+	return p.points[i].Metric > p.points[j].Metric
 }
 
-func (h *PointHeap) Swap(i, j int) {
-	h.points[i], h.points[j] = h.points[j], h.points[i]
+func (p PointHeap) Swap(i, j int) {
+	p.points[i], p.points[j] = p.points[j], p.points[i]
 }
 
-func (h *PointHeap) Push(p MetricPoint) {
-	if h.Len() < h.size {
-		h.points = append(h.points, p)
-	} else {
-		if p.Metric < h.points[0].Metric {
-			h.Pop()
-			h.points = append(h.points, p)
-		}
+func (p *PointHeap) Push(x interface{}) {
+	if p.size <= 0 {
+		return
+	}
+	if len(p.points) < p.size {
+		p.points = append(p.points, x.(MetricPoint))
+		return
+	}
+	if x.(MetricPoint).Metric < p.Peek().(MetricPoint).Metric {
+		heap.Pop(p)
+		p.points = append(p.points, x.(MetricPoint))
 	}
 }
 
-func (h *PointHeap) Pop() MetricPoint {
-	old := *h
-	n := old.Len()
+func (p *PointHeap) Pop() interface{} {
+	old := *p
+	n := len(old.points)
 	x := old.points[n-1]
-	h.points = old.points[0 : n-1]
+	p.points = old.points[0 : n-1]
 	return x
+}
+
+func (p *PointHeap) Peek() interface{} {
+	old := *p
+	n := len(old.points)
+	x := old.points[n-1]
+	return x
+}
+
+func (p *PointHeap) Report() []Point {
+	n := len(p.points)
+	result := make([]Point, n)
+	for i := 0; i < n; i++ {
+		q := heap.Pop(p)
+		result[n-i-1] = q.(MetricPoint).Point
+	}
+	return result
 }

@@ -17,12 +17,19 @@
             "MaxVal": 5,
             "Val": 0.5,
             "Incr": 0.1
+        },
+        {
+            "Name": "Closest Neighbors",
+            "MinVal": 0,
+            "MaxVal": 10,
+            "Val": 2,
+            "Incr": 1
         }
     ],
     "Toggles": [
         {
             "Name": "Show Points",
-            "Checked": false
+            "Checked": true
         },
         {
             "Name": "Clear",
