@@ -1,13 +1,9 @@
 package sketchy
 
 import (
-	"container/heap"
-	"math"
-	"math/rand"
-	"testing"
-	"time"
-
 	"github.com/stretchr/testify/assert"
+	"math"
+	"testing"
 )
 
 func TestGcd(t *testing.T) {
@@ -136,30 +132,4 @@ func TestRad2Deg(t *testing.T) {
 	r := Tau / 4
 	d := Rad2Deg(r)
 	assert.Equal(t, 90.0, d)
-}
-
-func TestPointHeap(t *testing.T) {
-	W := 420.0
-	H := 297.0
-	rand.Seed(time.Now().UnixNano())
-	N := 10
-	K := 2
-	target := Point{X: rand.Float64() * W, Y: rand.Float64() * H}
-	points := make([]MetricPoint, N)
-	ph := &PointHeap{
-		size:   K,
-		points: []MetricPoint{},
-	}
-	heap.Init(ph)
-	for i := 0; i < N; i++ {
-		point := Point{X: rand.Float64() * W, Y: rand.Float64() * H}
-		dist := Distance(target, point)
-		points[i] = MetricPoint{
-			Metric: dist,
-			Point:  point,
-		}
-		heap.Push(ph, points[i])
-	}
-	assert.Equal(t, N, len(points))
-	assert.LessOrEqual(t, K, ph.Len())
 }

@@ -1,7 +1,6 @@
 package sketchy
 
 import (
-	"container/heap"
 	"github.com/tdewolff/canvas"
 )
 
@@ -9,7 +8,7 @@ const defaultCapacity = 4
 
 type QuadTree struct {
 	capacity int
-	points   []Point
+	points   []IndexPoint
 	boundary Rect
 
 	nw *QuadTree
@@ -32,8 +31,8 @@ func NewQuadTreeWithCapacity(r Rect, c int) *QuadTree {
 	}
 }
 
-func (q *QuadTree) Insert(p Point) bool {
-	if !q.boundary.ContainsPoint(p) {
+func (q *QuadTree) Insert(p IndexPoint) bool {
+	if !q.boundary.ContainsPoint(p.Point) {
 		return false
 	}
 
@@ -69,8 +68,8 @@ func (q *QuadTree) Query(r Rect) []Point {
 	}
 
 	for _, p := range q.points {
-		if r.ContainsPoint(p) {
-			results = append(results, p)
+		if r.ContainsPoint(p.Point) {
+			results = append(results, p.Point)
 		}
 	}
 
@@ -86,23 +85,22 @@ func (q *QuadTree) Query(r Rect) []Point {
 	return results
 }
 
-func (q *QuadTree) NearestNeighbors(point Point, k int) []Point {
-	var result []Point
+func (q *QuadTree) NearestNeighbors(point IndexPoint, k int) []IndexPoint {
+	var result []IndexPoint
 	if k <= 0 {
 		return result
 	}
-	ph := &PointHeap{
-		size:   k,
-		points: []MetricPoint{},
+	ph := NewMaxPointHeap()
+	q.pushOnHeap(point, ph, k)
+	points := ph.ReportReversed()
+	for _, p := range points {
+		result = append(result, p.ToIndexPoint())
 	}
-	heap.Init(ph)
-	q.pushOnHeap(point, ph)
-	result = ph.Report()
 	return result
 }
 
 func (q *QuadTree) Clear() {
-	q.points = []Point{}
+	q.points = []IndexPoint{}
 	q.ne = nil
 	q.se = nil
 	q.sw = nil
@@ -161,18 +159,31 @@ func (q *QuadTree) subdivide() {
 	q.nw = NewQuadTree(Rect{X: x, Y: y, W: w, H: h})
 }
 
-func (q *QuadTree) pushOnHeap(target Point, h *PointHeap) {
+func (q *QuadTree) pushOnHeap(target IndexPoint, h *PointHeap, k int) {
 	for _, p := range q.points {
-		heap.Push(h, MetricPoint{
-			Metric: SquaredDistance(target, p),
-			Point:  p,
-		})
+		if p.Index == target.Index {
+			continue
+		}
+		metric := SquaredDistance(target.Point, p.Point)
+		mp := MetricPoint{
+			Metric: metric,
+			Index:  p.Index,
+			Point:  p.Point,
+		}
+		if h.Len() < k {
+			h.Push(mp)
+		} else {
+			if metric < h.Peek().Metric {
+				_ = h.Pop()
+				h.Push(mp)
+			}
+		}
 	}
 	if q.ne == nil {
 		return
 	}
-	q.ne.pushOnHeap(target, h)
-	q.se.pushOnHeap(target, h)
-	q.sw.pushOnHeap(target, h)
-	q.nw.pushOnHeap(target, h)
+	q.ne.pushOnHeap(target, h, k)
+	q.se.pushOnHeap(target, h, k)
+	q.sw.pushOnHeap(target, h, k)
+	q.nw.pushOnHeap(target, h, k)
 }

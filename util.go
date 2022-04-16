@@ -1,7 +1,6 @@
 package sketchy
 
 import (
-	"container/heap"
 	_ "container/heap"
 	"fmt"
 	"math"
@@ -103,64 +102,45 @@ func Equalf(a, b float64) bool {
 	return math.Abs(b-a) <= Smol
 }
 
-type MetricPoint struct {
-	Metric float64
+func (p Point) ToIndexPoint(index int) IndexPoint {
+	return IndexPoint{
+		Index: index,
+		Point: p,
+	}
+}
+
+func (p Point) ToMetricPoint(index int, metric float64) MetricPoint {
+	return MetricPoint{
+		Metric: metric,
+		Index:  index,
+		Point:  p,
+	}
+}
+
+// An IndexPoint is a wrapper around a point with an extra int identifier, useful when used with trees and heaps
+type IndexPoint struct {
+	Index int
 	Point
 }
 
-// PointHeap implements a max heap of MetricPoint objects
-type PointHeap struct {
-	size   int
-	points []MetricPoint
+func (p IndexPoint) ToPoint() Point {
+	return p.Point
 }
 
-func (p PointHeap) Len() int {
-	return len(p.points)
+// A MetricPoint is a wrapper around a point with to extra identifiers, useful when used with trees and heaps
+type MetricPoint struct {
+	Metric float64
+	Index  int
+	Point
 }
 
-func (p PointHeap) Less(i, j int) bool {
-	return p.points[i].Metric > p.points[j].Metric
-}
-
-func (p PointHeap) Swap(i, j int) {
-	p.points[i], p.points[j] = p.points[j], p.points[i]
-}
-
-func (p *PointHeap) Push(x interface{}) {
-	if p.size <= 0 {
-		return
-	}
-	if len(p.points) < p.size {
-		p.points = append(p.points, x.(MetricPoint))
-		return
-	}
-	if x.(MetricPoint).Metric < p.Peek().(MetricPoint).Metric {
-		heap.Pop(p)
-		p.points = append(p.points, x.(MetricPoint))
+func (p MetricPoint) ToIndexPoint() IndexPoint {
+	return IndexPoint{
+		Index: p.Index,
+		Point: p.Point,
 	}
 }
 
-func (p *PointHeap) Pop() interface{} {
-	old := *p
-	n := len(old.points)
-	x := old.points[n-1]
-	p.points = old.points[0 : n-1]
-	return x
-}
-
-func (p *PointHeap) Peek() interface{} {
-	old := *p
-	n := len(old.points)
-	x := old.points[n-1]
-	return x
-}
-
-func (p *PointHeap) Report() []Point {
-	n := len(p.points)
-	result := make([]Point, n)
-	for i := 0; i < n; i++ {
-		q := heap.Pop(p)
-		result[n-i-1] = q.(MetricPoint).Point
-	}
-	return result
+func (p MetricPoint) ToPoint() Point {
+	return p.Point
 }

@@ -7,7 +7,7 @@ import (
 
 func TestKDTree_Insert(t *testing.T) {
 	assert := assert.New(t)
-	tree := NewKDTreeWithPoint(Point{X: 50, Y: 50}, Rect{X: 0, Y: 0, W: 100, H: 100})
+	tree := NewKDTreeWithPoint(Point{X: 50, Y: 50}.ToIndexPoint(0), Rect{X: 0, Y: 0, W: 100, H: 100})
 	assert.Equal(1, tree.Size())
 }
 
@@ -136,8 +136,8 @@ func BenchmarkKDTree_Insert(b *testing.B) {
 			b.ResetTimer()
 			for i := 0; i < b.N; i++ {
 				kdtree := NewKDTree(rect)
-				for _, p := range points {
-					kdtree.Insert(p)
+				for j, p := range points {
+					kdtree.Insert(p.ToIndexPoint(j))
 				}
 			}
 		})
@@ -267,8 +267,8 @@ func BenchmarkKDTree_Query(b *testing.B) {
 				points = rng.NoisyRandomPoints(v.n, v.thresh, rect)
 			}
 			tree := NewKDTree(rect)
-			for _, p := range points {
-				tree.Insert(p)
+			for i, p := range points {
+				tree.Insert(p.ToIndexPoint(i))
 			}
 			b.ResetTimer()
 			for i := 0; i < b.N; i++ {
@@ -509,10 +509,10 @@ func BenchmarkKDTree_kNN(b *testing.B) {
 				points = rng.NoisyRandomPoints(v.n, v.thresh, rect)
 			}
 			tree := NewKDTree(rect)
-			for _, p := range points {
-				tree.Insert(p)
+			for i, p := range points {
+				tree.Insert(p.ToIndexPoint(i))
 			}
-			targetPoint := Point{X: v.w / 2, Y: v.h / 2}
+			targetPoint := Point{X: v.w / 2, Y: v.h / 2}.ToIndexPoint(-1)
 			b.ResetTimer()
 			for i := 0; i < b.N; i++ {
 				_ = tree.NearestNeighbors(targetPoint, v.k)

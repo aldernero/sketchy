@@ -1,12 +1,11 @@
 package sketchy
 
 import (
-	"container/heap"
 	"github.com/tdewolff/canvas"
 )
 
 type KDTree struct {
-	point  *Point
+	point  *IndexPoint
 	region Rect
 	left   *KDTree
 	right  *KDTree
@@ -21,7 +20,7 @@ func NewKDTree(r Rect) *KDTree {
 	}
 }
 
-func NewKDTreeWithPoint(p Point, r Rect) *KDTree {
+func NewKDTreeWithPoint(p IndexPoint, r Rect) *KDTree {
 	return &KDTree{
 		point:  &p,
 		region: r,
@@ -34,14 +33,14 @@ func (k *KDTree) IsLeaf() bool {
 	return k.left == nil && k.right == nil
 }
 
-func (k *KDTree) Insert(p Point) {
+func (k *KDTree) Insert(p IndexPoint) {
 	k.insert(p, 0)
 }
 
 func (k *KDTree) Query(r Rect) []Point {
 	var results []Point
-	if k.point != nil && r.ContainsPoint(*k.point) {
-		results = append(results, *k.point)
+	if k.point != nil && r.ContainsPoint(k.point.Point) {
+		results = append(results, k.point.Point)
 	}
 	if k.left != nil {
 		if r.Contains(k.left.region) {
@@ -70,18 +69,17 @@ func (k *KDTree) Query(r Rect) []Point {
 	return results
 }
 
-func (k *KDTree) NearestNeighbors(point Point, s int) []Point {
-	var result []Point
+func (k *KDTree) NearestNeighbors(point IndexPoint, s int) []IndexPoint {
+	var result []IndexPoint
 	if s <= 0 {
 		return result
 	}
-	ph := &PointHeap{
-		size:   s,
-		points: []MetricPoint{},
+	ph := NewMaxPointHeap()
+	k.pushOnHeap(point, ph, s)
+	points := ph.ReportReversed()
+	for _, p := range points {
+		result = append(result, p.ToIndexPoint())
 	}
-	heap.Init(ph)
-	k.pushOnHeap(point, ph)
-	result = ph.Report()
 	return result
 }
 
@@ -110,7 +108,7 @@ func (k *KDTree) DrawWithPoints(s float64, ctx *canvas.Context) {
 	k.draw(ctx, 0, s)
 }
 
-func (k *KDTree) insert(p Point, d int) {
+func (k *KDTree) insert(p IndexPoint, d int) {
 	if k.point == nil {
 		k.point = &p
 		return
@@ -172,7 +170,7 @@ func (k *KDTree) insert(p Point, d int) {
 
 func (k *KDTree) reportSubtree() []Point {
 	var results []Point
-	results = append(results, *k.point)
+	results = append(results, k.point.Point)
 	if k.left != nil {
 		results = append(results, k.left.reportSubtree()...)
 	}
@@ -207,17 +205,27 @@ func (k *KDTree) draw(ctx *canvas.Context, depth int, pointSize float64) {
 	}
 }
 
-func (k *KDTree) pushOnHeap(target Point, h *PointHeap) {
+func (k *KDTree) pushOnHeap(target IndexPoint, h *PointHeap, s int) {
 	if k.point != nil {
-		heap.Push(h, MetricPoint{
-			Metric: SquaredDistance(target, *k.point),
-			Point:  *k.point,
-		})
+		metric := SquaredDistance(target.Point, k.point.Point)
+		mp := MetricPoint{
+			Metric: metric,
+			Index:  k.point.Index,
+			Point:  k.point.Point,
+		}
+		if h.Len() < s {
+			h.Push(mp)
+		} else {
+			if metric < h.Peek().Metric {
+				_ = h.Pop()
+				h.Push(mp)
+			}
+		}
 	}
 	if k.left != nil {
-		k.left.pushOnHeap(target, h)
+		k.left.pushOnHeap(target, h, s)
 	}
 	if k.right != nil {
-		k.right.pushOnHeap(target, h)
+		k.right.pushOnHeap(target, h, s)
 	}
 }

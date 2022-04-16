@@ -15,16 +15,16 @@ func TestQuadTree_Insert(t *testing.T) {
 		H: 100,
 	})
 	assert.Equal(0, qt.Size())
-	qt.Insert(Point{X: 0, Y: 0})
+	qt.Insert(Point{X: 0, Y: 0}.ToIndexPoint(0))
 	assert.Equal(1, qt.Size())
-	qt.Insert(Point{X: -1, Y: 0})
+	qt.Insert(Point{X: -1, Y: 0}.ToIndexPoint(0))
 	assert.Equal(1, qt.Size())
-	qt.Insert(Point{X: 10, Y: 0})
+	qt.Insert(Point{X: 10, Y: 0}.ToIndexPoint(0))
 	assert.Equal(2, qt.Size())
 	for i := 0; i < 5; i++ {
 		x := rand.Float64() * 100
 		y := rand.Float64() * 100
-		qt.Insert(Point{X: x, Y: y})
+		qt.Insert(Point{X: x, Y: y}.ToIndexPoint(0))
 	}
 	assert.Equal(7, qt.Size())
 }
@@ -154,8 +154,8 @@ func BenchmarkQuadTree_Insert(b *testing.B) {
 			b.ResetTimer()
 			for i := 0; i < b.N; i++ {
 				qt := NewQuadTreeWithCapacity(rect, v.cap)
-				for _, p := range points {
-					qt.Insert(p)
+				for j, p := range points {
+					qt.Insert(p.ToIndexPoint(j))
 				}
 			}
 		})
@@ -285,8 +285,8 @@ func BenchmarkQuadTree_Query(b *testing.B) {
 				points = rng.NoisyRandomPoints(v.n, v.thresh, rect)
 			}
 			qt := NewQuadTreeWithCapacity(rect, v.cap)
-			for _, p := range points {
-				qt.Insert(p)
+			for i, p := range points {
+				qt.Insert(p.ToIndexPoint(i))
 			}
 			b.ResetTimer()
 			for i := 0; i < b.N; i++ {
@@ -527,10 +527,10 @@ func BenchmarkQuadTree_kNN(b *testing.B) {
 				points = rng.NoisyRandomPoints(v.n, v.thresh, rect)
 			}
 			qt := NewQuadTreeWithCapacity(rect, v.cap)
-			for _, p := range points {
-				qt.Insert(p)
+			for i, p := range points {
+				qt.Insert(p.ToIndexPoint(i))
 			}
-			targetPoint := Point{X: v.w / 2, Y: v.h / 2}
+			targetPoint := Point{X: v.w / 2, Y: v.h / 2}.ToIndexPoint(-1)
 			b.ResetTimer()
 			for i := 0; i < b.N; i++ {
 				_ = qt.NearestNeighbors(targetPoint, v.k)

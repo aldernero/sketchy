@@ -13,25 +13,28 @@ import (
 
 var kdtree *sketchy.KDTree
 
-var nearestPoints []sketchy.Point
+var nearestPoints []sketchy.IndexPoint
+var count int
 
 func update(s *sketchy.Sketch) {
 	// Update logic goes here
 	if s.Toggle("Clear") {
 		kdtree.Clear()
+		count = 0
 	}
-	nearestPoints = []sketchy.Point{}
+	nearestPoints = []sketchy.IndexPoint{}
 	if inpututil.IsMouseButtonJustReleased(ebiten.MouseButtonLeft) {
 		x, y := ebiten.CursorPosition()
 		if s.PointInSketchArea(float64(x), float64(y)) {
 			p := s.CanvasCoords(float64(x), float64(y))
-			kdtree.Insert(p)
+			kdtree.Insert(p.ToIndexPoint(count))
+			count++
 		}
 	} else {
 		x, y := ebiten.CursorPosition()
 		if s.PointInSketchArea(float64(x), float64(y)) {
 			p := s.CanvasCoords(float64(x), float64(y))
-			nearestPoints = kdtree.NearestNeighbors(p, int(s.Slider("Closest Neighbors")))
+			nearestPoints = kdtree.NearestNeighbors(p.ToIndexPoint(-1), int(s.Slider("Closest Neighbors")))
 		}
 	}
 }
