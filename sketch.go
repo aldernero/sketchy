@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"github.com/tdewolff/canvas"
 	"github.com/tdewolff/canvas/renderers"
@@ -43,6 +44,7 @@ type Sketch struct {
 	SketchBackgroundColor     string        `json:"SketchBackgroundColor"`
 	SketchOutlineColor        string        `json:"SketchOutlineColor"`
 	DisableClearBetweenFrames bool          `json:"DisableClearBetweenFrames"`
+	ShowFPS                   bool          `json:"ShowFPS"`
 	RasterDPI                 float64       `json:"RasterDPI"`
 	RandomSeed                int64         `json:"RandomSeed"`
 	Sliders                   []Slider      `json:"Sliders"`
@@ -226,7 +228,7 @@ func (s *Sketch) PlaceControls(_ float64, _ float64, ctx *canvas.Context) {
 		rect := s.Sliders[i].GetRect()
 		s.Sliders[i].Pos = Point{
 			X: SliderHPadding,
-			Y: ctx.Height() - (float64(i)*rect.H + s.Sliders[i].Height + 2*SliderVPadding) - 2*SliderVPadding,
+			Y: ctx.Height() - (float64(i)*rect.H + s.Sliders[i].Height + 2*SliderVPadding) - 3*SliderVPadding,
 		}
 		lastRect = s.Sliders[i].GetRect()
 	}
@@ -302,6 +304,9 @@ func (s *Sketch) Draw(screen *ebiten.Image) {
 		s.needToClear = false
 	}
 	s.Drawer(s, ctx)
+	if s.ShowFPS {
+		ebitenutil.DebugPrint(screen, fmt.Sprintf("FPS: %0.2f", ebiten.CurrentFPS()))
+	}
 	if s.isSavingPNG {
 		fname := s.Prefix + "_" + GetTimestampString() + ".png"
 		err := renderers.Write(fname, s.SketchCanvas, canvas.DPI(s.RasterDPI))

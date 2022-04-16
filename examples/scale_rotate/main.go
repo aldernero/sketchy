@@ -15,7 +15,6 @@ const radius = 80.0
 
 func update(s *sketchy.Sketch) {
 	// Update logic goes here
-	// Not needed for this example
 }
 
 func draw(s *sketchy.Sketch, c *canvas.Context) {
@@ -66,6 +65,7 @@ func main() {
 	ebiten.SetWindowSize(int(s.ControlWidth+s.SketchWidth), int(s.SketchHeight))
 	ebiten.SetWindowTitle("Sketchy - " + s.Title)
 	ebiten.SetWindowResizable(false)
+	ebiten.SetFPSMode(ebiten.FPSModeVsyncOffMaximum)
 	if err := ebiten.RunGame(s); err != nil {
 		log.Fatal(err)
 	}
