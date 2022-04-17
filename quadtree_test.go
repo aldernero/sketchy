@@ -29,6 +29,48 @@ func TestQuadTree_Insert(t *testing.T) {
 	assert.Equal(7, qt.Size())
 }
 
+func TestQuadTree_Search(t *testing.T) {
+	assert := assert.New(t)
+	points := []IndexPoint{
+		{
+			Index: 0,
+			Point: Point{X: 1, Y: 7},
+		},
+		{
+			Index: 1,
+			Point: Point{X: 2, Y: 8},
+		},
+		{
+			Index: 2,
+			Point: Point{X: 3, Y: 9},
+		},
+		{
+			Index: 3,
+			Point: Point{X: 4, Y: 10},
+		},
+		{
+			Index: 4,
+			Point: Point{X: 5, Y: 11},
+		},
+		{
+			Index: 5,
+			Point: Point{X: 6, Y: 12},
+		},
+	}
+	tree := NewQuadTree(Rect{X: 0, Y: 0, W: 20, H: 20})
+	for _, p := range points {
+		tree.Insert(p)
+	}
+	point := tree.Search(points[2])
+	assert.NotNil(point)
+	assert.Equal(points[2].Index, point.Index)
+
+	tree.UpdateIndex(points[2], -2)
+	point = tree.Search(points[2])
+	assert.NotNil(point)
+	assert.Equal(-2, point.Index)
+}
+
 func BenchmarkQuadTree_Insert(b *testing.B) {
 	var table = []struct {
 		name        string

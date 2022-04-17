@@ -1,0 +1,24 @@
+{
+    "SketchWidth": 800,
+    "SketchHeight": 800,
+    "ControlWidth": 240,
+    "Sliders": [
+        {
+            "Name": "numPoints",
+            "MinVal": 1,
+            "MaxVal": 10000,
+            "Val": 100,
+            "Incr": 1
+        }
+    ],
+    "Toggles": [
+        {
+            "Name": "Show Points",
+            "Checked": false
+        }
+    ],
+    "SketchBackgroundColor": "#1e1e1e",
+    "SketchOutlineColor": "",
+    "ControlBackgroundColor": "#1e1e1e",
+    "ControlOutlineColor": "#ffdb00"
+}

@@ -37,6 +37,59 @@ func (k *KDTree) Insert(p IndexPoint) {
 	k.insert(p, 0)
 }
 
+func (k *KDTree) Search(p IndexPoint) *IndexPoint {
+	var result *IndexPoint
+	if !k.region.ContainsPoint(p.Point) {
+		return nil
+	}
+	if k.point == nil {
+		return nil
+	}
+	if k.point.Point.IsEqual(p.Point) {
+		return k.point
+	}
+	if k.left != nil {
+		result = k.left.Search(p)
+		if result != nil {
+			return result
+		}
+	}
+	if k.right != nil {
+		result = k.right.Search(p)
+		if result != nil {
+			return result
+		}
+	}
+	return nil
+}
+
+func (k *KDTree) UpdateIndex(p IndexPoint, index int) *IndexPoint {
+	var result *IndexPoint
+	if !k.region.ContainsPoint(p.Point) {
+		return nil
+	}
+	if k.point == nil {
+		return nil
+	}
+	if k.point.Point.IsEqual(p.Point) {
+		k.point.Index = index
+		return k.point
+	}
+	if k.left != nil {
+		result = k.left.UpdateIndex(p, index)
+		if result != nil {
+			return result
+		}
+	}
+	if k.right != nil {
+		result = k.right.UpdateIndex(p, index)
+		if result != nil {
+			return result
+		}
+	}
+	return nil
+}
+
 func (k *KDTree) Query(r Rect) []Point {
 	var results []Point
 	if k.point != nil && r.ContainsPoint(k.point.Point) {
@@ -207,18 +260,20 @@ func (k *KDTree) draw(ctx *canvas.Context, depth int, pointSize float64) {
 
 func (k *KDTree) pushOnHeap(target IndexPoint, h *PointHeap, s int) {
 	if k.point != nil {
-		metric := SquaredDistance(target.Point, k.point.Point)
-		mp := MetricPoint{
-			Metric: metric,
-			Index:  k.point.Index,
-			Point:  k.point.Point,
-		}
-		if h.Len() < s {
-			h.Push(mp)
-		} else {
-			if metric < h.Peek().Metric {
-				_ = h.Pop()
+		if k.point.Index != target.Index {
+			metric := SquaredDistance(target.Point, k.point.Point)
+			mp := MetricPoint{
+				Metric: metric,
+				Index:  k.point.Index,
+				Point:  k.point.Point,
+			}
+			if h.Len() < s {
 				h.Push(mp)
+			} else {
+				if metric < h.Peek().Metric {
+					_ = h.Pop()
+					h.Push(mp)
+				}
 			}
 		}
 	}

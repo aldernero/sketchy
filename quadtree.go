@@ -60,6 +60,71 @@ func (q *QuadTree) Insert(p IndexPoint) bool {
 	return false
 }
 
+func (q *QuadTree) Search(p IndexPoint) *IndexPoint {
+	var result *IndexPoint
+	if !q.boundary.ContainsPoint(p.Point) {
+		return nil
+	}
+	for _, point := range q.points {
+		if point.Point.IsEqual(p.Point) {
+			return &point
+		}
+	}
+	if q.ne == nil {
+		return nil
+	}
+	result = q.ne.Search(p)
+	if result != nil {
+		return result
+	}
+	result = q.se.Search(p)
+	if result != nil {
+		return result
+	}
+	result = q.sw.Search(p)
+	if result != nil {
+		return result
+	}
+	result = q.nw.Search(p)
+	if result != nil {
+		return result
+	}
+	return nil
+}
+
+func (q *QuadTree) UpdateIndex(p IndexPoint, index int) *IndexPoint {
+	var result *IndexPoint
+	if !q.boundary.ContainsPoint(p.Point) {
+		return nil
+	}
+	for i := range q.points {
+		if q.points[i].Point.IsEqual(p.Point) {
+			q.points[i].Index = index
+			return &q.points[i]
+		}
+	}
+	if q.ne == nil {
+		return nil
+	}
+	result = q.ne.UpdateIndex(p, index)
+	if result != nil {
+		return result
+	}
+	result = q.se.UpdateIndex(p, index)
+	if result != nil {
+		return result
+	}
+	result = q.sw.UpdateIndex(p, index)
+	if result != nil {
+		return result
+	}
+	result = q.nw.UpdateIndex(p, index)
+	if result != nil {
+		return result
+	}
+	return nil
+}
+
 func (q *QuadTree) Query(r Rect) []Point {
 	var results = []Point{}
 
