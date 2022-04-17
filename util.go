@@ -13,7 +13,7 @@ var (
 	Tau   = 2 * math.Pi
 	Sqrt2 = math.Sqrt2
 	Sqrt3 = math.Sqrt(3)
-	Smol  = 1e-6
+	Smol  = 1e-9
 )
 
 // Greatest common divisor

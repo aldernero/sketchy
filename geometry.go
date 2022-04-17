@@ -48,7 +48,7 @@ func (p Point) Lerp(a Point, i float64) Point {
 
 // IsEqual determines if two points are equal
 func (p Point) IsEqual(q Point) bool {
-	return Equalf(p.X, q.X) && Equalf(p.Y, q.Y)
+	return p.X == q.X && p.Y == q.Y
 }
 
 func (p Point) Draw(s float64, ctx *canvas.Context) {

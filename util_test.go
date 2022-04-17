@@ -133,3 +133,10 @@ func TestRad2Deg(t *testing.T) {
 	d := Rad2Deg(r)
 	assert.Equal(t, 90.0, d)
 }
+
+func TestEqualf(t *testing.T) {
+	assert := assert.New(t)
+	a := 100.1234567890
+	b := 100.1234567891
+	assert.Equal(Equalf(a, b), true)
+}

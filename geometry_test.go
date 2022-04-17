@@ -6,6 +6,19 @@ import (
 	"testing"
 )
 
+func TestPoint_IsEqual(t *testing.T) {
+	assert := assert.New(t)
+	p := Point{
+		X: 100.123456789,
+		Y: 100.123456789,
+	}
+	q := Point{
+		X: 100.123456789,
+		Y: 100.123456789,
+	}
+	assert.Equal(p.IsEqual(q), true)
+}
+
 func TestSlope(t *testing.T) {
 	assert := assert.New(t)
 	line := Line{
