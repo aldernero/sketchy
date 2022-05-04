@@ -51,6 +51,10 @@ func (p Point) IsEqual(q Point) bool {
 	return p.X == q.X && p.Y == q.Y
 }
 
+func (l Line) IsEqual(k Line) bool {
+	return l.P.IsEqual(k.P) && l.Q.IsEqual(k.Q)
+}
+
 func (p Point) Draw(s float64, ctx *canvas.Context) {
 	ctx.DrawPath(p.X, p.Y, canvas.Circle(s))
 }
@@ -157,6 +161,33 @@ func (l Line) Midpoint() Point {
 // Length Calculates the length of a line
 func (l Line) Length() float64 {
 	return Distance(l.P, l.Q)
+}
+
+func (l Line) Intersects(k Line) bool {
+	a1 := l.Q.X - l.P.X
+	b1 := k.P.X - k.Q.X
+	c1 := k.P.X - l.P.X
+	a2 := l.Q.Y - l.P.Y
+	b2 := k.P.Y - k.Q.Y
+	c2 := k.P.Y - l.P.Y
+	d := a1*b2 - a2*b1
+	if d == 0 {
+		// lines are parallel
+		return false
+	}
+	// Cramer's rule
+	s := (c1*b2 - c2*b1) / d
+	t := (a1*c2 - a2*c1) / d
+	return s >= 0 && t >= 0 && s <= 1 && t <= 1
+}
+
+func (l Line) ParallelTo(k Line) bool {
+	a1 := l.Q.X - l.P.X
+	b1 := k.P.X - k.Q.X
+	a2 := l.Q.Y - l.P.Y
+	b2 := k.P.Y - k.Q.Y
+	d := a1*b2 - a2*b1
+	return d == 0
 }
 
 // Length Calculates the length of the line segments of a curve

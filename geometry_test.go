@@ -33,12 +33,12 @@ func TestSlope(t *testing.T) {
 	assert.Equal(math.Inf(-1), line.Slope())
 	line = Line{
 		P: Point{X: 0, Y: 0},
-		Q: Point{X: 0.0000001, Y: 1},
+		Q: Point{X: 0.0000000001, Y: 1},
 	}
 	assert.Equal(math.Inf(1), line.Slope())
 	line = Line{
 		P: Point{X: 0, Y: 0},
-		Q: Point{X: -0.0000001, Y: 1},
+		Q: Point{X: -0.0000000001, Y: 1},
 	}
 	assert.Equal(math.Inf(-1), line.Slope())
 	line = Line{
@@ -112,4 +112,40 @@ func TestCurveLerp(t *testing.T) {
 	curve.Closed = true
 	assert.Equal(Point{X: 0, Y: 1}, curve.Lerp(0.75))
 	assert.Equal(Point{X: 0, Y: 0.5}, curve.Lerp(0.875))
+}
+
+func TestLine_Intersects(t *testing.T) {
+	assert := assert.New(t)
+	l := Line{
+		P: Point{X: -1, Y: -1},
+		Q: Point{X: 1, Y: 1},
+	}
+	k := Line{
+		P: Point{X: -1, Y: 1},
+		Q: Point{X: 1, Y: -1},
+	}
+	m := Line{
+		P: Point{X: 0, Y: 1},
+		Q: Point{X: 1, Y: 2},
+	}
+	assert.True(l.Intersects(k))
+	assert.True(k.Intersects(l))
+	assert.False(k.Intersects(m))
+	assert.False(m.Intersects(k))
+	assert.False(l.Intersects(m))
+	assert.False(m.Intersects(l))
+}
+
+func TestLine_ParallelTo(t *testing.T) {
+	assert := assert.New(t)
+	l := Line{
+		P: Point{X: -1, Y: -1},
+		Q: Point{X: 1, Y: 1},
+	}
+	k := Line{
+		P: Point{X: 0, Y: 1},
+		Q: Point{X: 1, Y: 2},
+	}
+	assert.True(l.ParallelTo(k))
+	assert.True(k.ParallelTo(l))
 }
