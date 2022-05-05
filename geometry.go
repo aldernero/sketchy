@@ -7,6 +7,8 @@ import (
 	"math"
 )
 
+// Primitive types
+
 // Point is a simple point in 2D space
 type Point struct {
 	X float64
@@ -25,6 +27,12 @@ type Curve struct {
 	Closed bool
 }
 
+// A Circle represented by a center point and radius
+type Circle struct {
+	Center Point
+	Radius float64
+}
+
 // Rect is a simple rectangle
 type Rect struct {
 	X float64
@@ -32,6 +40,15 @@ type Rect struct {
 	W float64
 	H float64
 }
+
+// A Triangle specified by vertices as points
+type Triangle struct {
+	A Point
+	B Point
+	C Point
+}
+
+// Point functions
 
 // Tuple representation of a point, useful for debugging
 func (p Point) String() string {
@@ -51,17 +68,28 @@ func (p Point) IsEqual(q Point) bool {
 	return p.X == q.X && p.Y == q.Y
 }
 
-func (l Line) IsEqual(k Line) bool {
-	return l.P.IsEqual(k.P) && l.Q.IsEqual(k.Q)
-}
-
 func (p Point) Draw(s float64, ctx *canvas.Context) {
 	ctx.DrawPath(p.X, p.Y, canvas.Circle(s))
 }
 
+// Distance between two points
+func Distance(p Point, q Point) float64 {
+	return math.Sqrt(math.Pow(q.X-p.X, 2) + math.Pow(q.Y-p.Y, 2))
+}
+
+// SquaredDistance is the square of the distance between two points
+func SquaredDistance(p Point, q Point) float64 {
+	return math.Pow(q.X-p.X, 2) + math.Pow(q.Y-p.Y, 2)
+}
+
+// Line functions
 // String representation of a line, useful for debugging
 func (l Line) String() string {
 	return fmt.Sprintf("(%f, %f) -> (%f, %f)", l.P.X, l.P.Y, l.Q.X, l.Q.Y)
+}
+
+func (l Line) IsEqual(k Line) bool {
+	return l.P.IsEqual(k.P) && l.Q.IsEqual(k.Q)
 }
 
 func (l Line) Angle() float64 {
@@ -138,16 +166,6 @@ func (l Line) Draw(ctx *canvas.Context) {
 	ctx.Stroke()
 }
 
-// Distance between two points
-func Distance(p Point, q Point) float64 {
-	return math.Sqrt(math.Pow(q.X-p.X, 2) + math.Pow(q.Y-p.Y, 2))
-}
-
-// SquaredDistance is the square of the distance between two points
-func SquaredDistance(p Point, q Point) float64 {
-	return math.Pow(q.X-p.X, 2) + math.Pow(q.Y-p.Y, 2)
-}
-
 // Midpoint Calculates the midpoint between two points
 func Midpoint(p Point, q Point) Point {
 	return Point{X: 0.5 * (p.X + q.X), Y: 0.5 * (p.Y + q.Y)}
@@ -189,6 +207,8 @@ func (l Line) ParallelTo(k Line) bool {
 	d := a1*b2 - a2*b1
 	return d == 0
 }
+
+// Curve functions
 
 // Length Calculates the length of the line segments of a curve
 func (c *Curve) Length() float64 {
@@ -349,10 +369,7 @@ func (c *Curve) Draw(ctx *canvas.Context) {
 	ctx.Stroke()
 }
 
-type Circle struct {
-	Center Point
-	Radius float64
-}
+// Circle functions
 
 func (c *Circle) Draw(ctx *canvas.Context) {
 	ctx.DrawPath(c.Center.X, c.Center.Y, canvas.Circle(c.Radius))
@@ -376,6 +393,8 @@ func (c *Circle) ContainsPoint(p Point) bool {
 func (c *Circle) PointOnEdge(p Point) bool {
 	return Equalf(Distance(c.Center, p), c.Radius)
 }
+
+// Rect functions
 
 // ContainsPoint determines if a point lies within a rectangle
 func (r *Rect) ContainsPoint(p Point) bool {
@@ -430,4 +449,35 @@ func (r *Rect) Intersects(rect Rect) bool {
 func (r *Rect) Draw(ctx *canvas.Context) {
 	rect := canvas.Rectangle(r.W, r.H)
 	ctx.DrawPath(r.X, r.Y, rect)
+}
+
+// Triangle functions
+
+func (t *Triangle) Draw(ctx *canvas.Context) {
+	ctx.MoveTo(t.A.X, t.A.Y)
+	ctx.LineTo(t.B.X, t.B.Y)
+	ctx.LineTo(t.C.X, t.C.Y)
+	ctx.Close()
+}
+
+func (t *Triangle) Area() float64 {
+	// Heron's formula
+	a := Line{P: t.A, Q: t.B}.Length()
+	b := Line{P: t.B, Q: t.C}.Length()
+	c := Line{P: t.C, Q: t.A}.Length()
+	s := (a + b + c) / 2
+	return math.Sqrt(s * (s - a) * (s - b) * (s - c))
+}
+
+func (t *Triangle) Perimeter() float64 {
+	a := Line{P: t.A, Q: t.B}.Length()
+	b := Line{P: t.B, Q: t.C}.Length()
+	c := Line{P: t.C, Q: t.A}.Length()
+	return a + b + c
+}
+
+func (t *Triangle) Centroid() Point {
+	x := (t.A.X + t.B.X + t.C.X) / 3
+	y := (t.A.Y + t.B.Y + t.C.Y) / 3
+	return Point{X: x, Y: y}
 }
