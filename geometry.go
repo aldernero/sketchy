@@ -267,6 +267,10 @@ func (c *Curve) LastLine() Line {
 	}
 }
 
+func (c *Curve) AddPoint(x, y float64) {
+	c.Points = append(c.Points, Point{X: x, Y: y})
+}
+
 // Lerp calculates a point a given percentage along a curve
 func (c *Curve) Lerp(percentage float64) Point {
 	var point Point

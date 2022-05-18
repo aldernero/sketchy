@@ -8,7 +8,6 @@ require (
 	github.com/ojrac/opensimplex-go v1.0.2
 	github.com/stretchr/testify v1.7.0
 	github.com/tdewolff/canvas v0.0.0-20220224205349-b6bbc6a34308
-	golang.org/x/exp v0.0.0-20220218215828-6cf2b201936e
 	golang.org/x/image v0.0.0-20211028202545-6944b10bf410
 )
 

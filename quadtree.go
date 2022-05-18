@@ -150,6 +150,67 @@ func (q *QuadTree) Query(r Rect) []Point {
 	return results
 }
 
+func (q *QuadTree) QueryExcludeIndex(r Rect, index int) []Point {
+	var results = []Point{}
+
+	if q.boundary.IsDisjoint(r) {
+		return results
+	}
+
+	for _, p := range q.points {
+		if r.ContainsPoint(p.Point) && p.Index != index {
+			results = append(results, p.Point)
+		}
+	}
+
+	if q.ne == nil {
+		return results
+	}
+
+	results = append(results, q.ne.QueryExcludeIndex(r, index)...)
+	results = append(results, q.se.QueryExcludeIndex(r, index)...)
+	results = append(results, q.sw.QueryExcludeIndex(r, index)...)
+	results = append(results, q.nw.QueryExcludeIndex(r, index)...)
+
+	return results
+}
+
+func (q *QuadTree) QueryCircle(center Point, radius float64) []Point {
+	rect := Rect{
+		X: center.X - radius,
+		Y: center.Y - radius,
+		W: radius,
+		H: radius,
+	}
+	rectQuery := q.Query(rect)
+	var results []Point
+	R2 := radius * radius
+	for _, p := range rectQuery {
+		if SquaredDistance(center, p) < R2 {
+			results = append(results, p)
+		}
+	}
+	return results
+}
+
+func (q *QuadTree) QueryCircleExcludeIndex(center Point, radius float64, index int) []Point {
+	rect := Rect{
+		X: center.X - radius,
+		Y: center.Y - radius,
+		W: radius,
+		H: radius,
+	}
+	rectQuery := q.QueryExcludeIndex(rect, index)
+	var results []Point
+	R2 := radius * radius
+	for _, p := range rectQuery {
+		if SquaredDistance(center, p) < R2 {
+			results = append(results, p)
+		}
+	}
+	return results
+}
+
 func (q *QuadTree) NearestNeighbors(point IndexPoint, k int) []IndexPoint {
 	var result []IndexPoint
 	if k <= 0 {
