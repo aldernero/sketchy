@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	gaul "github.com/aldernero/gaul"
 	"github.com/tdewolff/canvas"
 	"log"
 
@@ -11,7 +12,7 @@ import (
 
 var synthwavePalette sketchy.Gradient
 
-func drawLines(l sketchy.Line, n int, p float64, ctx *canvas.Context) {
+func drawLines(l gaul.Line, n int, p float64, ctx *canvas.Context) {
 	if n == 0 {
 		return
 	}
@@ -20,17 +21,17 @@ func drawLines(l sketchy.Line, n int, p float64, ctx *canvas.Context) {
 	right := l.Q
 	L := l.Length()
 	pb := l.PerpendicularBisector(p * L)
-	colorPercent := sketchy.Clamp(0, 1, sketchy.Map(0.5, 25, 0, 1, L))
+	colorPercent := gaul.Clamp(0, 1, gaul.Map(0.5, 25, 0, 1, L))
 	if n%2 == 0 {
 		colorPercent = 1 - colorPercent
 	}
 	ctx.SetStrokeColor(synthwavePalette.Color(colorPercent))
 	pb.Draw(ctx)
 	ctx.Stroke()
-	drawLines(sketchy.Line{P: middle, Q: pb.P}, n-1, p, ctx)
-	drawLines(sketchy.Line{P: middle, Q: pb.Q}, n-1, p, ctx)
-	drawLines(sketchy.Line{P: left, Q: middle}, n-1, p, ctx)
-	drawLines(sketchy.Line{P: middle, Q: right}, n-1, p, ctx)
+	drawLines(gaul.Line{P: middle, Q: pb.P}, n-1, p, ctx)
+	drawLines(gaul.Line{P: middle, Q: pb.Q}, n-1, p, ctx)
+	drawLines(gaul.Line{P: left, Q: middle}, n-1, p, ctx)
+	drawLines(gaul.Line{P: middle, Q: right}, n-1, p, ctx)
 }
 
 func update(s *sketchy.Sketch) {
@@ -40,9 +41,9 @@ func update(s *sketchy.Sketch) {
 func draw(s *sketchy.Sketch, c *canvas.Context) {
 	// Drawing code goes here
 	c.SetStrokeWidth(0.5)
-	line := sketchy.Line{
-		P: sketchy.Point{X: 10, Y: c.Height() / 2},
-		Q: sketchy.Point{X: c.Width() - 10, Y: c.Height() / 2},
+	line := gaul.Line{
+		P: gaul.Point{X: 10, Y: c.Height() / 2},
+		Q: gaul.Point{X: c.Width() - 10, Y: c.Height() / 2},
 	}
 	line.Draw(c)
 	drawLines(line, int(s.Slider("depth")), s.Slider("persistence"), c)

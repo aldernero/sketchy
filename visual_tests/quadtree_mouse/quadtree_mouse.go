@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	gaul "github.com/aldernero/gaul"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"github.com/tdewolff/canvas"
 	"image/color"
@@ -12,9 +13,9 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
-var qt *sketchy.QuadTree
+var qt *gaul.QuadTree
 
-var nearestPoints []sketchy.IndexPoint
+var nearestPoints []gaul.IndexPoint
 var count int
 
 func update(s *sketchy.Sketch) {
@@ -23,7 +24,7 @@ func update(s *sketchy.Sketch) {
 		qt.Clear()
 		count = 0
 	}
-	nearestPoints = []sketchy.IndexPoint{}
+	nearestPoints = []gaul.IndexPoint{}
 	if inpututil.IsMouseButtonJustReleased(ebiten.MouseButtonLeft) {
 		x, y := ebiten.CursorPosition()
 		if s.PointInSketchArea(float64(x), float64(y)) {
@@ -52,7 +53,7 @@ func draw(s *sketchy.Sketch, c *canvas.Context) {
 	} else {
 		qt.Draw(c)
 	}
-	queryRect := sketchy.Rect{
+	queryRect := gaul.Rect{
 		X: 0.4 * c.Width(),
 		Y: 0.4 * c.Height(),
 		W: 0.2 * c.Width(),
@@ -94,7 +95,7 @@ func main() {
 	s.Updater = update
 	s.Drawer = draw
 	s.Init()
-	qt = sketchy.NewQuadTree(sketchy.Rect{
+	qt = gaul.NewQuadTree(gaul.Rect{
 		X: 0,
 		Y: 0,
 		W: s.Width(),

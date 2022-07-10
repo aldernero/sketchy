@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	gaul "github.com/aldernero/gaul"
 	"github.com/tdewolff/canvas"
 	"image/color"
 	"log"
@@ -10,19 +11,19 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
-var lissa = sketchy.Lissajous{Nx: 3, Ny: 2}
+var lissa = gaul.Lissajous{Nx: 3, Ny: 2}
 
 func update(s *sketchy.Sketch) {
 	lissa.Nx = int(s.Slider("nx"))
 	lissa.Ny = int(s.Slider("ny"))
 	lissa.Px += s.Slider("phaseChange")
-	lissa.Py = sketchy.Deg2Rad(s.Slider("yphase"))
+	lissa.Py = gaul.Deg2Rad(s.Slider("yphase"))
 }
 
 func draw(s *sketchy.Sketch, c *canvas.Context) {
 	radius := s.Slider("radius")
-	origin := sketchy.Point{X: c.Width() / 2, Y: c.Height() / 2}
-	curve := sketchy.GenLissajous(lissa, 1000, origin, radius)
+	origin := gaul.Point{X: c.Width() / 2, Y: c.Height() / 2}
+	curve := gaul.GenLissajous(lissa, 1000, origin, radius)
 	c.SetStrokeColor(color.CMYK{C: 200})
 	c.SetStrokeWidth(1)
 	c.MoveTo(curve.Points[0].X, curve.Points[0].Y)

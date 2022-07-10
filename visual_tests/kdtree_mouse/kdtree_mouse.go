@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	gaul "github.com/aldernero/gaul"
 	"github.com/aldernero/sketchy"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
@@ -11,9 +12,9 @@ import (
 	"strconv"
 )
 
-var kdtree *sketchy.KDTree
+var kdtree *gaul.KDTree
 
-var nearestPoints []sketchy.IndexPoint
+var nearestPoints []gaul.IndexPoint
 var count int
 
 func update(s *sketchy.Sketch) {
@@ -22,7 +23,7 @@ func update(s *sketchy.Sketch) {
 		kdtree.Clear()
 		count = 0
 	}
-	nearestPoints = []sketchy.IndexPoint{}
+	nearestPoints = []gaul.IndexPoint{}
 	if inpututil.IsMouseButtonJustReleased(ebiten.MouseButtonLeft) {
 		x, y := ebiten.CursorPosition()
 		if s.PointInSketchArea(float64(x), float64(y)) {
@@ -51,7 +52,7 @@ func draw(s *sketchy.Sketch, c *canvas.Context) {
 	} else {
 		kdtree.Draw(c)
 	}
-	queryRect := sketchy.Rect{
+	queryRect := gaul.Rect{
 		X: 0.4 * c.Width(),
 		Y: 0.4 * c.Height(),
 		W: 0.2 * c.Width(),
@@ -95,13 +96,13 @@ func main() {
 	s.Init()
 	w := s.Width()
 	h := s.Height()
-	rect := sketchy.Rect{
+	rect := gaul.Rect{
 		X: 0,
 		Y: 0,
 		W: w,
 		H: h,
 	}
-	kdtree = sketchy.NewKDTree(rect)
+	kdtree = gaul.NewKDTree(rect)
 	ebiten.SetWindowSize(int(s.ControlWidth+s.SketchWidth), int(s.SketchHeight))
 	ebiten.SetWindowTitle("Sketchy - " + s.Title)
 	ebiten.SetWindowResizable(false)

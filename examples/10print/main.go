@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	gaul "github.com/aldernero/gaul"
 	"github.com/tdewolff/canvas"
 	"image/color"
 	"log"
@@ -26,7 +27,7 @@ type Truchet struct {
 	rows  int
 	cols  int
 	tiles []Tile
-	rng   sketchy.Rng
+	rng   gaul.Rng
 }
 
 func (t *Truchet) init(r int, c int) {

@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	gaul "github.com/aldernero/gaul"
 	"github.com/tdewolff/canvas"
 	"image/color"
 	"log"
@@ -18,14 +19,14 @@ func update(s *sketchy.Sketch) {
 
 func draw(s *sketchy.Sketch, c *canvas.Context) {
 	// Drawing code goes here
-	var points []sketchy.Point
-	ls := sketchy.Linspace(0, sketchy.Tau, int(s.Slider("num_points"))+1, true)
+	var points []gaul.Point
+	ls := gaul.Linspace(0, gaul.Tau, int(s.Slider("num_points"))+1, true)
 	for _, i := range ls {
 		x := 0.5*c.Width() + 50*math.Cos(i)
 		y := 0.5*c.Height() + 50*math.Sin(i)
-		points = append(points, sketchy.Point{X: x, Y: y})
+		points = append(points, gaul.Point{X: x, Y: y})
 	}
-	curve := sketchy.Curve{Points: points, Closed: true}
+	curve := gaul.Curve{Points: points, Closed: true}
 	c.SetStrokeColor(color.White)
 	curve.Draw(c)
 	c.SetStrokeColor(sketchy.StringToColor("magenta"))
@@ -33,9 +34,9 @@ func draw(s *sketchy.Sketch, c *canvas.Context) {
 	for i := 0; i < len(points)-1; i++ {
 		p := points[i]
 		q := points[i+1]
-		l := sketchy.Line{P: p, Q: q}
+		l := gaul.Line{P: p, Q: q}
 		m := l.Midpoint()
-		vec := sketchy.Vec2{X: q.X - p.X, Y: q.Y - p.Y}
+		vec := gaul.Vec2{X: q.X - p.X, Y: q.Y - p.Y}
 		norm := vec.UnitNormal()
 		norm = norm.Scale(s.Slider("scale"))
 		if s.Tick == 1 {

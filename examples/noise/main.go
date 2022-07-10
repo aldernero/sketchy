@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	gaul "github.com/aldernero/gaul"
 	"github.com/tdewolff/canvas"
 	"image/color"
 	"log"
@@ -39,12 +40,12 @@ func draw(s *sketchy.Sketch, c *canvas.Context) {
 		for y := 0.0; y < s.SketchHeight; y += cellSize {
 			noise := s.Rand.Noise3D(x, y, 0)
 			if !s.Toggle("monochrome") {
-				hue := sketchy.Map(0, 1, 0, 360, noise)
+				hue := gaul.Map(0, 1, 0, 360, noise)
 				cellColor := colorful.Hsl(hue, 0.5, 0.5)
 				c.SetFillColor(cellColor)
 				c.SetStrokeColor(cellColor)
 			} else {
-				gray := sketchy.Map(0, 1, 0, 255, noise)
+				gray := gaul.Map(0, 1, 0, 255, noise)
 				cellColor := color.Gray{Y: uint8(gray)}
 				c.SetFillColor(cellColor)
 				c.SetStrokeColor(cellColor)

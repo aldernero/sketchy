@@ -1,14 +1,14 @@
 package sketchy
 
 import (
+	gaul "github.com/aldernero/gaul"
+	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"github.com/tdewolff/canvas"
 	"image/color"
 	"math"
 	"math/rand"
 	"strconv"
-
-	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/hajimehoshi/ebiten/v2/inpututil"
 )
 
 const (
@@ -35,22 +35,22 @@ const (
 )
 
 type Slider struct {
-	Name               string  `json:"Name"`
-	Pos                Point   `json:"-"`
-	Width              float64 `json:"Width"`
-	Height             float64 `json:"Height"`
-	MinVal             float64 `json:"MinVal"`
-	MaxVal             float64 `json:"MaxVal"`
-	Val                float64 `json:"Val"`
-	Incr               float64 `json:"Incr"`
-	OutlineColor       string  `json:"OutlineColor"`
-	BackgroundColor    string  `json:"BackgroundColor"`
-	FillColor          string  `json:"FillColor"`
-	UseGradientFill    bool    `json:"UseGradientFill"`
-	GradientStartColor string  `json:"GradientStartColor"`
-	GradientEndColor   string  `json:"GradientEndColor"`
-	TextColor          string  `json:"TextColor"`
-	DrawRect           bool    `json:"DrawRect"`
+	Name               string     `json:"Name"`
+	Pos                gaul.Point `json:"-"`
+	Width              float64    `json:"Width"`
+	Height             float64    `json:"Height"`
+	MinVal             float64    `json:"MinVal"`
+	MaxVal             float64    `json:"MaxVal"`
+	Val                float64    `json:"Val"`
+	Incr               float64    `json:"Incr"`
+	OutlineColor       string     `json:"OutlineColor"`
+	BackgroundColor    string     `json:"BackgroundColor"`
+	FillColor          string     `json:"FillColor"`
+	UseGradientFill    bool       `json:"UseGradientFill"`
+	GradientStartColor string     `json:"GradientStartColor"`
+	GradientEndColor   string     `json:"GradientEndColor"`
+	TextColor          string     `json:"TextColor"`
+	DrawRect           bool       `json:"DrawRect"`
 	colors             ColorConfig
 	DidJustChange      bool `json:"-"`
 	fontFamily         *canvas.FontFamily
@@ -58,16 +58,16 @@ type Slider struct {
 }
 
 type Toggle struct {
-	Name            string  `json:"Name"`
-	Pos             Point   `json:"-"`
-	Width           float64 `json:"Width"`
-	Height          float64 `json:"Height"`
-	Checked         bool    `json:"Checked"`
-	IsButton        bool    `json:"IsButton"`
-	OutlineColor    string  `json:"OutlineColor"`
-	BackgroundColor string  `json:"BackgroundColor"`
-	FillColor       string  `json:"FillColor"`
-	TextColor       string  `json:"TextColor"`
+	Name            string     `json:"Name"`
+	Pos             gaul.Point `json:"-"`
+	Width           float64    `json:"Width"`
+	Height          float64    `json:"Height"`
+	Checked         bool       `json:"Checked"`
+	IsButton        bool       `json:"IsButton"`
+	OutlineColor    string     `json:"OutlineColor"`
+	BackgroundColor string     `json:"BackgroundColor"`
+	FillColor       string     `json:"FillColor"`
+	TextColor       string     `json:"TextColor"`
 	colors          ColorConfig
 	DidJustChange   bool `json:"-"`
 	wasPressed      bool
@@ -76,15 +76,15 @@ type Toggle struct {
 }
 
 func (s *Slider) GetPercentage() float64 {
-	return Map(s.MinVal, s.MaxVal, 0, 1, s.Val)
+	return gaul.Map(s.MinVal, s.MaxVal, 0, 1, s.Val)
 }
 
-func (s *Slider) GetRect() Rect {
+func (s *Slider) GetRect() gaul.Rect {
 	x := s.Pos.X - SliderHPadding
 	y := s.Pos.Y - SliderVPadding
 	w := s.Width + 2*SliderHPadding
 	h := s.Height + TextHeight + 2*SliderVPadding
-	return Rect{X: x, Y: y, W: w, H: h}
+	return gaul.Rect{X: x, Y: y, W: w, H: h}
 }
 
 func (s *Slider) IsInside(x float64, y float64) bool {
@@ -94,7 +94,7 @@ func (s *Slider) IsInside(x float64, y float64) bool {
 
 func (s *Slider) Update(x float64) {
 	totalIncr := math.Round((s.MaxVal - s.MinVal) / s.Incr)
-	pct := Map(s.Pos.X, s.Pos.X+s.Width, 0, 1, x)
+	pct := gaul.Map(s.Pos.X, s.Pos.X+s.Width, 0, 1, x)
 	s.Val = s.MinVal + pct*totalIncr*s.Incr
 }
 
@@ -117,7 +117,7 @@ func (s *Slider) CheckAndUpdate(ctx *canvas.Canvas) (bool, error) {
 				} else {
 					s.Val += s.Incr
 				}
-				s.Val = Clamp(s.MinVal, s.MaxVal, s.Val)
+				s.Val = gaul.Clamp(s.MinVal, s.MaxVal, s.Val)
 				didChange = true
 			}
 		}
@@ -127,7 +127,7 @@ func (s *Slider) CheckAndUpdate(ctx *canvas.Canvas) (bool, error) {
 }
 
 func (s *Slider) Randomize() {
-	val := Map(0, 1, s.MinVal, s.MaxVal, rand.Float64())
+	val := gaul.Map(0, 1, s.MinVal, s.MaxVal, rand.Float64())
 	s.Val = val
 }
 
@@ -188,7 +188,7 @@ func (s *Slider) Draw(ctx *canvas.Context) {
 func NewIntStepSlider(name string, minVal int, maxVal int) Slider {
 	s := Slider{
 		Name:   name,
-		Pos:    Point{},
+		Pos:    gaul.Point{},
 		Width:  0,
 		MinVal: float64(minVal),
 		MaxVal: float64(maxVal),
@@ -201,22 +201,22 @@ func NewIntStepSlider(name string, minVal int, maxVal int) Slider {
 func NewRadiansSlider(name string, steps int) Slider {
 	s := Slider{
 		Name:   name,
-		Pos:    Point{},
+		Pos:    gaul.Point{},
 		Width:  0,
 		MinVal: 0,
-		MaxVal: Tau,
+		MaxVal: gaul.Tau,
 		Val:    0,
-		Incr:   Tau / float64(steps),
+		Incr:   gaul.Tau / float64(steps),
 	}
 	return s
 }
 
-func (t *Toggle) GetRect() Rect {
+func (t *Toggle) GetRect() gaul.Rect {
 	x := t.Pos.X - ToggleHPadding
 	y := t.Pos.Y + ToggleVPadding
 	w := t.Width + 2*ToggleHPadding
 	h := t.Height + ToggleVPadding
-	return Rect{X: x, Y: y, W: w, H: h}
+	return gaul.Rect{X: x, Y: y, W: w, H: h}
 }
 
 func (t *Toggle) IsInside(x float64, y float64) bool {

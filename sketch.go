@@ -3,6 +3,7 @@ package sketchy
 import (
 	"encoding/json"
 	"fmt"
+	gaul "github.com/aldernero/gaul"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
@@ -52,7 +53,7 @@ type Sketch struct {
 	Updater                   SketchUpdater `json:"-"`
 	Drawer                    SketchDrawer  `json:"-"`
 	DidControlsChange         bool          `json:"-"`
-	Rand                      Rng           `json:"-"`
+	Rand                      gaul.Rng      `json:"-"`
 	sliderControlMap          map[string]int
 	ToggleControlMap          map[string]int `json:"-"`
 	controlColorConfig        ColorConfig
@@ -117,7 +118,7 @@ func (s *Sketch) Init() {
 	s.buildMaps()
 	s.parseColors()
 	s.FontFace = s.FontFamily.Face(14.0, color.White, canvas.FontRegular, canvas.FontNormal)
-	s.Rand = NewRng(s.RandomSeed)
+	s.Rand = gaul.NewRng(s.RandomSeed)
 	s.ControlCanvas = canvas.New(s.controlWidth(), s.Height())
 	s.SketchCanvas = canvas.New(s.Width(), s.Height())
 	ctx := canvas.NewContext(s.ControlCanvas)
@@ -219,14 +220,14 @@ func (s *Sketch) RandomizeSlider(name string) {
 }
 
 func (s *Sketch) PlaceControls(_ float64, _ float64, ctx *canvas.Context) {
-	var lastRect Rect
+	var lastRect gaul.Rect
 	for i := range s.Sliders {
 		if s.Sliders[i].Height == 0 {
 			s.Sliders[i].Height = SliderHeight
 		}
 		s.Sliders[i].Width = ctx.Width() - 2*SliderHPadding
 		rect := s.Sliders[i].GetRect()
-		s.Sliders[i].Pos = Point{
+		s.Sliders[i].Pos = gaul.Point{
 			X: SliderHPadding,
 			Y: ctx.Height() - (float64(i)*rect.H + s.Sliders[i].Height + 2*SliderVPadding) - 3*SliderVPadding,
 		}
@@ -243,7 +244,7 @@ func (s *Sketch) PlaceControls(_ float64, _ float64, ctx *canvas.Context) {
 		}
 		s.Toggles[i].Width = s.controlWidth() - 2*ToggleHPadding
 		rect := s.Toggles[i].GetRect()
-		s.Toggles[i].Pos = Point{
+		s.Toggles[i].Pos = gaul.Point{
 			X: ToggleHPadding,
 			Y: startY - (float64(i)*rect.H + s.Toggles[i].Height + ToggleVPadding),
 		}
@@ -308,7 +309,7 @@ func (s *Sketch) Draw(screen *ebiten.Image) {
 		ebitenutil.DebugPrint(screen, fmt.Sprintf("FPS: %0.2f", ebiten.CurrentFPS()))
 	}
 	if s.isSavingPNG {
-		fname := s.Prefix + "_" + GetTimestampString() + ".png"
+		fname := s.Prefix + "_" + gaul.GetTimestampString() + ".png"
 		err := renderers.Write(fname, s.SketchCanvas, canvas.DPI(s.RasterDPI))
 		if err != nil {
 			panic(err)
@@ -317,7 +318,7 @@ func (s *Sketch) Draw(screen *ebiten.Image) {
 		s.isSavingPNG = false
 	}
 	if s.isSavingSVG {
-		fname := s.Prefix + "_" + GetTimestampString() + ".svg"
+		fname := s.Prefix + "_" + gaul.GetTimestampString() + ".svg"
 		err := renderers.Write(fname, s.SketchCanvas)
 		if err != nil {
 			panic(err)
@@ -326,7 +327,7 @@ func (s *Sketch) Draw(screen *ebiten.Image) {
 		s.isSavingSVG = false
 	}
 	if s.isSavingScreen {
-		fname := s.Prefix + "_" + GetTimestampString() + ".png"
+		fname := s.Prefix + "_" + gaul.GetTimestampString() + ".png"
 		sketchImage := screen.SubImage(s.getSketchImageRect())
 		f, err := os.Create(fname)
 		if err != nil {
@@ -352,13 +353,13 @@ func (s *Sketch) Draw(screen *ebiten.Image) {
 }
 
 // Converts window coordinates (pixels, upper left origin) to canvas coordinates (mm, lower left origin)
-func (s *Sketch) CanvasCoords(x, y float64) Point {
-	return Point{X: MmPerPx * (x - s.ControlWidth), Y: MmPerPx * (s.SketchHeight - y)}
+func (s *Sketch) CanvasCoords(x, y float64) gaul.Point {
+	return gaul.Point{X: MmPerPx * (x - s.ControlWidth), Y: MmPerPx * (s.SketchHeight - y)}
 }
 
 // Converts window coordinates to sketch coordinates
-func (s *Sketch) SketchCoords(x, y float64) Point {
-	return Point{X: MmPerPx * (x - s.ControlWidth), Y: MmPerPx * (s.SketchHeight - y)}
+func (s *Sketch) SketchCoords(x, y float64) gaul.Point {
+	return gaul.Point{X: MmPerPx * (x - s.ControlWidth), Y: MmPerPx * (s.SketchHeight - y)}
 }
 
 // Coordinates are in pixels, useful when checkin if mouse clicks are in the sketch area
@@ -366,8 +367,8 @@ func (s *Sketch) PointInSketchArea(x, y float64) bool {
 	return x > s.ControlWidth && x <= s.ControlWidth+s.SketchWidth && y >= 0 && y <= s.SketchHeight
 }
 
-func (s *Sketch) CanvasRect() Rect {
-	return Rect{X: 0, Y: 0, W: s.Width(), H: s.Height()}
+func (s *Sketch) CanvasRect() gaul.Rect {
+	return gaul.Rect{X: 0, Y: 0, W: s.Width(), H: s.Height()}
 }
 
 func (s *Sketch) DumpState() {
@@ -418,7 +419,7 @@ func (s *Sketch) parseColors() {
 
 func (s *Sketch) saveConfig() {
 	configJson, _ := json.MarshalIndent(s, "", "    ")
-	fname := s.Prefix + "_config_" + GetTimestampString() + ".json"
+	fname := s.Prefix + "_config_" + gaul.GetTimestampString() + ".json"
 	err := ioutil.WriteFile(fname, configJson, 0644)
 	if err != nil {
 		fmt.Println(err)

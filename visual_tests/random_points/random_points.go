@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	gaul "github.com/aldernero/gaul"
 	"github.com/tdewolff/canvas"
 	"image/color"
 	"log"
@@ -23,7 +24,7 @@ func update(s *sketchy.Sketch) {
 func draw(s *sketchy.Sketch, c *canvas.Context) {
 	c.SetStrokeColor(color.White)
 	c.SetFillColor(color.Transparent)
-	var points []sketchy.Point
+	var points []gaul.Point
 	num := int(s.Slider("points"))
 	if s.Toggle("OpenSimplex") {
 		points = s.Rand.NoisyRandomPoints(num, s.Slider("threshold"), s.CanvasRect())

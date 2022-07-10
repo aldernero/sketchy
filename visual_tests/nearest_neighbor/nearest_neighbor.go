@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	gaul "github.com/aldernero/gaul"
 	"github.com/tdewolff/canvas"
 	"image/color"
 	"log"
@@ -13,27 +14,27 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
-var points []sketchy.Point
-var tree *sketchy.KDTree
-var currentPoint sketchy.IndexPoint
+var points []gaul.Point
+var tree *gaul.KDTree
+var currentPoint gaul.IndexPoint
 
 func setup(s *sketchy.Sketch) {
-	points = []sketchy.Point{}
+	points = []gaul.Point{}
 	rect := s.CanvasRect()
-	tree = sketchy.NewKDTree(rect)
-	currentPoint = sketchy.IndexPoint{
+	tree = gaul.NewKDTree(rect)
+	currentPoint = gaul.IndexPoint{
 		Index: -1,
-		Point: sketchy.Point{X: 0, Y: 0},
+		Point: gaul.Point{X: 0, Y: 0},
 	}
 	// Get a sample of random points, add them to the tree
 	numPoints := int(s.Slider("numPoints"))
 	radius := 0.25 * rect.W
 	for i := 0; i < numPoints; i++ {
 		r := rand.Float64() * radius
-		theta := rand.Float64() * sketchy.Tau
-		point := sketchy.IndexPoint{
+		theta := rand.Float64() * gaul.Tau
+		point := gaul.IndexPoint{
 			Index: i,
-			Point: sketchy.Point{
+			Point: gaul.Point{
 				X: r*math.Cos(theta) + rect.W/2,
 				Y: r*math.Sin(theta) + rect.H/2,
 			},
@@ -73,7 +74,7 @@ func draw(s *sketchy.Sketch, c *canvas.Context) {
 	}
 	c.SetStrokeColor(color.White)
 	c.SetStrokeWidth(0.3)
-	curve := sketchy.Curve{
+	curve := gaul.Curve{
 		Points: points,
 		Closed: false,
 	}

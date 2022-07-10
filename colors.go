@@ -1,6 +1,7 @@
 package sketchy
 
 import (
+	gaul "github.com/aldernero/gaul"
 	"github.com/lucasb-eyer/go-colorful"
 	"golang.org/x/image/colornames"
 	"image/color"
@@ -82,7 +83,7 @@ func NewSimpleGradientFromNamed(c1, c2 string) SimpleGradient {
 }
 
 func (sg *SimpleGradient) Color(percentage float64) color.Color {
-	val := Clamp(0, 1, percentage)
+	val := gaul.Clamp(0, 1, percentage)
 	c1, _ := colorful.MakeColor(sg.startColor)
 	c2, _ := colorful.MakeColor(sg.endColor)
 	return c1.BlendHcl(c2, val)
@@ -109,7 +110,7 @@ func NewGradientFromNamed(names []string) Gradient {
 }
 
 func (g *Gradient) Color(percentage float64) color.Color {
-	val := Clamp(0, 1, percentage)
+	val := gaul.Clamp(0, 1, percentage)
 	n := g.NumStops()
 	if n == 1 {
 		return g.stops[0]
@@ -120,7 +121,7 @@ func (g *Gradient) Color(percentage float64) color.Color {
 	if val == 1 {
 		return g.stops[n-1]
 	}
-	i := Map(0, 1, 0, float64(n)-1, percentage)
+	i := gaul.Map(0, 1, 0, float64(n)-1, percentage)
 	lerp := i - math.Floor(i)
 	index := int(math.Floor(i))
 	c1, _ := colorful.MakeColor(g.stops[index])

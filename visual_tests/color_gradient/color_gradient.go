@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	gaul "github.com/aldernero/gaul"
 	"github.com/tdewolff/canvas"
 	"log"
 
@@ -23,14 +24,14 @@ func draw(s *sketchy.Sketch, c *canvas.Context) {
 	left := 0.05 * W
 	right := 0.95 * W
 	N := 100
-	x := sketchy.Linspace(left, right, N, true)
+	x := gaul.Linspace(left, right, N, true)
 	dx := 1.10 * (right - left) / float64(N)
 	dy := 5.0
 	c.SetStrokeWidth(1)
 	c.SetStrokeCapper(canvas.ButtCap)
 	c.SetStrokeJoiner(canvas.MiterJoin)
 	for _, i := range x {
-		p := sketchy.Map(0.05*W, 0.95*W, 0, 1, i)
+		p := gaul.Map(0.05*W, 0.95*W, 0, 1, i)
 		c.SetFillColor(cg1.Color(p))
 		c.SetStrokeColor(cg1.Color(p))
 		c.DrawPath(i, H-7, canvas.Rectangle(dx, dy))
@@ -39,7 +40,7 @@ func draw(s *sketchy.Sketch, c *canvas.Context) {
 		c.DrawPath(i, H-30, canvas.Rectangle(dx, dy))
 	}
 	p := s.Slider("percentage")
-	xPos := sketchy.Map(0, 1, 0.05*W, 0.95*W, p)
+	xPos := gaul.Map(0, 1, 0.05*W, 0.95*W, p)
 	c.SetFillColor(cg1.Color(p))
 	c.SetStrokeColor(cg1.Color(p))
 	c.DrawPath(xPos-2.5, H-17, canvas.Rectangle(5, 5))
