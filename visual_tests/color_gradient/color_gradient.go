@@ -72,7 +72,7 @@ func main() {
 	cg2 = sketchy.NewGradientFromNamed([]string{"blue", "green", "yellow", "red"})
 	ebiten.SetWindowSize(int(s.ControlWidth+s.SketchWidth), int(s.SketchHeight))
 	ebiten.SetWindowTitle("Sketchy - " + s.Title)
-	ebiten.SetWindowResizable(false)
+	ebiten.SetWindowResizingMode(ebiten.WindowResizingModeDisabled)
 	if err := ebiten.RunGame(s); err != nil {
 		log.Fatal(err)
 	}
