@@ -1,7 +1,7 @@
 package sketchy
 
 import (
-	gaul "github.com/aldernero/gaul"
+	"github.com/aldernero/gaul"
 	"github.com/lucasb-eyer/go-colorful"
 	"golang.org/x/image/colornames"
 	"image/color"

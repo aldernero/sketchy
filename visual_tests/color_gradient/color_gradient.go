@@ -2,7 +2,7 @@ package main
 
 import (
 	"flag"
-	gaul "github.com/aldernero/gaul"
+	"github.com/aldernero/gaul"
 	"github.com/tdewolff/canvas"
 	"log"
 

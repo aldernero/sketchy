@@ -1,7 +1,7 @@
 package sketchy
 
 import (
-	gaul "github.com/aldernero/gaul"
+	"github.com/aldernero/gaul"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"github.com/tdewolff/canvas"

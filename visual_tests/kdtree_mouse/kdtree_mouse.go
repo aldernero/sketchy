@@ -2,7 +2,7 @@ package main
 
 import (
 	"flag"
-	gaul "github.com/aldernero/gaul"
+	"github.com/aldernero/gaul"
 	"github.com/aldernero/sketchy"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"

@@ -3,7 +3,7 @@ package sketchy
 import (
 	"encoding/json"
 	"fmt"
-	gaul "github.com/aldernero/gaul"
+	"github.com/aldernero/gaul"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"

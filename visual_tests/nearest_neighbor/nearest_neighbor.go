@@ -3,7 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
-	gaul "github.com/aldernero/gaul"
+	"github.com/aldernero/gaul"
 	"github.com/tdewolff/canvas"
 	"image/color"
 	"log"
