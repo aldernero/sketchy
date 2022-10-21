@@ -13,7 +13,6 @@ import (
 	"image"
 	"image/color"
 	"image/png"
-	"io/ioutil"
 	"log"
 	"math/rand"
 	"os"
@@ -420,7 +419,7 @@ func (s *Sketch) parseColors() {
 func (s *Sketch) saveConfig() {
 	configJson, _ := json.MarshalIndent(s, "", "    ")
 	fname := s.Prefix + "_config_" + gaul.GetTimestampString() + ".json"
-	err := ioutil.WriteFile(fname, configJson, 0644)
+	err := os.WriteFile(fname, configJson, 0644)
 	if err != nil {
 		fmt.Println(err)
 	}
