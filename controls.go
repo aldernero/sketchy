@@ -93,9 +93,9 @@ func (s *Slider) IsInside(x float64, y float64) bool {
 }
 
 func (s *Slider) Update(x float64) {
-	totalIncr := math.Round((s.MaxVal - s.MinVal) / s.Incr)
+	totalIncr := (s.MaxVal - s.MinVal) / s.Incr
 	pct := gaul.Map(s.Pos.X, s.Pos.X+s.Width, 0, 1, x)
-	s.Val = s.MinVal + pct*totalIncr*s.Incr
+	s.Val = s.MinVal + math.Round(pct*totalIncr)*s.Incr
 }
 
 func (s *Slider) CheckAndUpdate(ctx *canvas.Canvas) (bool, error) {
@@ -183,32 +183,6 @@ func (s *Slider) Draw(ctx *canvas.Context) {
 		path := canvas.Rectangle(rect.W, rect.H)
 		ctx.DrawPath(rect.X, rect.Y, path)
 	}
-}
-
-func NewIntStepSlider(name string, minVal int, maxVal int) Slider {
-	s := Slider{
-		Name:   name,
-		Pos:    gaul.Point{},
-		Width:  0,
-		MinVal: float64(minVal),
-		MaxVal: float64(maxVal),
-		Val:    float64(minVal),
-		Incr:   1,
-	}
-	return s
-}
-
-func NewRadiansSlider(name string, steps int) Slider {
-	s := Slider{
-		Name:   name,
-		Pos:    gaul.Point{},
-		Width:  0,
-		MinVal: 0,
-		MaxVal: gaul.Tau,
-		Val:    0,
-		Incr:   gaul.Tau / float64(steps),
-	}
-	return s
 }
 
 func (t *Toggle) GetRect() gaul.Rect {

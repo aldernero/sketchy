@@ -351,17 +351,17 @@ func (s *Sketch) Draw(screen *ebiten.Image) {
 	screen.DrawImage(ebiten.NewImageFromImage(img), op)
 }
 
-// Converts window coordinates (pixels, upper left origin) to canvas coordinates (mm, lower left origin)
+// CanvasCoords converts window coordinates (pixels, upper left origin) to canvas coordinates (mm, lower left origin)
 func (s *Sketch) CanvasCoords(x, y float64) gaul.Point {
 	return gaul.Point{X: MmPerPx * (x - s.ControlWidth), Y: MmPerPx * (s.SketchHeight - y)}
 }
 
-// Converts window coordinates to sketch coordinates
+// SketchCoords converts window coordinates to sketch coordinates
 func (s *Sketch) SketchCoords(x, y float64) gaul.Point {
 	return gaul.Point{X: MmPerPx * (x - s.ControlWidth), Y: MmPerPx * (s.SketchHeight - y)}
 }
 
-// Coordinates are in pixels, useful when checkin if mouse clicks are in the sketch area
+// PointInSketchArea calculates coordinates in pixels, useful when checkin if mouse clicks are in the sketch area
 func (s *Sketch) PointInSketchArea(x, y float64) bool {
 	return x > s.ControlWidth && x <= s.ControlWidth+s.SketchWidth && y >= 0 && y <= s.SketchHeight
 }
