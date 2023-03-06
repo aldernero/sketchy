@@ -232,7 +232,7 @@ func (s *Sketch) PlaceControls(_ float64, _ float64, ctx *canvas.Context) {
 		}
 		lastRect = s.Sliders[i].GetRect()
 	}
-	startY := lastRect.Y - 2*lastRect.H - 2*SliderVPadding
+	startY := lastRect.Y - lastRect.H - SliderVPadding
 	for i := range s.Toggles {
 		if s.Toggles[i].Height == 0 {
 			if s.Toggles[i].IsButton {
@@ -305,7 +305,7 @@ func (s *Sketch) Draw(screen *ebiten.Image) {
 	}
 	s.Drawer(s, ctx)
 	if s.ShowFPS {
-		ebitenutil.DebugPrint(screen, fmt.Sprintf("FPS: %0.2f", ebiten.CurrentFPS()))
+		ebitenutil.DebugPrint(screen, fmt.Sprintf("FPS: %0.2f", ebiten.ActualFPS()))
 	}
 	if s.isSavingPNG {
 		fname := s.Prefix + "_" + gaul.GetTimestampString() + ".png"
