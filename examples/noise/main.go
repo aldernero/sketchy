@@ -4,8 +4,11 @@ import (
 	"flag"
 	"github.com/aldernero/gaul"
 	"github.com/tdewolff/canvas"
+	"image"
 	"image/color"
 	"log"
+	"runtime"
+	"sync"
 
 	"github.com/aldernero/sketchy"
 	"github.com/hajimehoshi/ebiten/v2"
@@ -14,7 +17,34 @@ import (
 
 var tick int64
 
-func update(s *sketchy.Sketch) {
+type pixel struct {
+	x, y int
+	c    color.Color
+}
+
+type result []pixel
+
+var img *image.RGBA64
+var pxPerMm float64
+
+func calcNoise(s *sketchy.Sketch, mono bool, cs []pixel, results chan<- result, wg *sync.WaitGroup) {
+	defer wg.Done()
+	res := make(result, len(cs))
+	for i, cell := range cs {
+		noise := s.Rand.Noise3D(float64(cell.x), float64(cell.y), 0)
+		if !mono {
+			hue := gaul.Map(0, 1, 0, 360, noise)
+			cell.c = colorful.Hsl(hue, 0.5, 0.5)
+		} else {
+			gray := gaul.Map(0, 1, 0, 255, noise)
+			cell.c = color.Gray{Y: uint8(gray)}
+		}
+		res[i] = cell
+	}
+	results <- res
+}
+
+func setup(s *sketchy.Sketch) {
 	s.Rand.SetSeed(s.RandomSeed)
 	s.Rand.SetNoiseOctaves(int(s.Slider("octaves")))
 	s.Rand.SetNoisePersistence(s.Slider("persistence"))
@@ -24,35 +54,52 @@ func update(s *sketchy.Sketch) {
 	s.Rand.SetNoiseOffsetX(s.Slider("xoffset"))
 	s.Rand.SetNoiseOffsetY(s.Slider("yoffset"))
 	s.Rand.SetNoiseScaleZ(0.005)
-	s.Rand.SetNoiseOffsetZ(3 * float64(tick))
-	if s.Toggle("animate") {
-		tick++
+	img = image.NewRGBA64(image.Rect(0, 0, int(s.SketchWidth), int(s.SketchHeight)))
+	rect := img.Rect
+	W := rect.Dx()
+	H := rect.Dy()
+	pixels := make([]pixel, W*H)
+	for i := 0; i < W; i++ {
+		for j := 0; j < H; j++ {
+			pixels[i*H+j] = pixel{i, j, nil}
+		}
 	}
-	if s.Toggle("reset") {
-		tick = 0
+	numWorkers := runtime.NumCPU()
+	results := make(chan result, numWorkers)
+	var wg sync.WaitGroup
+	wg.Add(numWorkers)
+	mono := s.Toggle("monochrome")
+	for i := 0; i < numWorkers; i++ {
+		cs := pixels[i*len(pixels)/numWorkers : (i+1)*len(pixels)/numWorkers]
+		go calcNoise(s, mono, cs, results, &wg)
+	}
+	wg.Wait()
+	for i := 0; i < numWorkers; i++ {
+		r := <-results
+		for _, p := range r {
+			img.Set(p.x, p.y, p.c)
+		}
+	}
+	close(results)
+}
+
+func update(s *sketchy.Sketch) {
+	if s.DidControlsChange {
+		if s.Toggle("reset") {
+			tick = 0
+		}
+		setup(s)
+		return
+	}
+	if s.Toggle("animate") {
+		s.Rand.SetNoiseOffsetZ(2 * float64(tick))
+		setup(s)
+		tick++
 	}
 }
 
 func draw(s *sketchy.Sketch, c *canvas.Context) {
-	cellSize := s.Slider("cellSize")
-	//c.SetStrokeWidth(1)
-	for x := 0.0; x < s.SketchWidth; x += cellSize {
-		for y := 0.0; y < s.SketchHeight; y += cellSize {
-			noise := s.Rand.Noise3D(x, y, 0)
-			if !s.Toggle("monochrome") {
-				hue := gaul.Map(0, 1, 0, 360, noise)
-				cellColor := colorful.Hsl(hue, 0.5, 0.5)
-				c.SetFillColor(cellColor)
-				c.SetStrokeColor(cellColor)
-			} else {
-				gray := gaul.Map(0, 1, 0, 255, noise)
-				cellColor := color.Gray{Y: uint8(gray)}
-				c.SetFillColor(cellColor)
-				c.SetStrokeColor(cellColor)
-			}
-			c.DrawPath(x, y, canvas.Rectangle(cellSize, cellSize))
-		}
-	}
+	c.DrawImage(0, 0, img, canvas.Resolution(pxPerMm))
 }
 
 func main() {
@@ -74,6 +121,9 @@ func main() {
 	s.Updater = update
 	s.Drawer = draw
 	s.Init()
+	pxPerMm = s.SketchWidth / s.Width()
+	img = image.NewRGBA64(image.Rect(0, 0, int(s.SketchWidth), int(s.SketchHeight)))
+	setup(s)
 	ebiten.SetWindowSize(int(s.ControlWidth+s.SketchWidth), int(s.SketchHeight))
 	ebiten.SetWindowTitle("Sketchy - " + s.Title)
 	ebiten.SetWindowResizingMode(ebiten.WindowResizingModeDisabled)

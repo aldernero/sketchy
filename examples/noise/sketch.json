@@ -1,22 +1,14 @@
 {
     "Title": "OpenSimplex Noise Example",
     "SketchWidth": 800,
-    "SketchHeight": 800,
+    "SketchHeight": 600,
     "ControlWidth": 200,
     "Sliders": [
-        {
-            "Name": "cellSize",
-            "MinVal": 1,
-            "MaxVal": 40,
-            "Val": 5.0,
-            "Incr": 0.5,
-            "DrawRect": false
-        },
         {
             "Name": "octaves",
             "MinVal": 1,
             "MaxVal": 10,
-            "Val": 1,
+            "Val": 2,
             "Incr": 1,
             "DrawRect": false
         },
@@ -24,7 +16,7 @@
             "Name": "persistence",
             "MinVal": 0,
             "MaxVal": 2,
-            "Val": 0.9,
+            "Val": 0.23,
             "Incr": 0.01,
             "DrawRect": false
         },
@@ -32,7 +24,7 @@
             "Name": "lacunarity",
             "MinVal": 0,
             "MaxVal": 10,
-            "Val": 2,
+            "Val": 0.3,
             "Incr": 0.1,
             "DrawRect": false
         },
@@ -40,7 +32,7 @@
             "Name": "xscale",
             "MinVal": 0,
             "MaxVal": 0.1,
-            "Val": 0.005,
+            "Val": 0.0056,
             "Incr": 0.0001,
             "DrawRect": false
         },
@@ -48,7 +40,7 @@
             "Name": "yscale",
             "MinVal": 0,
             "MaxVal": 0.1,
-            "Val": 0.005,
+            "Val": 0.0035,
             "Incr": 0.0001,
             "DrawRect": false
         },
