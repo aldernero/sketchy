@@ -10,7 +10,7 @@ Below are a couple of screenshots from the example sketches:
 ![fractal_example](assets/images/fractal_example_screenshot.png)
 ### Noise
 
-![noise_example](assets/images/opensimplex_example_screenshot.png)
+![Screenshot_20230318_123516](https://user-images.githubusercontent.com/96601789/226129625-c8b5346f-0f84-47ba-aa8c-92ba6ba838d9.png)
 
 ### 10PRINT
 ![10print_example](assets/images/10print_example_screenshot.png)
