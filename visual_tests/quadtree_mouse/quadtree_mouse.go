@@ -104,8 +104,6 @@ func main() {
 	ebiten.SetWindowSize(int(s.ControlWidth+s.SketchWidth), int(s.SketchHeight))
 	ebiten.SetWindowTitle("Sketchy - " + s.Title)
 	ebiten.SetWindowResizingMode(ebiten.WindowResizingModeDisabled)
-	ebiten.SetFPSMode(ebiten.FPSModeVsyncOffMaximum)
-	ebiten.SetMaxTPS(ebiten.SyncWithFPS)
 	if err := ebiten.RunGame(s); err != nil {
 		log.Fatal(err)
 	}

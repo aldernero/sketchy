@@ -10,7 +10,7 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
-var synthwavePalette sketchy.Gradient
+var synthwavePalette gaul.Gradient
 
 func drawLines(l gaul.Line, n int, p float64, ctx *canvas.Context) {
 	if n == 0 {
@@ -69,7 +69,7 @@ func main() {
 	s.Updater = update
 	s.Drawer = draw
 	s.Init()
-	synthwavePalette = sketchy.NewGradientFromNamed([]string{"#1bbbd9", "#f900a4"})
+	synthwavePalette = gaul.NewGradientFromNamed([]string{"#1bbbd9", "#f900a4"})
 	ebiten.SetWindowSize(int(s.ControlWidth+s.SketchWidth), int(s.SketchHeight))
 	ebiten.SetWindowTitle("Sketchy - " + s.Title)
 	ebiten.SetWindowResizingMode(ebiten.WindowResizingModeDisabled)

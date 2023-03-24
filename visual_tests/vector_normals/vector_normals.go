@@ -29,7 +29,7 @@ func draw(s *sketchy.Sketch, c *canvas.Context) {
 	curve := gaul.Curve{Points: points, Closed: true}
 	c.SetStrokeColor(color.White)
 	curve.Draw(c)
-	c.SetStrokeColor(sketchy.StringToColor("magenta"))
+	c.SetStrokeColor(gaul.StringToColor("magenta"))
 	c.SetStrokeWidth(0.3)
 	for i := 0; i < len(points)-1; i++ {
 		p := points[i]

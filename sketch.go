@@ -55,8 +55,8 @@ type Sketch struct {
 	Rand                      gaul.Rng      `json:"-"`
 	sliderControlMap          map[string]int
 	ToggleControlMap          map[string]int `json:"-"`
-	controlColorConfig        ColorConfig
-	sketchColorConfig         ColorConfig
+	controlColorConfig        gaul.ColorConfig
+	sketchColorConfig         gaul.ColorConfig
 	isSavingPNG               bool
 	isSavingSVG               bool
 	isSavingScreen            bool
@@ -402,10 +402,10 @@ func (s *Sketch) buildMaps() {
 }
 
 func (s *Sketch) parseColors() {
-	s.controlColorConfig.Set(s.ControlBackgroundColor, BackgroundColorType, DefaultBackgroundColor)
-	s.controlColorConfig.Set(s.ControlOutlineColor, OutlineColorType, DefaultOutlineColor)
-	s.sketchColorConfig.Set(s.SketchBackgroundColor, BackgroundColorType, DefaultBackgroundColor)
-	s.sketchColorConfig.Set(s.SketchOutlineColor, OutlineColorType, DefaultSketchOutlineColor)
+	s.controlColorConfig.Set(s.ControlBackgroundColor, gaul.BackgroundColorType, DefaultBackgroundColor)
+	s.controlColorConfig.Set(s.ControlOutlineColor, gaul.OutlineColorType, DefaultOutlineColor)
+	s.sketchColorConfig.Set(s.SketchBackgroundColor, gaul.BackgroundColorType, DefaultBackgroundColor)
+	s.sketchColorConfig.Set(s.SketchOutlineColor, gaul.OutlineColorType, DefaultSketchOutlineColor)
 	for i := range s.Sliders {
 		s.Sliders[i].parseColors()
 		s.Sliders[i].SetFont(s.FontFamily)

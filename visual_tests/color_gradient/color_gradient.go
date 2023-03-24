@@ -10,8 +10,8 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
-var cg1 sketchy.SimpleGradient
-var cg2 sketchy.Gradient
+var cg1 gaul.SimpleGradient
+var cg2 gaul.Gradient
 
 func update(s *sketchy.Sketch) {
 	// Update logic goes here
@@ -68,8 +68,8 @@ func main() {
 	s.Updater = update
 	s.Drawer = draw
 	s.Init()
-	cg1 = sketchy.NewSimpleGradientFromNamed("cyan", "magenta")
-	cg2 = sketchy.NewGradientFromNamed([]string{"blue", "green", "yellow", "red"})
+	cg1 = gaul.NewSimpleGradientFromNamed("cyan", "magenta")
+	cg2 = gaul.NewGradientFromNamed([]string{"blue", "green", "yellow", "red"})
 	ebiten.SetWindowSize(int(s.ControlWidth+s.SketchWidth), int(s.SketchHeight))
 	ebiten.SetWindowTitle("Sketchy - " + s.Title)
 	ebiten.SetWindowResizingMode(ebiten.WindowResizingModeDisabled)

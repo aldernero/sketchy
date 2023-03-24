@@ -51,7 +51,7 @@ type Slider struct {
 	GradientEndColor   string     `json:"GradientEndColor"`
 	TextColor          string     `json:"TextColor"`
 	DrawRect           bool       `json:"DrawRect"`
-	colors             ColorConfig
+	colors             gaul.ColorConfig
 	DidJustChange      bool `json:"-"`
 	fontFamily         *canvas.FontFamily
 	fontFace           *canvas.FontFace
@@ -68,7 +68,7 @@ type Toggle struct {
 	BackgroundColor string     `json:"BackgroundColor"`
 	FillColor       string     `json:"FillColor"`
 	TextColor       string     `json:"TextColor"`
-	colors          ColorConfig
+	colors          gaul.ColorConfig
 	DidJustChange   bool `json:"-"`
 	wasPressed      bool
 	fontFamily      *canvas.FontFamily
@@ -298,10 +298,10 @@ func (t *Toggle) SetFont(ff *canvas.FontFamily) {
 }
 
 func (s *Slider) parseColors() {
-	s.colors.Set(s.BackgroundColor, BackgroundColorType, SliderBackgroundColor)
-	s.colors.Set(s.OutlineColor, OutlineColorType, SliderOutlineColor)
-	s.colors.Set(s.TextColor, TextColorType, SliderTextColor)
-	s.colors.Set(s.FillColor, FillColorType, SliderFillColor)
+	s.colors.Set(s.BackgroundColor, gaul.BackgroundColorType, SliderBackgroundColor)
+	s.colors.Set(s.OutlineColor, gaul.OutlineColorType, SliderOutlineColor)
+	s.colors.Set(s.TextColor, gaul.TextColorType, SliderTextColor)
+	s.colors.Set(s.FillColor, gaul.FillColorType, SliderFillColor)
 	if s.UseGradientFill {
 		c1 := SliderGradientStart
 		c2 := SliderGradientEnd
@@ -311,13 +311,13 @@ func (s *Slider) parseColors() {
 		if s.GradientEndColor != "" {
 			c2 = s.GradientEndColor
 		}
-		s.colors.Gradient = NewSimpleGradientFromNamed(c1, c2)
+		s.colors.Gradient = gaul.NewSimpleGradientFromNamed(c1, c2)
 	}
 }
 
 func (t *Toggle) parseColors() {
-	t.colors.Set(t.BackgroundColor, BackgroundColorType, ToggleBackgroundColor)
-	t.colors.Set(t.OutlineColor, OutlineColorType, ToggleOutlineColor)
-	t.colors.Set(t.TextColor, TextColorType, ToggleTextColor)
-	t.colors.Set(t.FillColor, FillColorType, ToggleFillColor)
+	t.colors.Set(t.BackgroundColor, gaul.BackgroundColorType, ToggleBackgroundColor)
+	t.colors.Set(t.OutlineColor, gaul.OutlineColorType, ToggleOutlineColor)
+	t.colors.Set(t.TextColor, gaul.TextColorType, ToggleTextColor)
+	t.colors.Set(t.FillColor, gaul.FillColorType, ToggleFillColor)
 }
