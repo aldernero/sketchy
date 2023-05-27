@@ -356,9 +356,10 @@ func (s *Sketch) CanvasCoords(x, y float64) gaul.Point {
 	return gaul.Point{X: MmPerPx * (x - s.ControlWidth), Y: MmPerPx * (s.SketchHeight - y)}
 }
 
-// SketchCoords converts window coordinates to sketch coordinates
+// SketchCoords converts canvas coordinates (mm, lower left origin) to sketch coordinates (pixels, upper left origin)
+// this ignores the control area
 func (s *Sketch) SketchCoords(x, y float64) gaul.Point {
-	return gaul.Point{X: MmPerPx * (x - s.ControlWidth), Y: MmPerPx * (s.SketchHeight - y)}
+	return gaul.Point{X: x / MmPerPx, Y: s.SketchHeight - y/MmPerPx}
 }
 
 // PointInSketchArea calculates coordinates in pixels, useful when checkin if mouse clicks are in the sketch area
