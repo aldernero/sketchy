@@ -31,7 +31,7 @@ func calcNoise(s *sketchy.Sketch, mono bool, cs []pixel, results chan<- result, 
 	defer wg.Done()
 	res := make(result, len(cs))
 	for i, cell := range cs {
-		noise := s.Rand.Noise3D(float64(cell.x), float64(cell.y), 0)
+		noise := s.Rand.Noise2D(float64(cell.x), float64(cell.y))
 		if !mono {
 			hue := gaul.Map(0, 1, 0, 360, noise)
 			cell.c = colorful.Hsl(hue, 0.5, 0.5)
