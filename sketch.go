@@ -110,8 +110,8 @@ func (s *Sketch) Init() {
 	if s.RandomSeed == 0 {
 		s.RandomSeed = time.Now().UnixNano()
 	}
-	s.FontFamily = canvas.NewFontFamily("DejaVu Sans")
-	if err := s.FontFamily.LoadLocalFont("DejaVuSans", canvas.FontRegular); err != nil {
+	s.FontFamily = canvas.NewFontFamily("dejavu")
+	if err := s.FontFamily.LoadSystemFont("DejaVu Sans", canvas.FontRegular); err != nil {
 		panic(err)
 	}
 	s.buildMaps()
