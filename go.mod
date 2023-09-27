@@ -3,10 +3,10 @@ module github.com/aldernero/sketchy
 go 1.18
 
 require (
-	github.com/aldernero/gaul v0.0.0-20230917162250-62cb9a46fb21
-	github.com/hajimehoshi/ebiten/v2 v2.5.9
+	github.com/aldernero/gaul v0.0.0-20230925011242-c003952de61d
+	github.com/hajimehoshi/ebiten/v2 v2.6.0
 	github.com/lucasb-eyer/go-colorful v1.2.0
-	github.com/tdewolff/canvas v0.0.0-20230917124520-e6ea538e3e50
+	github.com/tdewolff/canvas v0.0.0-20230925184154-c651fde88374
 )
 
 require (
@@ -18,7 +18,7 @@ require (
 	github.com/benoitkugler/textlayout v0.3.0 // indirect
 	github.com/benoitkugler/textprocessing v0.0.3 // indirect
 	github.com/dsnet/compress v0.0.1 // indirect
-	github.com/ebitengine/purego v0.4.0 // indirect
+	github.com/ebitengine/purego v0.5.0 // indirect
 	github.com/go-fonts/latin-modern v0.3.1 // indirect
 	github.com/go-gl/glfw/v3.3/glfw v0.0.0-20221017161538-93cebf72946b // indirect
 	github.com/go-latex/latex v0.0.0-20230307184459-12ec69307ad9 // indirect
@@ -31,7 +31,7 @@ require (
 	github.com/wcharczuk/go-chart/v2 v2.1.1 // indirect
 	golang.org/x/exp/shiny v0.0.0-20230905200255-921286631fa9 // indirect
 	golang.org/x/image v0.12.0 // indirect
-	golang.org/x/mobile v0.0.0-20230906132913-2077a3224571 // indirect
+	golang.org/x/mobile v0.0.0-20230922142353-e2f452493d57 // indirect
 	golang.org/x/net v0.15.0 // indirect
 	golang.org/x/sync v0.3.0 // indirect
 	golang.org/x/sys v0.12.0 // indirect
