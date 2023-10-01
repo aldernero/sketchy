@@ -1,0 +1,53 @@
+{
+    "SketchWidth": 1920,
+    "SketchHeight": 1080,
+    "ControlWidth": 240,
+    "Sliders": [
+        {
+            "Name": "num",
+            "MinVal": 1,
+            "MaxVal": 400,
+            "Val": 200,
+            "Incr": 1
+        },
+        {
+            "Name": "radius",
+            "MinVal": 0,
+            "MaxVal": 1,
+            "Val": 0.16,
+            "Incr": 0.01
+        },
+        {
+            "Name": "xoffset",
+            "MinVal": 0,
+            "MaxVal": 1,
+            "Val": 0.30,
+            "Incr": 0.01
+        },
+        {
+            "Name": "yoffset",
+            "MinVal": 0,
+            "MaxVal": 1,
+            "Val": 0.45,
+            "Incr": 0.01
+        }
+    ],
+    "Toggles": [
+        {
+            "Name": "show triangles",
+            "Checked": false
+        },
+        {
+            "Name": "symmetric",
+            "Checked": false
+        },
+        {
+            "Name": "next",
+            "IsButton": true
+        }
+    ],
+    "SketchBackgroundColor": "#1e1e1e",
+    "SketchOutlineColor": "",
+    "ControlBackgroundColor": "#1e1e1e",
+    "ControlOutlineColor": "#ffdb00"
+}

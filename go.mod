@@ -3,15 +3,15 @@ module github.com/aldernero/sketchy
 go 1.18
 
 require (
-	github.com/aldernero/gaul v0.0.0-20230925011242-c003952de61d
+	github.com/aldernero/gaul v0.0.0-20231001154347-6874db693ae8
 	github.com/hajimehoshi/ebiten/v2 v2.6.0
 	github.com/lucasb-eyer/go-colorful v1.2.0
-	github.com/tdewolff/canvas v0.0.0-20230925184154-c651fde88374
+	github.com/tdewolff/canvas v0.0.0-20230929121632-db7265801182
 )
 
 require (
 	github.com/ByteArena/poly2tri-go v0.0.0-20170716161910-d102ad91854f // indirect
-	github.com/adrg/strutil v0.3.0 // indirect
+	github.com/adrg/strutil v0.3.1 // indirect
 	github.com/adrg/sysfont v0.1.2 // indirect
 	github.com/adrg/xdg v0.4.0 // indirect
 	github.com/aldernero/go-noise v0.0.0-20230828020352-dac1e55fbf1a // indirect

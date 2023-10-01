@@ -5,6 +5,7 @@ github.com/ByteArena/poly2tri-go v0.0.0-20170716161910-d102ad91854f/go.mod h1:vI
 github.com/adrg/strutil v0.2.2/go.mod h1:EF2fjOFlGTepljfI+FzgTG13oXthR7ZAil9/aginnNQ=
 github.com/adrg/strutil v0.3.0 h1:bi/HB2zQbDihC8lxvATDTDzkT4bG7PATtVnDYp5rvq4=
 github.com/adrg/strutil v0.3.0/go.mod h1:Jz0wzBVE6Uiy9wxo62YEqEY1Nwto3QlLl1Il5gkLKWU=
+github.com/adrg/strutil v0.3.1/go.mod h1:8h90y18QLrs11IBffcGX3NW/GFBXCMcNg4M7H6MspPA=
 github.com/adrg/sysfont v0.1.2 h1:MSU3KREM4RhsQ+7QgH7wPEPTgAgBIz0Hw6Nd4u7QgjE=
 github.com/adrg/sysfont v0.1.2/go.mod h1:6d3l7/BSjX9VaeXWJt9fcrftFaD/t7l11xgSywCPZGk=
 github.com/adrg/xdg v0.3.0/go.mod h1:7I2hH/IT30IsupOpKZ5ue7/qNi3CoKzD6tL3HwpaRMQ=
@@ -29,6 +30,8 @@ github.com/aldernero/gaul v0.0.0-20230917162250-62cb9a46fb21 h1:MgboW91YUSfcq8ik
 github.com/aldernero/gaul v0.0.0-20230917162250-62cb9a46fb21/go.mod h1:a9NEuN2XmNHxKWKhLcTwEVVABTQoCJegtzWNKu3XM0A=
 github.com/aldernero/gaul v0.0.0-20230925011242-c003952de61d h1:AQ/wb/Cs9bcJAVou9vS3Xxx4XFPTRyUg6+sv0JBunfA=
 github.com/aldernero/gaul v0.0.0-20230925011242-c003952de61d/go.mod h1:a9NEuN2XmNHxKWKhLcTwEVVABTQoCJegtzWNKu3XM0A=
+github.com/aldernero/gaul v0.0.0-20231001154347-6874db693ae8 h1:HrZkRErixksPBUJazIvKI2DpynppjmU4cvtplPDdkDw=
+github.com/aldernero/gaul v0.0.0-20231001154347-6874db693ae8/go.mod h1:Hjb1KGyRtSTQVMdHW3u5PPZTd7U6nUf6mUt/pYiElY4=
 github.com/aldernero/go-noise v0.0.0-20230827202328-a17ef70bb870 h1:bTw9NERQvz2vMzTXgS7NFRE/iQvDOHtgsR2mQfYAWZU=
 github.com/aldernero/go-noise v0.0.0-20230827202328-a17ef70bb870/go.mod h1:aVxtL8PCtDYC/xqnKnt+19s92kDkkE52jJBFjr6XKBo=
 github.com/aldernero/go-noise v0.0.0-20230827204149-0806943c2f79 h1:pyN/RAfHwqYRPRWhBmdCQc9aI/gjQv2QH4EObu6v37w=
@@ -44,6 +47,7 @@ github.com/benoitkugler/textprocessing v0.0.3/go.mod h1:/4bLyCf1QYywunMK3Gf89Nhb
 github.com/cheekybits/is v0.0.0-20150225183255-68e9c0620927/go.mod h1:h/aW8ynjgkuj+NQRlZcDbAbM1ORAbXjXX77sX7T289U=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
+github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/djherbis/atime v1.1.0/go.mod h1:28OF6Y8s3NQWwacXc5eZTsEsiMzp7LF8MbXE+XJPdBE=
 github.com/dsnet/compress v0.0.1 h1:PlZu0n3Tuv04TzpfPbrnI0HW/YwodEXDS+oPKahKF0Q=
 github.com/dsnet/compress v0.0.1/go.mod h1:Aw8dCMJ7RioblQeTqt88akK31OvO8Dhf5JflhBbQEHo=
@@ -99,10 +103,14 @@ github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZb
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/spf13/pflag v1.0.5/go.mod h1:McXfInJRrz4CZXVZOBLb0bTZqETkiAhM9Iw0y3An2Bg=
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
+github.com/stretchr/objx v0.4.0/go.mod h1:YvHI0jy2hoMjB+UWwv71VJQ9isScKT/TqJzVSSt89Yw=
+github.com/stretchr/objx v0.5.0/go.mod h1:Yh+to48EsGEfYuaHDzXPcE3xhTkx73EhmCGUpEOglKo=
 github.com/stretchr/testify v1.6.1/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/h/Wwjteg=
 github.com/stretchr/testify v1.7.0/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/h/Wwjteg=
 github.com/stretchr/testify v1.7.1/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/h/Wwjteg=
+github.com/stretchr/testify v1.8.0/go.mod h1:yNjHg4UonilssWZ8iaSj1OCr/vHnekPRkoO+kdMU+MU=
 github.com/stretchr/testify v1.8.2 h1:+h33VjcLVPDHtOdpUCuF+7gSuG3yGIftsP1YvFihtJ8=
+github.com/stretchr/testify v1.8.4/go.mod h1:sz/lmYIOXD/1dqDmKjjqLyZ2RngseejIcXlSw2iwfAo=
 github.com/tdewolff/canvas v0.0.0-20230520194752-d2aa2646d6a4 h1:jszaJ3OntfmvkPcBeV3sg3+kGcNQ7cjxXfoaSlD1nJ8=
 github.com/tdewolff/canvas v0.0.0-20230520194752-d2aa2646d6a4/go.mod h1:8Q1WI1rGdKIRWCoHnYZS6Ce0SszgX4SuFGfW3JIZ1jU=
 github.com/tdewolff/canvas v0.0.0-20230725155945-641901f69684 h1:zvYsrmuaCpJa5Uw2zL2yEA28wfehNbe8Vvfl3/ttf5o=
@@ -113,6 +121,8 @@ github.com/tdewolff/canvas v0.0.0-20230917124520-e6ea538e3e50 h1:pyaVhhmgOQ2tlPO
 github.com/tdewolff/canvas v0.0.0-20230917124520-e6ea538e3e50/go.mod h1:KaZWLWHSMsHqU90hoZ5rz6ZFmZg5Y2cVw87PCEEndCQ=
 github.com/tdewolff/canvas v0.0.0-20230925184154-c651fde88374 h1:wO57Uyh9QGi0EhexYSHHJ52aASvdHTvWY0uKPBNFuYQ=
 github.com/tdewolff/canvas v0.0.0-20230925184154-c651fde88374/go.mod h1:KaZWLWHSMsHqU90hoZ5rz6ZFmZg5Y2cVw87PCEEndCQ=
+github.com/tdewolff/canvas v0.0.0-20230929121632-db7265801182 h1:kyOOA2gwSFEibNJgpfSj3x8ul3+L5aY/lygx8thRjlk=
+github.com/tdewolff/canvas v0.0.0-20230929121632-db7265801182/go.mod h1:KaZWLWHSMsHqU90hoZ5rz6ZFmZg5Y2cVw87PCEEndCQ=
 github.com/tdewolff/minify/v2 v2.12.6 h1:kw5FU0ErJyd7fs+TMojIlBvLyEjsN93wP1n8NUOs320=
 github.com/tdewolff/minify/v2 v2.12.6/go.mod h1:ZRKTheiOGyLSK8hOZWWv+YoJAECzDivNgAlVYDHp/Ws=
 github.com/tdewolff/minify/v2 v2.12.7 h1:pBzz2tAfz5VghOXiQIsSta6srhmTeinQPjRDHWoumCA=
@@ -228,6 +238,7 @@ gonum.org/v1/plot v0.14.0/go.mod h1:MLdR9424SJed+5VqC6MsouEpig9pZX2VZ57H9ko2bXU=
 gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
 gopkg.in/yaml.v3 v3.0.0-20200313102051-9f266ea9e77c/go.mod h1:K4uyk7z7BCEPqu6E+C64Yfv1cQ7kz7rIZviUmN+EgEM=
 gopkg.in/yaml.v3 v3.0.1 h1:fxVm/GzAzEWqLHuvctI91KS9hhNmmWOoWu0XTYJS7CA=
+gopkg.in/yaml.v3 v3.0.1/go.mod h1:K4uyk7z7BCEPqu6E+C64Yfv1cQ7kz7rIZviUmN+EgEM=
 rsc.io/pdf v0.1.1 h1:k1MczvYDUvJBe93bYd7wrZLLUEcLZAuF824/I4e5Xr4=
 star-tex.org/x/tex v0.4.0 h1:AXUwgpnHLCxZUWW3qrmjv6ezNhH3PjUVBuLLejz2cgU=
 star-tex.org/x/tex v0.4.0/go.mod h1:w91ycsU/DkkCr7GWr60GPWqp3gn2U+6VX71T0o8k8qE=
