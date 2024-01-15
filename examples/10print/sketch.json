@@ -36,7 +36,7 @@
             "Name": "persistence",
             "MinVal": 0,
             "MaxVal": 2,
-            "Val": 0.8672566371681416,
+            "Val": 0.95,
             "Incr": 0.01,
             "OutlineColor": "",
             "BackgroundColor": "",
@@ -47,7 +47,7 @@
             "Name": "lacunarity",
             "MinVal": 0,
             "MaxVal": 10,
-            "Val": 0.2884955752212389,
+            "Val": 2.7,
             "Incr": 0.1,
             "OutlineColor": "",
             "BackgroundColor": "",
@@ -58,23 +58,17 @@
             "Name": "xscale",
             "MinVal": 0,
             "MaxVal": 0.1,
-            "Val": 0.003099999999999999,
+            "Val": 0.04,
             "Incr": 0.0001,
-            "OutlineColor": "",
-            "BackgroundColor": "",
-            "FillColor": "",
-            "TextColor": ""
+            "DrawRect": false
         },
         {
             "Name": "yscale",
             "MinVal": 0,
             "MaxVal": 0.1,
-            "Val": 0.0033999999999999985,
+            "Val": 0.07,
             "Incr": 0.0001,
-            "OutlineColor": "",
-            "BackgroundColor": "",
-            "FillColor": "",
-            "TextColor": ""
+            "DrawRect": false
         },
         {
             "Name": "xoffset",

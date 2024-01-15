@@ -3,10 +3,10 @@ module github.com/aldernero/sketchy
 go 1.18
 
 require (
-	github.com/aldernero/gaul v0.0.0-20231114030959-23fe01ab5fd4
+	github.com/aldernero/gaul v0.0.0-20240115183543-9c7ed484e7c8
 	github.com/hajimehoshi/ebiten/v2 v2.6.3
 	github.com/lucasb-eyer/go-colorful v1.2.0
-	github.com/tdewolff/canvas v0.0.0-20231218015800-2ad5075e9362
+	github.com/tdewolff/canvas v0.0.0-20231102134958-6de43c767dbf
 )
 
 require (

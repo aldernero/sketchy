@@ -39,6 +39,7 @@ func (t *Truchet) init(r int, c int, s *sketchy.Sketch) {
 		if noise > 0.5 {
 			tile = ForwardSlash
 		}
+		//fmt.Println(i, noise, tile)
 		t.tiles = append(t.tiles, tile)
 	}
 }

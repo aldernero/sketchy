@@ -4,6 +4,8 @@ github.com/ByteArena/poly2tri-go v0.0.0-20170716161910-d102ad91854f/go.mod h1:vI
 github.com/ajstarks/svgo v0.0.0-20211024235047-1546f124cd8b h1:slYM766cy2nI3BwyRiyQj/Ud48djTMtMebDqepE95rw=
 github.com/aldernero/gaul v0.0.0-20231114030959-23fe01ab5fd4 h1:eBWCxFqnK58QazCTqbjJCVH2qo5wSn/204fP2nIbYUY=
 github.com/aldernero/gaul v0.0.0-20231114030959-23fe01ab5fd4/go.mod h1:ldRdaaQ9kzBGPOUKhwXCOjXbG9Xt/+hCA9TdrgFfgRk=
+github.com/aldernero/gaul v0.0.0-20240115183543-9c7ed484e7c8 h1:ZKOrvFwjsHh+xVhIq+0RnbC8uK90xMWvvk8EA2pdDxY=
+github.com/aldernero/gaul v0.0.0-20240115183543-9c7ed484e7c8/go.mod h1:ldRdaaQ9kzBGPOUKhwXCOjXbG9Xt/+hCA9TdrgFfgRk=
 github.com/aldernero/interp v0.0.0-20231114035812-9ab0a3e37bf6 h1:HU0GRLVJYfu2JFcfBvHnsn1UGC+T0XxVHgvE2JErStA=
 github.com/aldernero/interp v0.0.0-20231114035812-9ab0a3e37bf6/go.mod h1:m2qXCvyUGDX7/wj1uq7Lmcub35OehMt/uM0WSG5qy3w=
 github.com/benoitkugler/pstokenizer v1.0.0/go.mod h1:l1G2Voirz0q/jj0TQfabNxVsa8HZXh/VMxFSRALWTiE=
@@ -44,6 +46,8 @@ github.com/ojrac/opensimplex-go v1.0.2 h1:l4vs0D+JCakcu5OV0kJ99oEaWJfggSc9jiLpxa
 github.com/ojrac/opensimplex-go v1.0.2/go.mod h1:NwbXFFbXcdGgIFdiA7/REME+7n/lOf1TuEbLiZYOWnM=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
 github.com/stretchr/testify v1.8.4 h1:CcVxjf3Q8PM0mHUKJCdn+eZZtm5yQwehR5yeSVQQcUk=
+github.com/tdewolff/canvas v0.0.0-20231102134958-6de43c767dbf h1:SiFIPDecTcEpw8GTDi2NsX0Cedp+GizeammteylMvmE=
+github.com/tdewolff/canvas v0.0.0-20231102134958-6de43c767dbf/go.mod h1:QT5dPLAqJLD02UXi9Dd2BkCBV4i3zh+dVxITYpd7q2Y=
 github.com/tdewolff/canvas v0.0.0-20231218015800-2ad5075e9362 h1:E9HkFtZcjoZQCaSyb2Finw4jhC0NWOJ2DCCoAMYrXLg=
 github.com/tdewolff/canvas v0.0.0-20231218015800-2ad5075e9362/go.mod h1:hGxWCl1a3KdYh6pxYy9sa9jLAlmKLMeuCSCjjy39iVE=
 github.com/tdewolff/minify/v2 v2.20.10 h1:iz9IkdRqD2pyneib/AvTas23RRG5TnuUFNcNVKmL/jU=
