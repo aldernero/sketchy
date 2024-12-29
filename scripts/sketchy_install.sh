@@ -19,4 +19,4 @@ mkdir "$DIR"
 cp -r ../template "$DIR"/
 go build -o "$DIR"/sketchy ../cmd/sketchy/main.go
 
-echo "Sucessfully installed sketchy environment to $DIR"
+echo "Successfully installed sketchy environment to $DIR"
