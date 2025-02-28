@@ -220,7 +220,7 @@ func (s *Sketch) Draw(screen *ebiten.Image) {
 	s.SketchCanvas.Reset()
 	ctx := canvas.NewContext(s.SketchCanvas)
 	if !s.DisableClearBetweenFrames || s.needToClear {
-		ctx.SetFillColor(s.sketchColorConfig.Background)
+		ctx.SetFillColor(color.Black)
 		ctx.SetStrokeColor(color.Transparent)
 		ctx.DrawPath(0, 0, canvas.Rectangle(ctx.Width(), ctx.Height()))
 		ctx.Close()
