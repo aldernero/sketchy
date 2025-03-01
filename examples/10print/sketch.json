@@ -3,7 +3,6 @@
     "Prefix": "sketch",
     "SketchWidth": 800,
     "SketchHeight": 800,
-    "ControlWidth": 240,
     "ControlBackgroundColor": "",
     "ControlOutlineColor": "",
     "SketchBackgroundColor": "#1e1e1e",
@@ -15,82 +14,56 @@
             "MinVal": 1,
             "MaxVal": 60,
             "Val": 5,
-            "Incr": 0.5,
-            "OutlineColor": "",
-            "BackgroundColor": "",
-            "FillColor": "",
-            "TextColor": ""
+            "Incr": 0.5
         },
         {
             "Name": "octaves",
             "MinVal": 1,
             "MaxVal": 10,
             "Val": 2,
-            "Incr": 1,
-            "OutlineColor": "",
-            "BackgroundColor": "",
-            "FillColor": "",
-            "TextColor": ""
+            "Incr": 1
         },
         {
             "Name": "persistence",
             "MinVal": 0,
             "MaxVal": 2,
             "Val": 0.95,
-            "Incr": 0.01,
-            "OutlineColor": "",
-            "BackgroundColor": "",
-            "FillColor": "",
-            "TextColor": ""
+            "Incr": 0.01
         },
         {
             "Name": "lacunarity",
             "MinVal": 0,
             "MaxVal": 10,
             "Val": 2.7,
-            "Incr": 0.1,
-            "OutlineColor": "",
-            "BackgroundColor": "",
-            "FillColor": "",
-            "TextColor": ""
+            "Incr": 0.1
         },
         {
             "Name": "xscale",
             "MinVal": 0,
             "MaxVal": 0.1,
             "Val": 0.04,
-            "Incr": 0.0001,
-            "DrawRect": false
+            "Incr": 0.0001
         },
         {
             "Name": "yscale",
             "MinVal": 0,
             "MaxVal": 0.1,
             "Val": 0.07,
-            "Incr": 0.0001,
-            "DrawRect": false
+            "Incr": 0.0001
         },
         {
             "Name": "xoffset",
             "MinVal": -1000,
             "MaxVal": 1000,
             "Val": 0,
-            "Incr": 1,
-            "OutlineColor": "",
-            "BackgroundColor": "",
-            "FillColor": "",
-            "TextColor": ""
+            "Incr": 1
         },
         {
             "Name": "yoffset",
             "MinVal": -1000,
             "MaxVal": 1000,
             "Val": 0,
-            "Incr": 1,
-            "OutlineColor": "",
-            "BackgroundColor": "",
-            "FillColor": "",
-            "TextColor": ""
+            "Incr": 1
         }
     ]
 }

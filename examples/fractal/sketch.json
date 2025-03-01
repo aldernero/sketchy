@@ -2,29 +2,21 @@
     "Title": "Fractal Sketch",
     "SketchWidth": 800,
     "SketchHeight": 800,
-    "ControlWidth": 200,
+    "ControlWidth": 250,
     "Sliders": [
         {
             "Name": "depth",
             "MinVal": 1,
             "MaxVal": 10,
             "Val": 4,
-            "Incr": 1,
-            "OutlineColor": "cyan",
-            "UseGradientFill": true
+            "Incr": 1
         },
         {
             "Name": "persistence",
             "MinVal": 0,
             "MaxVal": 1,
             "Val": 0.9,
-            "Incr": 0.01,
-            "OutlineColor": "cyan",
-            "UseGradientFill": true
+            "Incr": 0.01
         }
-    ],
-    "SketchBackgroundColor": "#1e1e1e",
-    "SketchOutlineColor": "",
-    "ControlBackgroundColor": "#1e1e1e",
-    "ControlOutlineColor": "cyan",
+    ]
 }

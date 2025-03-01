@@ -276,7 +276,7 @@ func (s *Sketch) Draw(screen *ebiten.Image) {
 
 // CanvasCoords converts window coordinates (pixels, upper left origin) to canvas coordinates (mm, lower left origin)
 func (s *Sketch) CanvasCoords(x, y float64) gaul.Point {
-	return gaul.Point{X: MmPerPx * (x - s.ControlWidth), Y: MmPerPx * (s.SketchHeight - y)}
+	return gaul.Point{X: MmPerPx * x, Y: MmPerPx * (s.SketchHeight - y)}
 }
 
 // SketchCoords converts canvas coordinates (mm, lower left origin) to sketch coordinates (pixels, upper left origin)
@@ -287,7 +287,7 @@ func (s *Sketch) SketchCoords(x, y float64) gaul.Point {
 
 // PointInSketchArea calculates coordinates in pixels, useful when checkin if mouse clicks are in the sketch area
 func (s *Sketch) PointInSketchArea(x, y float64) bool {
-	return x > s.ControlWidth && x <= s.ControlWidth+s.SketchWidth && y >= 0 && y <= s.SketchHeight
+	return x > 0 && x <= s.SketchWidth && y >= 0 && y <= s.SketchHeight
 }
 
 func (s *Sketch) CanvasRect() gaul.Rect {
@@ -336,23 +336,21 @@ func (s *Sketch) saveConfig() {
 }
 
 func (s *Sketch) getSketchImageRect() image.Rectangle {
-	left := int(s.ControlWidth)
-	top := 0
-	right := left + int(s.SketchWidth)
+	right := int(s.SketchWidth)
 	bottom := int(s.SketchHeight)
-	return image.Rect(left, top, right, bottom)
+	return image.Rect(0, 0, right, bottom)
 }
 
 func (s *Sketch) controlWindow(ctx *debugui.Context) {
-	ctx.Window("Controls", image.Rect(40, 40, 340, 500), func(res debugui.Response, layout debugui.Layout) {
+	ctx.Window("Controls", image.Rect(DefaultControlWindowX, DefaultControlWindowY, DefaultControlWindowWidth, DefaultControlWindowHeight), func(res debugui.Response, layout debugui.Layout) {
 		// window info
-		if ctx.Header("Sliders", false) != 0 {
+		if ctx.Header("Sliders", true) != 0 {
 			for i := range s.Sliders {
 				ctx.Label(s.Sliders[i].Name)
-				ctx.Slider(&s.Sliders[i].Val, s.Sliders[i].MinVal, s.Sliders[i].MaxVal, s.Sliders[i].Incr, 2)
+				ctx.Slider(&s.Sliders[i].Val, s.Sliders[i].MinVal, s.Sliders[i].MaxVal, s.Sliders[i].Incr, s.Sliders[i].digits)
 			}
 		}
-		if ctx.Header("Toggles", false) != 0 {
+		if ctx.Header("Toggles", true) != 0 {
 			for i := range s.Toggles {
 				if s.Toggles[i].IsButton {
 					if ctx.Button(s.Toggles[i].Name) != 0 {

@@ -9,33 +9,44 @@ import (
 )
 
 const (
-	SliderHeight   = 4.0
-	SliderHPadding = 2.0
-	SliderVPadding = 2.0
-	ToggleHeight   = 5.5
-	ToggleHPadding = 3.0
-	ToggleVPadding = 2.0
-	ButtonHeight   = 5.5
+	DefaultControlWindowWidth  = 250
+	DefaultControlWindowHeight = 500
+	DefaultControlWindowX      = 25
+	DefaultControlWindowY      = 25
 )
 
 type Slider struct {
-	Name          string  `json:"Name"`
-	MinVal        float64 `json:"MinVal"`
-	MaxVal        float64 `json:"MaxVal"`
-	Val           float64 `json:"Val"`
-	Incr          float64 `json:"Incr"`
-	DidJustChange bool    `json:"-"`
+	Name   string  `json:"Name"`
+	MinVal float64 `json:"MinVal"`
+	MaxVal float64 `json:"MaxVal"`
+	Val    float64 `json:"Val"`
+	Incr   float64 `json:"Incr"`
+	digits int
 }
 
 type Toggle struct {
-	Name          string     `json:"Name"`
-	Pos           gaul.Point `json:"-"`
-	Width         float64    `json:"Width"`
-	Height        float64    `json:"Height"`
-	Checked       bool       `json:"Checked"`
-	IsButton      bool       `json:"IsButton"`
-	OutlineColor  string     `json:"OutlineColor"`
-	DidJustChange bool       `json:"-"`
+	Name         string     `json:"Name"`
+	Pos          gaul.Point `json:"-"`
+	Width        float64    `json:"Width"`
+	Height       float64    `json:"Height"`
+	Checked      bool       `json:"Checked"`
+	IsButton     bool       `json:"IsButton"`
+	OutlineColor string     `json:"OutlineColor"`
+}
+
+func NewSlider(name string, min, max, val, incr float64) Slider {
+	digits := 0
+	if incr < 1 {
+		digits = int(math.Ceil(math.Abs(math.Log10(incr))))
+	}
+	return Slider{
+		Name:   name,
+		MinVal: min,
+		MaxVal: max,
+		Val:    val,
+		Incr:   incr,
+		digits: digits,
+	}
 }
 
 func (s *Slider) GetPercentage() float64 {
@@ -48,9 +59,5 @@ func (s *Slider) Randomize() {
 }
 
 func (s *Slider) StringVal() string {
-	digits := 0
-	if s.Incr < 1 {
-		digits = int(math.Ceil(math.Abs(math.Log10(s.Incr))))
-	}
-	return strconv.FormatFloat(s.Val, 'f', digits, 64)
+	return strconv.FormatFloat(s.Val, 'f', s.digits, 64)
 }

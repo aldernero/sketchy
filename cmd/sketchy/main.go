@@ -37,7 +37,10 @@ func main() {
 		if err != nil {
 			log.Fatal("error while copying template files: ", err)
 		}
-		os.Chdir(dirPath)
+		err = os.Chdir(dirPath)
+		if err != nil {
+			log.Fatal("error while changing directory:", err)
+		}
 		modInitCmd := exec.Command("go", "mod", "init", prefix)
 		_, cmdErr := modInitCmd.Output()
 		if cmdErr != nil {
@@ -48,7 +51,10 @@ func main() {
 		if cmdErr != nil {
 			log.Fatal("error while go mod tidy: ", cmdErr)
 		}
-		os.Chdir(cwd)
+		err = os.Chdir(cwd)
+		if err != nil {
+			log.Fatal("error while changing directory:", err)
+		}
 	case "run":
 		if _, err := os.Stat(dirPath); errors.Is(err, fs.ErrNotExist) {
 			log.Fatalf("directory %s doesn't exist: %v", dirPath, err)
@@ -61,7 +67,10 @@ func main() {
 		if !pathExists {
 			log.Fatalf("sketch file %s doesn't exist", appPath)
 		}
-		os.Chdir(dirPath)
+		err = os.Chdir(dirPath)
+		if err != nil {
+			log.Fatal("error while changing directory:", err)
+		}
 		bin, binErr := exec.LookPath("go")
 		if binErr != nil {
 			log.Fatal(binErr)
@@ -71,7 +80,10 @@ func main() {
 		if execErr != nil {
 			log.Fatal("error while running sketch: ", execErr)
 		}
-		os.Chdir(cwd)
+		err = os.Chdir(cwd)
+		if err != nil {
+			log.Fatal("error while changing directory:", err)
+		}
 	default:
 		usage()
 	}
@@ -133,12 +145,22 @@ func copyFile(src string, dst string) error {
 	if err != nil {
 		return err
 	}
-	defer srcFd.Close()
+	defer func(srcFd *os.File) {
+		err := srcFd.Close()
+		if err != nil {
+
+		}
+	}(srcFd)
 	dstFd, err := os.Create(dst)
 	if err != nil {
 		return err
 	}
-	defer dstFd.Close()
+	defer func(dstFd *os.File) {
+		err := dstFd.Close()
+		if err != nil {
+
+		}
+	}(dstFd)
 	_, err = io.Copy(dstFd, srcFd)
 	if err != nil {
 		return err
