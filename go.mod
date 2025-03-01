@@ -5,7 +5,6 @@ go 1.23.2
 require (
 	github.com/aldernero/gaul v0.0.0-20241111001829-17f5073b8c73
 	github.com/ebitengine/debugui v0.0.0-20241116042544-7eae500d7fed
-	github.com/ebitenui/ebitenui v0.6.0
 	github.com/hajimehoshi/ebiten/v2 v2.8.6
 	github.com/lucasb-eyer/go-colorful v1.2.0
 	github.com/tdewolff/canvas v0.0.0-20241223212311-a4892b47d753
@@ -35,7 +34,6 @@ require (
 	github.com/tdewolff/minify/v2 v2.21.2 // indirect
 	github.com/tdewolff/parse/v2 v2.7.19 // indirect
 	github.com/wcharczuk/go-chart/v2 v2.1.2 // indirect
-	golang.org/x/exp v0.0.0-20241009180824-f66d83c29e7c // indirect
 	golang.org/x/image v0.23.0 // indirect
 	golang.org/x/net v0.33.0 // indirect
 	golang.org/x/sync v0.10.0 // indirect

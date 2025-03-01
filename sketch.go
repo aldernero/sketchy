@@ -52,9 +52,11 @@ type Sketch struct {
 	Updater                   SketchUpdater `json:"-"`
 	Drawer                    SketchDrawer  `json:"-"`
 	DidControlsChange         bool          `json:"-"`
+	DidSlidersChange          bool          `json:"-"`
+	DidTogglesChange          bool          `json:"-"`
 	Rand                      gaul.Rng      `json:"-"`
 	sliderControlMap          map[string]int
-	ToggleControlMap          map[string]int `json:"-"`
+	toggleControlMap          map[string]int `json:"-"`
 	controlColorConfig        gaul.ColorConfig
 	sketchColorConfig         gaul.ColorConfig
 	isSavingPNG               bool
@@ -130,7 +132,7 @@ func (s *Sketch) Slider(name string) float64 {
 }
 
 func (s *Sketch) Toggle(name string) bool {
-	i, ok := s.ToggleControlMap[name]
+	i, ok := s.toggleControlMap[name]
 	if !ok {
 		log.Fatalf("%s not a valid control name", name)
 	}
@@ -153,20 +155,41 @@ func (s *Sketch) UpdateControls() {
 	if inpututil.IsKeyJustReleased(ebiten.KeyUp) {
 		s.RandomSeed++
 		s.Rand.SetSeed(s.RandomSeed)
+		s.DidControlsChange = true
 		fmt.Println("RandomSeed incremented: ", s.RandomSeed)
 	}
 	if inpututil.IsKeyJustReleased(ebiten.KeyDown) {
 		s.RandomSeed--
 		s.Rand.SetSeed(s.RandomSeed)
+		s.DidControlsChange = true
 		fmt.Println("RandomSeed decremented: ", s.RandomSeed)
 	}
 	if inpututil.IsKeyJustReleased(ebiten.KeySlash) {
 		s.RandomSeed = rand.Int63()
 		s.Rand.SetSeed(s.RandomSeed)
+		s.DidControlsChange = true
 		fmt.Println("RandomSeed changed: ", s.RandomSeed)
 	}
 	if inpututil.IsKeyJustReleased(ebiten.KeySpace) {
 		s.DumpState()
+	}
+	// check if the values of the sliders have changed
+	for i := range s.Sliders {
+		s.Sliders[i].UpdateState()
+		if s.Sliders[i].DidJustChange {
+			s.DidSlidersChange = true
+		}
+	}
+	// check if the values of the toggles have changed
+	for i := range s.Toggles {
+		s.Toggles[i].UpdateState()
+		if s.Toggles[i].DidJustChange {
+			s.DidTogglesChange = true
+		}
+	}
+	// check if the controls have changed
+	if s.DidSlidersChange || s.DidTogglesChange {
+		s.DidControlsChange = true
 	}
 }
 
@@ -261,6 +284,9 @@ func (s *Sketch) Draw(screen *ebiten.Image) {
 	op := &ebiten.DrawImageOptions{}
 	screen.DrawImage(ebiten.NewImageFromImage(img), op)
 	s.ui.Draw(screen)
+	s.DidControlsChange = false
+	s.DidSlidersChange = false
+	s.DidTogglesChange = false
 }
 
 // CanvasCoords converts window coordinates (pixels, upper left origin) to canvas coordinates (mm, lower left origin)
@@ -306,12 +332,14 @@ func (s *Sketch) RandomHeight() float64 {
 func (s *Sketch) buildMaps() {
 	s.sliderControlMap = make(map[string]int)
 	for i := range s.Sliders {
+		s.Sliders[i].lastVal = s.Sliders[i].Val
 		s.Sliders[i].CalcDigits()
 		s.sliderControlMap[s.Sliders[i].Name] = i
 	}
-	s.ToggleControlMap = make(map[string]int)
+	s.toggleControlMap = make(map[string]int)
 	for i := range s.Toggles {
-		s.ToggleControlMap[s.Toggles[i].Name] = i
+		s.Toggles[i].lastVal = s.Toggles[i].Checked
+		s.toggleControlMap[s.Toggles[i].Name] = i
 	}
 }
 
