@@ -59,9 +59,13 @@ func (s *Slider) StringVal() string {
 	return strconv.FormatFloat(s.Val, 'f', s.digits, 64)
 }
 
-func (s *Slider) CalcDigits() int {
-	if s.Incr < 1 {
-		return int(math.Ceil(math.Abs(math.Log10(s.Incr))))
+func (s *Slider) CalcDigits() {
+	s.digits = calcDigits(s.Incr)
+}
+
+func calcDigits(val float64) int {
+	if val < 1 {
+		return int(math.Ceil(math.Abs(math.Log10(val))))
 	}
 	return 0
 }
