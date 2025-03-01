@@ -35,18 +35,15 @@ type Toggle struct {
 }
 
 func NewSlider(name string, min, max, val, incr float64) Slider {
-	digits := 0
-	if incr < 1 {
-		digits = int(math.Ceil(math.Abs(math.Log10(incr))))
-	}
-	return Slider{
+	s := Slider{
 		Name:   name,
 		MinVal: min,
 		MaxVal: max,
 		Val:    val,
 		Incr:   incr,
-		digits: digits,
 	}
+	s.CalcDigits()
+	return s
 }
 
 func (s *Slider) GetPercentage() float64 {
@@ -60,4 +57,11 @@ func (s *Slider) Randomize() {
 
 func (s *Slider) StringVal() string {
 	return strconv.FormatFloat(s.Val, 'f', s.digits, 64)
+}
+
+func (s *Slider) CalcDigits() int {
+	if s.Incr < 1 {
+		return int(math.Ceil(math.Abs(math.Log10(s.Incr))))
+	}
+	return 0
 }

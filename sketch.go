@@ -62,7 +62,6 @@ type Sketch struct {
 	isSavingScreen            bool
 	needToClear               bool
 	Tick                      int64              `json:"-"`
-	ControlCanvas             *canvas.Canvas     `json:"-"`
 	SketchCanvas              *canvas.Canvas     `json:"-"`
 	FontFamily                *canvas.FontFamily `json:"-"`
 	FontFace                  *canvas.FontFace   `json:"-"`
@@ -75,14 +74,6 @@ func (s *Sketch) Width() float64 {
 
 func (s *Sketch) Height() float64 {
 	return s.SketchHeight * MmPerPx
-}
-
-func (s *Sketch) FullWidth() float64 {
-	return (s.ControlWidth + s.SketchWidth) * MmPerPx
-}
-
-func (s *Sketch) controlWidth() float64 {
-	return s.ControlWidth * MmPerPx
 }
 
 func NewSketchFromFile(fname string) (*Sketch, error) {
@@ -119,7 +110,6 @@ func (s *Sketch) Init() {
 	s.buildMaps()
 	s.FontFace = s.FontFamily.Face(14.0, color.White, canvas.FontRegular, canvas.FontNormal)
 	s.Rand = gaul.NewRng(s.RandomSeed)
-	s.ControlCanvas = canvas.New(s.controlWidth(), s.Height())
 	s.SketchCanvas = canvas.New(s.Width(), s.Height())
 	s.needToClear = true
 	if s.DisableClearBetweenFrames {
@@ -216,7 +206,6 @@ func (s *Sketch) Clear() {
 }
 
 func (s *Sketch) Draw(screen *ebiten.Image) {
-	s.ControlCanvas.Reset()
 	s.SketchCanvas.Reset()
 	ctx := canvas.NewContext(s.SketchCanvas)
 	if !s.DisableClearBetweenFrames || s.needToClear {
@@ -317,6 +306,7 @@ func (s *Sketch) RandomHeight() float64 {
 func (s *Sketch) buildMaps() {
 	s.sliderControlMap = make(map[string]int)
 	for i := range s.Sliders {
+		s.Sliders[i].CalcDigits()
 		s.sliderControlMap[s.Sliders[i].Name] = i
 	}
 	s.ToggleControlMap = make(map[string]int)
