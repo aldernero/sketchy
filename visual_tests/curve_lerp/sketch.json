@@ -1,7 +1,6 @@
 {
   "SketchWidth": 800,
   "SketchHeight": 800,
-  "ControlWidth": 240,
   "Sliders": [
     {
       "Name": "num_points",

@@ -1,16 +1,13 @@
 {
     "SketchWidth": 800,
     "SketchHeight": 800,
-    "ControlWidth": 240,
     "Sliders": [
         {
             "Name": "percentage",
             "MinVal": 0,
             "MaxVal": 1,
             "Val": 0.5,
-            "Incr": 0.01,
-            "UseGradientFill": true,
-            "OutlineColor": "yellow"
+            "Incr": 0.01
         }
     ],
     "ControlOutlineColor": "darkcyan",
