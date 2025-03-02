@@ -70,7 +70,7 @@ func main() {
 	s.Drawer = draw
 	s.Init()
 	synthwavePalette = gaul.NewGradientFromNamed([]string{"#1bbbd9", "#f900a4"})
-	ebiten.SetWindowSize(int(s.ControlWidth+s.SketchWidth), int(s.SketchHeight))
+	ebiten.SetWindowSize(int(s.SketchWidth), int(s.SketchHeight))
 	ebiten.SetWindowTitle("Sketchy - " + s.Title)
 	ebiten.SetWindowResizingMode(ebiten.WindowResizingModeDisabled)
 	if err := ebiten.RunGame(s); err != nil {

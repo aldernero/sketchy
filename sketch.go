@@ -3,35 +3,34 @@ package sketchy
 import (
 	"encoding/json"
 	"fmt"
+	"image"
+	"image/color"
+	"log"
+	"math/rand"
+	"os"
+	"time"
+
 	"github.com/aldernero/gaul"
+	"github.com/ebitengine/debugui"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"github.com/tdewolff/canvas"
 	"github.com/tdewolff/canvas/renderers"
 	"github.com/tdewolff/canvas/renderers/rasterizer"
-	"image"
-	"image/color"
-	"image/png"
-	"log"
-	"math/rand"
-	"os"
-	"time"
 )
 
 const (
-	DefaultTitle              = "Sketch"
-	DefaultPrefix             = "sketch"
-	DefaultBackgroundColor    = "#1e1e1e"
-	DefaultOutlineColor       = "#ffdb00"
-	DefaultSketchOutlineColor = ""
-	ControlAreaMargin         = 1.0
-	MmPerPx                   = 0.26458333
-	DefaultDPI                = 96.0
+	DefaultTitle  = "Sketch"
+	DefaultPrefix = "sketch"
+	MmPerPx       = 0.26458333
+	DefaultDPI    = 96.0
 )
 
-type SketchUpdater func(s *Sketch)
-type SketchDrawer func(s *Sketch, ctx *canvas.Context)
+type (
+	SketchUpdater func(s *Sketch)
+	SketchDrawer  func(s *Sketch, ctx *canvas.Context)
+)
 
 type Sketch struct {
 	Title                     string        `json:"Title"`
@@ -52,20 +51,21 @@ type Sketch struct {
 	Updater                   SketchUpdater `json:"-"`
 	Drawer                    SketchDrawer  `json:"-"`
 	DidControlsChange         bool          `json:"-"`
+	DidSlidersChange          bool          `json:"-"`
+	DidTogglesChange          bool          `json:"-"`
 	Rand                      gaul.Rng      `json:"-"`
 	sliderControlMap          map[string]int
-	ToggleControlMap          map[string]int `json:"-"`
+	toggleControlMap          map[string]int
 	controlColorConfig        gaul.ColorConfig
 	sketchColorConfig         gaul.ColorConfig
 	isSavingPNG               bool
 	isSavingSVG               bool
-	isSavingScreen            bool
 	needToClear               bool
 	Tick                      int64              `json:"-"`
-	ControlCanvas             *canvas.Canvas     `json:"-"`
 	SketchCanvas              *canvas.Canvas     `json:"-"`
 	FontFamily                *canvas.FontFamily `json:"-"`
 	FontFace                  *canvas.FontFace   `json:"-"`
+	ui                        *debugui.DebugUI
 }
 
 func (s *Sketch) Width() float64 {
@@ -74,14 +74,6 @@ func (s *Sketch) Width() float64 {
 
 func (s *Sketch) Height() float64 {
 	return s.SketchHeight * MmPerPx
-}
-
-func (s *Sketch) FullWidth() float64 {
-	return (s.ControlWidth + s.SketchWidth) * MmPerPx
-}
-
-func (s *Sketch) controlWidth() float64 {
-	return s.ControlWidth * MmPerPx
 }
 
 func NewSketchFromFile(fname string) (*Sketch, error) {
@@ -110,18 +102,15 @@ func (s *Sketch) Init() {
 	if s.RandomSeed == 0 {
 		s.RandomSeed = time.Now().UnixNano()
 	}
+	s.ui = debugui.New()
 	s.FontFamily = canvas.NewFontFamily("dejavu")
 	if err := s.FontFamily.LoadSystemFont("DejaVu Sans", canvas.FontRegular); err != nil {
 		panic(err)
 	}
 	s.buildMaps()
-	s.parseColors()
 	s.FontFace = s.FontFamily.Face(14.0, color.White, canvas.FontRegular, canvas.FontNormal)
 	s.Rand = gaul.NewRng(s.RandomSeed)
-	s.ControlCanvas = canvas.New(s.controlWidth(), s.Height())
 	s.SketchCanvas = canvas.New(s.Width(), s.Height())
-	ctx := canvas.NewContext(s.ControlCanvas)
-	s.PlaceControls(s.controlWidth(), s.Height(), ctx)
 	s.needToClear = true
 	if s.DisableClearBetweenFrames {
 		ebiten.SetScreenClearedEveryFrame(false)
@@ -141,7 +130,7 @@ func (s *Sketch) Slider(name string) float64 {
 }
 
 func (s *Sketch) Toggle(name string) bool {
-	i, ok := s.ToggleControlMap[name]
+	i, ok := s.toggleControlMap[name]
 	if !ok {
 		log.Fatalf("%s not a valid control name", name)
 	}
@@ -149,15 +138,11 @@ func (s *Sketch) Toggle(name string) bool {
 }
 
 func (s *Sketch) UpdateControls() {
-	controlsChanged := false
 	if inpututil.IsKeyJustReleased(ebiten.KeyP) {
 		s.isSavingPNG = true
 	}
 	if inpututil.IsKeyJustReleased(ebiten.KeyS) {
 		s.isSavingSVG = true
-	}
-	if inpututil.IsKeyJustReleased(ebiten.KeyQ) {
-		s.isSavingScreen = true
 	}
 	if inpututil.IsKeyJustReleased(ebiten.KeyC) {
 		s.saveConfig()
@@ -165,43 +150,42 @@ func (s *Sketch) UpdateControls() {
 	if inpututil.IsKeyJustReleased(ebiten.KeyUp) {
 		s.RandomSeed++
 		s.Rand.SetSeed(s.RandomSeed)
-		controlsChanged = true
+		s.DidControlsChange = true
 		fmt.Println("RandomSeed incremented: ", s.RandomSeed)
 	}
 	if inpututil.IsKeyJustReleased(ebiten.KeyDown) {
 		s.RandomSeed--
 		s.Rand.SetSeed(s.RandomSeed)
-		controlsChanged = true
+		s.DidControlsChange = true
 		fmt.Println("RandomSeed decremented: ", s.RandomSeed)
 	}
 	if inpututil.IsKeyJustReleased(ebiten.KeySlash) {
 		s.RandomSeed = rand.Int63()
 		s.Rand.SetSeed(s.RandomSeed)
-		controlsChanged = true
+		s.DidControlsChange = true
 		fmt.Println("RandomSeed changed: ", s.RandomSeed)
 	}
 	if inpututil.IsKeyJustReleased(ebiten.KeySpace) {
 		s.DumpState()
 	}
+	// check if the values of the sliders have changed
 	for i := range s.Sliders {
-		didChange, err := s.Sliders[i].CheckAndUpdate(s.ControlCanvas)
-		if err != nil {
-			panic(err)
-		}
-		if didChange {
-			controlsChanged = true
+		s.Sliders[i].UpdateState()
+		if s.Sliders[i].DidJustChange {
+			s.DidSlidersChange = true
 		}
 	}
+	// check if the values of the toggles have changed
 	for i := range s.Toggles {
-		didChange, err := s.Toggles[i].CheckAndUpdate(s.ControlCanvas)
-		if err != nil {
-			panic(err)
-		}
-		if didChange {
-			controlsChanged = true
+		s.Toggles[i].UpdateState()
+		if s.Toggles[i].DidJustChange {
+			s.DidTogglesChange = true
 		}
 	}
-	s.DidControlsChange = controlsChanged
+	// check if the controls have changed
+	if s.DidSlidersChange || s.DidTogglesChange {
+		s.DidControlsChange = true
+	}
 }
 
 func (s *Sketch) RandomizeSliders() {
@@ -218,67 +202,19 @@ func (s *Sketch) RandomizeSlider(name string) {
 	s.Sliders[i].Randomize()
 }
 
-func (s *Sketch) PlaceControls(_ float64, _ float64, ctx *canvas.Context) {
-	var lastRect gaul.Rect
-	for i := range s.Sliders {
-		if s.Sliders[i].Height == 0 {
-			s.Sliders[i].Height = SliderHeight
-		}
-		s.Sliders[i].Width = ctx.Width() - 2*SliderHPadding
-		rect := s.Sliders[i].GetRect()
-		s.Sliders[i].Pos = gaul.Point{
-			X: SliderHPadding,
-			Y: ctx.Height() - (float64(i)*rect.H + s.Sliders[i].Height + 2*SliderVPadding) - 3*SliderVPadding,
-		}
-		lastRect = s.Sliders[i].GetRect()
-	}
-	startY := lastRect.Y - lastRect.H - SliderVPadding
-	for i := range s.Toggles {
-		if s.Toggles[i].Height == 0 {
-			if s.Toggles[i].IsButton {
-				s.Toggles[i].Height = ButtonHeight
-			} else {
-				s.Toggles[i].Height = ToggleHeight
-			}
-		}
-		s.Toggles[i].Width = s.controlWidth() - 2*ToggleHPadding
-		rect := s.Toggles[i].GetRect()
-		s.Toggles[i].Pos = gaul.Point{
-			X: ToggleHPadding,
-			Y: startY - (float64(i)*rect.H + s.Toggles[i].Height + ToggleVPadding),
-		}
-	}
-}
-
-func (s *Sketch) DrawControls(ctx *canvas.Context) {
-	ctx.SetFillColor(s.controlColorConfig.Background)
-	ctx.SetStrokeColor(s.controlColorConfig.Background)
-	ctx.DrawPath(0, 0, canvas.Rectangle(s.controlWidth(), s.Height()))
-	ctx.SetStrokeColor(s.controlColorConfig.Outline)
-	ctx.DrawPath(
-		0.5*ControlAreaMargin,
-		0.5*ControlAreaMargin,
-		canvas.Rectangle(ctx.Width()-ControlAreaMargin, ctx.Height()-ControlAreaMargin),
-	)
-	ctx.Stroke()
-	for i := range s.Sliders {
-		s.Sliders[i].Draw(ctx)
-	}
-	for i := range s.Toggles {
-		s.Toggles[i].Draw(ctx)
-	}
-}
-
 func (s *Sketch) Layout(
 	int,
 	int,
 ) (int, int) {
-	return int(s.ControlWidth + s.SketchWidth), int(s.SketchHeight)
+	return int(s.SketchWidth), int(s.SketchHeight)
 }
 
 func (s *Sketch) Update() error {
 	s.UpdateControls()
 	s.Updater(s)
+	s.ui.Update(func(ctx *debugui.Context) {
+		s.controlWindow(ctx)
+	})
 	s.Tick++
 	return nil
 }
@@ -288,16 +224,10 @@ func (s *Sketch) Clear() {
 }
 
 func (s *Sketch) Draw(screen *ebiten.Image) {
-	s.ControlCanvas.Reset()
 	s.SketchCanvas.Reset()
-	cc := canvas.NewContext(s.ControlCanvas)
-	cc.SetStrokeWidth(0.3)
-	s.DrawControls(cc)
-	img := rasterizer.Draw(s.ControlCanvas, canvas.DefaultResolution, canvas.DefaultColorSpace)
-	screen.DrawImage(ebiten.NewImageFromImage(img), nil)
 	ctx := canvas.NewContext(s.SketchCanvas)
 	if !s.DisableClearBetweenFrames || s.needToClear {
-		ctx.SetFillColor(s.sketchColorConfig.Background)
+		ctx.SetFillColor(color.Black)
 		ctx.SetStrokeColor(color.Transparent)
 		ctx.DrawPath(0, 0, canvas.Rectangle(ctx.Width(), ctx.Height()))
 		ctx.Close()
@@ -325,35 +255,18 @@ func (s *Sketch) Draw(screen *ebiten.Image) {
 		fmt.Println("Saved ", fname)
 		s.isSavingSVG = false
 	}
-	if s.isSavingScreen {
-		fname := s.Prefix + "_" + gaul.GetTimestampString() + ".png"
-		sketchImage := screen.SubImage(s.getSketchImageRect())
-		f, err := os.Create(fname)
-		if err != nil {
-			log.Fatal("error while trying to create screenshot file", err)
-		}
-		if err := png.Encode(f, sketchImage); err != nil {
-			err := f.Close()
-			if err != nil {
-				panic(err)
-			}
-			log.Fatal("error while trying to encode screenshot image", err)
-		}
-		if err := f.Close(); err != nil {
-			log.Fatal("error while trying to close screenshot file", err)
-		}
-		fmt.Println("Saved ", fname)
-		s.isSavingScreen = false
-	}
-	img = rasterizer.Draw(s.SketchCanvas, canvas.DefaultResolution, canvas.DefaultColorSpace)
+	img := rasterizer.Draw(s.SketchCanvas, canvas.DefaultResolution, canvas.DefaultColorSpace)
 	op := &ebiten.DrawImageOptions{}
-	op.GeoM.Translate(s.ControlWidth, 0)
 	screen.DrawImage(ebiten.NewImageFromImage(img), op)
+	s.ui.Draw(screen)
+	s.DidControlsChange = false
+	s.DidSlidersChange = false
+	s.DidTogglesChange = false
 }
 
 // CanvasCoords converts window coordinates (pixels, upper left origin) to canvas coordinates (mm, lower left origin)
 func (s *Sketch) CanvasCoords(x, y float64) gaul.Point {
-	return gaul.Point{X: MmPerPx * (x - s.ControlWidth), Y: MmPerPx * (s.SketchHeight - y)}
+	return gaul.Point{X: MmPerPx * x, Y: MmPerPx * (s.SketchHeight - y)}
 }
 
 // SketchCoords converts canvas coordinates (mm, lower left origin) to sketch coordinates (pixels, upper left origin)
@@ -364,7 +277,7 @@ func (s *Sketch) SketchCoords(x, y float64) gaul.Point {
 
 // PointInSketchArea calculates coordinates in pixels, useful when checkin if mouse clicks are in the sketch area
 func (s *Sketch) PointInSketchArea(x, y float64) bool {
-	return x > s.ControlWidth && x <= s.ControlWidth+s.SketchWidth && y >= 0 && y <= s.SketchHeight
+	return x > 0 && x <= s.SketchWidth && y >= 0 && y <= s.SketchHeight
 }
 
 func (s *Sketch) CanvasRect() gaul.Rect {
@@ -394,26 +307,14 @@ func (s *Sketch) RandomHeight() float64 {
 func (s *Sketch) buildMaps() {
 	s.sliderControlMap = make(map[string]int)
 	for i := range s.Sliders {
+		s.Sliders[i].lastVal = s.Sliders[i].Val
+		s.Sliders[i].CalcDigits()
 		s.sliderControlMap[s.Sliders[i].Name] = i
 	}
-	s.ToggleControlMap = make(map[string]int)
+	s.toggleControlMap = make(map[string]int)
 	for i := range s.Toggles {
-		s.ToggleControlMap[s.Toggles[i].Name] = i
-	}
-}
-
-func (s *Sketch) parseColors() {
-	s.controlColorConfig.Set(s.ControlBackgroundColor, gaul.BackgroundColorType, DefaultBackgroundColor)
-	s.controlColorConfig.Set(s.ControlOutlineColor, gaul.OutlineColorType, DefaultOutlineColor)
-	s.sketchColorConfig.Set(s.SketchBackgroundColor, gaul.BackgroundColorType, DefaultBackgroundColor)
-	s.sketchColorConfig.Set(s.SketchOutlineColor, gaul.OutlineColorType, DefaultSketchOutlineColor)
-	for i := range s.Sliders {
-		s.Sliders[i].parseColors()
-		s.Sliders[i].SetFont(s.FontFamily)
-	}
-	for i := range s.Toggles {
-		s.Toggles[i].parseColors()
-		s.Toggles[i].SetFont(s.FontFamily)
+		s.Toggles[i].lastVal = s.Toggles[i].Checked
+		s.toggleControlMap[s.Toggles[i].Name] = i
 	}
 }
 
@@ -428,9 +329,30 @@ func (s *Sketch) saveConfig() {
 }
 
 func (s *Sketch) getSketchImageRect() image.Rectangle {
-	left := int(s.ControlWidth)
-	top := 0
-	right := left + int(s.SketchWidth)
+	right := int(s.SketchWidth)
 	bottom := int(s.SketchHeight)
-	return image.Rect(left, top, right, bottom)
+	return image.Rect(0, 0, right, bottom)
+}
+
+func (s *Sketch) controlWindow(ctx *debugui.Context) {
+	ctx.Window("Controls", image.Rect(DefaultControlWindowX, DefaultControlWindowY, DefaultControlWindowWidth, DefaultControlWindowHeight), func(res debugui.Response, layout debugui.Layout) {
+		// window info
+		if ctx.Header("Sliders", true) != 0 {
+			for i := range s.Sliders {
+				ctx.Label(s.Sliders[i].Name)
+				ctx.Slider(&s.Sliders[i].Val, s.Sliders[i].MinVal, s.Sliders[i].MaxVal, s.Sliders[i].Incr, s.Sliders[i].digits)
+			}
+		}
+		if ctx.Header("Toggles", true) != 0 {
+			for i := range s.Toggles {
+				if s.Toggles[i].IsButton {
+					if ctx.Button(s.Toggles[i].Name) != 0 {
+						s.Toggles[i].Checked = !s.Toggles[i].Checked
+					}
+				} else {
+					ctx.Checkbox(s.Toggles[i].Name, &s.Toggles[i].Checked)
+				}
+			}
+		}
+	})
 }

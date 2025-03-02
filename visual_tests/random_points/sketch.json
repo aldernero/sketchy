@@ -2,7 +2,6 @@
     "Title": "Random Points",
     "SketchWidth": 800,
     "SketchHeight": 800,
-    "ControlWidth": 200,
     "Sliders": [
         {
             "Name": "points",

@@ -54,7 +54,7 @@ func main() {
 	s.Drawer = draw
 	s.Init()
 	s.ShowFPS = true
-	ebiten.SetWindowSize(int(s.ControlWidth+s.SketchWidth), int(s.SketchHeight))
+	ebiten.SetWindowSize(int(s.SketchWidth), int(s.SketchHeight))
 	ebiten.SetWindowTitle("Sketchy - " + s.Title)
 	ebiten.SetWindowResizingMode(ebiten.WindowResizingModeDisabled)
 	if err := ebiten.RunGame(s); err != nil {

@@ -124,7 +124,7 @@ func main() {
 	pxPerMm = s.SketchWidth / s.Width()
 	img = image.NewRGBA64(image.Rect(0, 0, int(s.SketchWidth), int(s.SketchHeight)))
 	setup(s)
-	ebiten.SetWindowSize(int(s.ControlWidth+s.SketchWidth), int(s.SketchHeight))
+	ebiten.SetWindowSize(int(s.SketchWidth), int(s.SketchHeight))
 	ebiten.SetWindowTitle("Sketchy - " + s.Title)
 	ebiten.SetWindowResizingMode(ebiten.WindowResizingModeDisabled)
 	if err := ebiten.RunGame(s); err != nil {

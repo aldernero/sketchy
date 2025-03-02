@@ -102,7 +102,7 @@ func main() {
 		curve3.Points = append(curve3.Points, p)
 	}
 	curve3.Closed = true
-	ebiten.SetWindowSize(int(s.ControlWidth+s.SketchWidth), int(s.SketchHeight))
+	ebiten.SetWindowSize(int(s.SketchWidth), int(s.SketchHeight))
 	ebiten.SetWindowTitle("Sketchy - " + s.Title)
 	ebiten.SetWindowResizingMode(ebiten.WindowResizingModeDisabled)
 	if err := ebiten.RunGame(s); err != nil {

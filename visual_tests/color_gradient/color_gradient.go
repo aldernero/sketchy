@@ -70,7 +70,7 @@ func main() {
 	s.Init()
 	cg1 = gaul.NewSimpleGradientFromNamed("cyan", "magenta")
 	cg2 = gaul.NewGradientFromNamed([]string{"blue", "green", "yellow", "red"})
-	ebiten.SetWindowSize(int(s.ControlWidth+s.SketchWidth), int(s.SketchHeight))
+	ebiten.SetWindowSize(int(s.SketchWidth), int(s.SketchHeight))
 	ebiten.SetWindowTitle("Sketchy - " + s.Title)
 	ebiten.SetWindowResizingMode(ebiten.WindowResizingModeDisabled)
 	if err := ebiten.RunGame(s); err != nil {

@@ -1,7 +1,6 @@
 {
     "SketchWidth": 1920,
     "SketchHeight": 1080,
-    "ControlWidth": 240,
     "Sliders": [
         {
             "Name": "num",
