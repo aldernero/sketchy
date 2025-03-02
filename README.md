@@ -10,7 +10,7 @@ Below are a couple of screenshots from the example sketches:
 ![fractal_example](assets/images/fractal_example_screenshot.png)
 ### Noise
 
-![Screenshot_20230318_123516](https://user-images.githubusercontent.com/96601789/226129625-c8b5346f-0f84-47ba-aa8c-92ba6ba838d9.png)
+![noise_example](assets/images/opensimplex_example_screenshot.png)
 
 ### 10PRINT
 ![10print_example](assets/images/10print_example_screenshot.png)
@@ -65,6 +65,7 @@ The syntax for creating a new sketch is `sketchy init project_name`. This will c
 mysketch
 ├── go.mod
 ├── go.sum
+├── icon.png
 ├── main.go
 └── sketch.json
 ```
@@ -82,18 +83,4 @@ There are three builtin keyboard shortcuts for saving sketch images and configur
 - "s" key - saves the current frame as an SVG file. The filename has the format `<prefix>_<timestamp>.svg`, where `<prefix>` by default is the project name (what you used during `sketchy init project_name`)
 - "p" key - same as above but saves the current frame as a PNG image.
 - "c" key - saves the configuration (control values and sketch parameters) as JSON. The filename has the format `<prefix>_config_<timestamp>.json`, where `<prefix>` by default is the project name (what you used during `sketchy init project_name`)
-
-# "Expert" Mode
-
-If you are already familiar with Go, you have probably realized you can just copy the template files into a new directory and run typical Go commands to build and run the sketch:
-
-```shell
-cp sketchy/template/* ~/my_sketch_dir/
-cd ~/my_sketch_dir
-go mod init sketch
-go mod tidy
-```
-Make your file edits, then
-```shell
-go run main.go
-```
+- "Esc" key - saves a screenshot of the current frame as a PNG image. The filename has the format `screenshot_<timestamp>.png`

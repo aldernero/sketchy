@@ -3,6 +3,8 @@ package main
 import (
 	"flag"
 	"github.com/tdewolff/canvas"
+	"image"
+	"image/png"
 	"log"
 	"os"
 	"runtime/pprof"
@@ -43,6 +45,15 @@ func main() {
 		pprof.StartCPUProfile(f)
 		defer pprof.StopCPUProfile()
 	}
+	// look for icon file
+	var iconImages []image.Image
+	fd, err := os.Open("icon.png")
+	if err == nil {
+		img, err := png.Decode(fd)
+		if err == nil {
+			iconImages = append(iconImages, img)
+		}
+	}
 	s, err := sketchy.NewSketchFromFile(configFile)
 	if err != nil {
 		log.Fatal(err)
@@ -60,6 +71,9 @@ func main() {
 	ebiten.SetWindowResizingMode(ebiten.WindowResizingModeDisabled)
 	ebiten.SetVsyncEnabled(true)
 	ebiten.SetTPS(ebiten.SyncWithFPS)
+	if iconImages != nil {
+		ebiten.SetWindowIcon(iconImages)
+	}
 	if err := ebiten.RunGame(s); err != nil {
 		log.Fatal(err)
 	}

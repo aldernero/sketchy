@@ -1,9 +1,9 @@
 package main
 
 import (
+	"embed"
 	"errors"
 	"fmt"
-	"io"
 	"io/fs"
 	"log"
 	"os"
@@ -11,6 +11,9 @@ import (
 	"path"
 	"syscall"
 )
+
+//go:embed template/*
+var template embed.FS
 
 func main() {
 	cwd, err := os.Getwd()
@@ -33,14 +36,11 @@ func main() {
 		if err != nil {
 			log.Fatal("error while creating directory: ", err)
 		}
-		err = copyTemplate(dirPath)
-		if err != nil {
-			log.Fatal("error while copying template files: ", err)
-		}
 		err = os.Chdir(dirPath)
 		if err != nil {
 			log.Fatal("error while changing directory:", err)
 		}
+		copyFilesFromEmbedFS(&template, "template", dirPath)
 		modInitCmd := exec.Command("go", "mod", "init", prefix)
 		_, cmdErr := modInitCmd.Output()
 		if cmdErr != nil {
@@ -96,38 +96,6 @@ func usage() {
 	fmt.Println("\trun - run project with name 'prefix'")
 }
 
-func copyTemplate(targetDir string) error {
-	cwd, err := os.Getwd()
-	if err != nil {
-		log.Fatal("error while getting working directory: ", err)
-	}
-	configFname := path.Join(cwd, "template", "sketch.json")
-	appFname := path.Join(cwd, "template", "main.go")
-	exists, err := regularFileExists(configFname)
-	if err != nil {
-		return fmt.Errorf("error while checking for config file: %v", err)
-	}
-	if !exists {
-		return fmt.Errorf("config file %s doesn't exist", configFname)
-	}
-	exists, err = regularFileExists(appFname)
-	if err != nil {
-		return fmt.Errorf("error while checking for config file: %v", err)
-	}
-	if !exists {
-		return fmt.Errorf("app file %s doesn't exist", appFname)
-	}
-	err = copyFile(configFname, path.Join(targetDir, "sketch.json"))
-	if err != nil {
-		return fmt.Errorf("error while copying config file: %v", err)
-	}
-	err = copyFile(appFname, path.Join(targetDir, "main.go"))
-	if err != nil {
-		return fmt.Errorf("error while copying app file: %v", err)
-	}
-	return nil
-}
-
 func regularFileExists(fname string) (bool, error) {
 	stat, err := os.Stat(fname)
 	if err == nil {
@@ -140,31 +108,23 @@ func regularFileExists(fname string) (bool, error) {
 	return false, err
 }
 
-func copyFile(src string, dst string) error {
-	srcFd, err := os.Open(src)
+func copyFilesFromEmbedFS(fs *embed.FS, dir, dest string) {
+	files, err := fs.ReadDir(dir)
 	if err != nil {
-		return err
+		log.Fatal("error while reading template directory: ", err)
 	}
-	defer func(srcFd *os.File) {
-		err := srcFd.Close()
-		if err != nil {
-
+	for _, file := range files {
+		if !file.IsDir() {
+			fname := path.Join(dir, file.Name())
+			destPath := path.Join(dest, file.Name())
+			destBytes, err := fs.ReadFile(fname)
+			if err != nil {
+				log.Fatal("error while reading template file: ", err)
+			}
+			err = os.WriteFile(destPath, destBytes, 0644)
+			if err != nil {
+				log.Fatal("error while writing template file: ", err)
+			}
 		}
-	}(srcFd)
-	dstFd, err := os.Create(dst)
-	if err != nil {
-		return err
 	}
-	defer func(dstFd *os.File) {
-		err := dstFd.Close()
-		if err != nil {
-
-		}
-	}(dstFd)
-	_, err = io.Copy(dstFd, srcFd)
-	if err != nil {
-		return err
-	}
-	err = dstFd.Sync()
-	return err
 }

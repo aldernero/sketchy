@@ -124,7 +124,7 @@ go run main.go
 ```
 ![hello_circle_blank](../assets/images/hello_circle_blank.png)
 
-You should see 2 sliders in the control area on the left. You can change the values by clicking or dragging within the slider bar area. You can also use the mouse wheel to increment and decrement the value. The sketch area is blank at the moment, let's change that!
+You should see 2 sliders in the control area on the left. You can change the values by clicking or dragging within the slider bar area. The sketch area is blank at the moment, let's change that!
 
 Close the sketch and open `main.go` in an editor. There are two functions `update` and `draw` where you implement the drawing. For a simple case like this we don't need `update`, we can do everything in the `draw` function.
 ```go
