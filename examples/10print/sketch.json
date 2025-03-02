@@ -1,8 +1,8 @@
 {
     "Title": "10PRINT Interaction",
     "Prefix": "sketch",
-    "SketchWidth": 800,
-    "SketchHeight": 800,
+    "SketchWidth": 1080,
+    "SketchHeight": 768,
     "ControlBackgroundColor": "",
     "ControlOutlineColor": "",
     "SketchBackgroundColor": "#1e1e1e",
@@ -13,7 +13,7 @@
             "Name": "cellSize",
             "MinVal": 1,
             "MaxVal": 60,
-            "Val": 5,
+            "Val": 20,
             "Incr": 0.5
         },
         {

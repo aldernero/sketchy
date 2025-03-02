@@ -1,7 +1,7 @@
 {
     "Title": "Fractal Sketch",
-    "SketchWidth": 800,
-    "SketchHeight": 800,
+    "SketchWidth": 1080,
+    "SketchHeight": 768,
     "ControlWidth": 250,
     "Sliders": [
         {

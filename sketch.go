@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"image"
 	"image/color"
-	"image/png"
 	"log"
 	"math/rand"
 	"os"
@@ -56,12 +55,11 @@ type Sketch struct {
 	DidTogglesChange          bool          `json:"-"`
 	Rand                      gaul.Rng      `json:"-"`
 	sliderControlMap          map[string]int
-	toggleControlMap          map[string]int `json:"-"`
+	toggleControlMap          map[string]int
 	controlColorConfig        gaul.ColorConfig
 	sketchColorConfig         gaul.ColorConfig
 	isSavingPNG               bool
 	isSavingSVG               bool
-	isSavingScreen            bool
 	needToClear               bool
 	Tick                      int64              `json:"-"`
 	SketchCanvas              *canvas.Canvas     `json:"-"`
@@ -145,9 +143,6 @@ func (s *Sketch) UpdateControls() {
 	}
 	if inpututil.IsKeyJustReleased(ebiten.KeyS) {
 		s.isSavingSVG = true
-	}
-	if inpututil.IsKeyJustReleased(ebiten.KeyQ) {
-		s.isSavingScreen = true
 	}
 	if inpututil.IsKeyJustReleased(ebiten.KeyC) {
 		s.saveConfig()
@@ -259,26 +254,6 @@ func (s *Sketch) Draw(screen *ebiten.Image) {
 		}
 		fmt.Println("Saved ", fname)
 		s.isSavingSVG = false
-	}
-	if s.isSavingScreen {
-		fname := s.Prefix + "_" + gaul.GetTimestampString() + ".png"
-		sketchImage := screen.SubImage(s.getSketchImageRect())
-		f, err := os.Create(fname)
-		if err != nil {
-			log.Fatal("error while trying to create screenshot file", err)
-		}
-		if err := png.Encode(f, sketchImage); err != nil {
-			err := f.Close()
-			if err != nil {
-				panic(err)
-			}
-			log.Fatal("error while trying to encode screenshot image", err)
-		}
-		if err := f.Close(); err != nil {
-			log.Fatal("error while trying to close screenshot file", err)
-		}
-		fmt.Println("Saved ", fname)
-		s.isSavingScreen = false
 	}
 	img := rasterizer.Draw(s.SketchCanvas, canvas.DefaultResolution, canvas.DefaultColorSpace)
 	op := &ebiten.DrawImageOptions{}

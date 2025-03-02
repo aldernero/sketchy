@@ -1,8 +1,7 @@
 {
     "Title": "OpenSimplex Noise Example",
-    "SketchWidth": 800,
-    "SketchHeight": 600,
-    "ControlWidth": 200,
+    "SketchWidth": 1080,
+    "SketchHeight": 768,
     "Sliders": [
         {
             "Name": "octaves",

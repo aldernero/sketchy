@@ -2,14 +2,15 @@ package main
 
 import (
 	"flag"
+	"fmt"
+	"github.com/aldernero/gaul"
+	"github.com/aldernero/sketchy"
+	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"github.com/tdewolff/canvas"
 	"image/color"
 	"log"
 	"math"
-
-	"github.com/aldernero/sketchy"
-	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/hajimehoshi/ebiten/v2/inpututil"
 )
 
 // Define a grid of tiles and a random number generator
@@ -23,29 +24,42 @@ const (
 )
 
 type Truchet struct {
-	rows  int
-	cols  int
-	tiles []Tile
+	rows     int
+	cols     int
+	originX  float64
+	originY  float64
+	cellSize float64
+	tiles    []Tile
 }
 
-func (t *Truchet) init(r int, c int, s *sketchy.Sketch) {
-	t.rows = r
-	t.cols = c
-	t.tiles = []Tile{}
-	for i := 0; i < r*c; i++ {
+func (t *Truchet) init(cellSize float64, s *sketchy.Sketch) {
+	t.rows = int(s.Height() / cellSize)
+	t.cols = int(s.Width() / cellSize)
+	t.cellSize = cellSize
+	t.originX = 0.5 * (s.Width() - float64(t.cols)*cellSize)
+	t.originY = 0.5 * (s.Height() - float64(t.rows)*cellSize)
+	t.tiles = make([]Tile, t.rows*t.cols)
+	for i := 0; i < t.rows*t.cols; i++ {
 		// Use opensimplex noise to make it more interesting
-		noise := s.Rand.Noise2D(float64(i%c), float64(i/r))
+		noise := s.Rand.Noise2D(float64(i%t.rows), float64(i)/float64(t.cols))
 		tile := BackSlash
 		if noise > 0.5 {
 			tile = ForwardSlash
 		}
-		//fmt.Println(i, noise, tile)
-		t.tiles = append(t.tiles, tile)
+		t.tiles[i] = tile
 	}
+	fmt.Println(t.rows, t.cols, t.originX, t.originY, t.cellSize)
 }
 
-func (t *Truchet) flip(r int, c int) {
+func (t *Truchet) flip(x, y float64) {
+	// Convert x, y to row, col
+	r := int(math.Floor((y - t.originY) / t.cellSize))
+	c := int(math.Floor((x - t.originX) / t.cellSize))
 	i := r*t.cols + c
+	if i < 0 || i >= len(t.tiles) {
+		fmt.Println(x, y, r, c, i)
+		fmt.Printf("Invalid tile index: %d Tile count: %d", i, len(t.tiles))
+	}
 	val := t.tiles[i]
 	switch val {
 	case EmptyTile:
@@ -54,6 +68,18 @@ func (t *Truchet) flip(r int, c int) {
 		t.tiles[i] = ForwardSlash
 	case ForwardSlash:
 		t.tiles[i] = EmptyTile
+	}
+}
+
+func (t *Truchet) rectForTile(i int) gaul.Rect {
+	cell := t.cellSize
+	x := cell*float64(i%t.cols) + t.originX
+	y := cell*float64(i/t.cols) + t.originY
+	return gaul.Rect{
+		X: x,
+		Y: y,
+		W: t.cellSize,
+		H: t.cellSize,
 	}
 }
 
@@ -67,7 +93,7 @@ func setup(s *sketchy.Sketch) {
 	s.Rand.SetNoiseScaleY(s.Slider("yscale"))
 	s.Rand.SetNoiseOffsetX(s.Slider("xoffset"))
 	s.Rand.SetNoiseOffsetY(s.Slider("yoffset"))
-	board.init(int(s.SketchCanvas.W/cellSize), int(s.SketchCanvas.H/cellSize), s)
+	board.init(cellSize, s)
 }
 
 func update(s *sketchy.Sketch) {
@@ -77,33 +103,36 @@ func update(s *sketchy.Sketch) {
 		setup(s)
 	}
 	// flip one tile
-	if inpututil.IsMouseButtonJustReleased(ebiten.MouseButtonLeft) {
+	if inpututil.IsMouseButtonJustReleased(ebiten.MouseButtonRight) {
 		x, y := ebiten.CursorPosition()
-		if s.PointInSketchArea(float64(x), float64(y)) {
-			p := s.CanvasCoords(float64(x), float64(y))
-			c := int(math.Floor(float64(board.rows) * p.X / s.SketchCanvas.W))
-			r := int(math.Floor(float64(board.cols) * p.Y / s.SketchCanvas.H))
-			board.flip(r, c)
-		}
+		p := s.CanvasCoords(float64(x), float64(y))
+		board.flip(p.X, p.Y)
 	}
 }
 
 func draw(s *sketchy.Sketch, c *canvas.Context) {
 	// Drawing code goes here
 	c.SetStrokeColor(color.White)
-	c.SetStrokeWidth(0.7)
-	dx := c.Width() / float64(board.cols)
-	dy := c.Height() / float64(board.rows)
+	c.SetStrokeWidth(0.5)
+	// draw board rectangle
+	c.MoveTo(board.originX, board.originY)
+	c.LineTo(board.originX+float64(board.cols)*board.cellSize, board.originY)
+	c.LineTo(board.originX+float64(board.cols)*board.cellSize, board.originY+float64(board.rows)*board.cellSize)
+	c.LineTo(board.originX, board.originY+float64(board.rows)*board.cellSize)
+	c.LineTo(board.originX, board.originY)
+	// draw tiles
+	c.SetStrokeWidth(0.5)
 	for i, t := range board.tiles {
-		x := dx * float64(i%board.cols)
-		y := dy * float64(i/board.rows)
+		rect := board.rectForTile(i)
 		switch t {
 		case BackSlash:
-			c.MoveTo(x, y)
-			c.LineTo(x+dx, y+dy)
+			c.MoveTo(rect.X, rect.Y)
+			c.LineTo(rect.X+board.cellSize, rect.Y+board.cellSize)
 		case ForwardSlash:
-			c.MoveTo(x, y+dy)
-			c.LineTo(x+dx, y)
+			c.MoveTo(rect.X, rect.Y+board.cellSize)
+			c.LineTo(rect.X+board.cellSize, rect.Y)
+		default:
+			// do nothing
 		}
 	}
 	c.Stroke()
@@ -131,6 +160,8 @@ func main() {
 	s.Drawer = draw
 	s.Init()
 	setup(s)
+	fmt.Println(s.SketchWidth, s.SketchHeight)
+	fmt.Println(s.Width(), s.Height())
 	ebiten.SetWindowSize(int(s.SketchWidth), int(s.SketchHeight))
 	ebiten.SetWindowTitle("Sketchy - " + s.Title)
 	ebiten.SetWindowResizingMode(ebiten.WindowResizingModeDisabled)
