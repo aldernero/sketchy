@@ -37,7 +37,11 @@ type Sketch struct {
 	Prefix                    string        `json:"Prefix"`
 	SketchWidth               float64       `json:"SketchWidth"`
 	SketchHeight              float64       `json:"SketchHeight"`
-	ControlWidth              float64       `json:"ControlWidth"`
+	ControlWidth              int           `json:"ControlWidth"`
+	ControlHeight             int           `json:"ControlHeight"`
+	SliderTextWidth           int           `json:"SliderTextWidth"`
+	CheckboxColumns           int           `json:"CheckboxColumns"`
+	ButtonColumns             int           `json:"ButtonColumns"`
 	ControlBackgroundColor    string        `json:"ControlBackgroundColor"`
 	ControlOutlineColor       string        `json:"ControlOutlineColor"`
 	SketchBackgroundColor     string        `json:"SketchBackgroundColor"`
@@ -54,6 +58,7 @@ type Sketch struct {
 	DidSlidersChange          bool          `json:"-"`
 	DidTogglesChange          bool          `json:"-"`
 	Rand                      gaul.Rng      `json:"-"`
+	seedUpdateString          string
 	sliderControlMap          map[string]int
 	toggleControlMap          map[string]int
 	controlColorConfig        gaul.ColorConfig
@@ -61,10 +66,8 @@ type Sketch struct {
 	isSavingPNG               bool
 	isSavingSVG               bool
 	needToClear               bool
-	Tick                      int64              `json:"-"`
-	SketchCanvas              *canvas.Canvas     `json:"-"`
-	FontFamily                *canvas.FontFamily `json:"-"`
-	FontFace                  *canvas.FontFace   `json:"-"`
+	Tick                      int64          `json:"-"`
+	SketchCanvas              *canvas.Canvas `json:"-"`
 	ui                        *debugui.DebugUI
 }
 
@@ -102,13 +105,23 @@ func (s *Sketch) Init() {
 	if s.RandomSeed == 0 {
 		s.RandomSeed = time.Now().UnixNano()
 	}
-	s.ui = debugui.New()
-	s.FontFamily = canvas.NewFontFamily("dejavu")
-	if err := s.FontFamily.LoadSystemFont("DejaVu Sans", canvas.FontRegular); err != nil {
-		panic(err)
+	if s.ControlWidth == 0 {
+		s.ControlWidth = DefaultControlWindowWidth
 	}
+	if s.ControlHeight == 0 {
+		s.ControlHeight = DefaultControlWindowHeight
+	}
+	if s.SliderTextWidth == 0 {
+		s.SliderTextWidth = DefaultSliderTextWidth
+	}
+	if s.CheckboxColumns == 0 {
+		s.CheckboxColumns = DefaultCheckboxColumns
+	}
+	if s.ButtonColumns == 0 {
+		s.ButtonColumns = DefaultButtonColumns
+	}
+	s.ui = debugui.New()
 	s.buildMaps()
-	s.FontFace = s.FontFamily.Face(14.0, color.White, canvas.FontRegular, canvas.FontNormal)
 	s.Rand = gaul.NewRng(s.RandomSeed)
 	s.SketchCanvas = canvas.New(s.Width(), s.Height())
 	s.needToClear = true
@@ -332,27 +345,4 @@ func (s *Sketch) getSketchImageRect() image.Rectangle {
 	right := int(s.SketchWidth)
 	bottom := int(s.SketchHeight)
 	return image.Rect(0, 0, right, bottom)
-}
-
-func (s *Sketch) controlWindow(ctx *debugui.Context) {
-	ctx.Window("Controls", image.Rect(DefaultControlWindowX, DefaultControlWindowY, DefaultControlWindowWidth, DefaultControlWindowHeight), func(res debugui.Response, layout debugui.Layout) {
-		// window info
-		if ctx.Header("Sliders", true) != 0 {
-			for i := range s.Sliders {
-				ctx.Label(s.Sliders[i].Name)
-				ctx.Slider(&s.Sliders[i].Val, s.Sliders[i].MinVal, s.Sliders[i].MaxVal, s.Sliders[i].Incr, s.Sliders[i].digits)
-			}
-		}
-		if ctx.Header("Toggles", true) != 0 {
-			for i := range s.Toggles {
-				if s.Toggles[i].IsButton {
-					if ctx.Button(s.Toggles[i].Name) != 0 {
-						s.Toggles[i].Checked = !s.Toggles[i].Checked
-					}
-				} else {
-					ctx.Checkbox(s.Toggles[i].Name, &s.Toggles[i].Checked)
-				}
-			}
-		}
-	})
 }

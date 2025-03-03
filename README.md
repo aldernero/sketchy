@@ -1,4 +1,4 @@
-![sketchy_logo_002](https://user-images.githubusercontent.com/96601789/154788295-49904170-fc0f-4de0-8e70-2c9093fdd6f1.png)
+![sketchy_logo](assets/images/logo.png)
 
 Sketchy is a framework for making generative art in Go. It is inspired by [vsketch](https://github.com/abey79/vsketch) and [openFrameworks](https://github.com/openframeworks/openFrameworks). It uses [canvas](https://github.com/tdewolff/canvas) for drawing and the [ebiten](https://github.com/hajimehoshi/ebiten) game engine for the GUI. It's designed to provide controls (sliders) via simple JSON that can be used within a familiar `update()` and `draw()` framework to enable quick iteration on designs.
 
@@ -83,4 +83,4 @@ There are three builtin keyboard shortcuts for saving sketch images and configur
 - "s" key - saves the current frame as an SVG file. The filename has the format `<prefix>_<timestamp>.svg`, where `<prefix>` by default is the project name (what you used during `sketchy init project_name`)
 - "p" key - same as above but saves the current frame as a PNG image.
 - "c" key - saves the configuration (control values and sketch parameters) as JSON. The filename has the format `<prefix>_config_<timestamp>.json`, where `<prefix>` by default is the project name (what you used during `sketchy init project_name`)
-- "Esc" key - saves a screenshot of the current frame as a PNG image. The filename has the format `screenshot_<timestamp>.png`
+- "Esc" key - saves a screenshot whole window, including the control panel. The filename has the format `screenshot_<timestamp>.png`
