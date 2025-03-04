@@ -178,8 +178,11 @@ func (s *Sketch) UpdateControls() {
 		s.DidControlsChange = true
 		fmt.Println("RandomSeed changed: ", s.RandomSeed)
 	}
-	if inpututil.IsKeyJustReleased(ebiten.KeySpace) {
+	if inpututil.IsKeyJustReleased(ebiten.KeyD) {
 		s.DumpState()
+	}
+	if inpututil.IsKeyJustReleased(ebiten.KeySpace) {
+		s.ui = debugui.New()
 	}
 	// check if the values of the sliders have changed
 	for i := range s.Sliders {

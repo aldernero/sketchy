@@ -1,6 +1,6 @@
 ![sketchy_logo](assets/images/logo.png)
 
-Sketchy is a framework for making generative art in Go. It is inspired by [vsketch](https://github.com/abey79/vsketch) and [openFrameworks](https://github.com/openframeworks/openFrameworks). It uses [canvas](https://github.com/tdewolff/canvas) for drawing and the [ebiten](https://github.com/hajimehoshi/ebiten) game engine for the GUI. It's designed to provide controls (sliders) via simple JSON that can be used within a familiar `update()` and `draw()` framework to enable quick iteration on designs.
+Sketchy is a framework for making generative art in Go. It is inspired by [vsketch](https://github.com/abey79/vsketch) and [openFrameworks](https://github.com/openframeworks/openFrameworks). It uses [canvas](https://github.com/tdewolff/canvas) for drawing and the [ebiten](https://github.com/hajimehoshi/ebiten) game engine for the GUI. It's designed to provide controls (sliders, checkboxes, buttons) via simple JSON that can be used within a familiar `update()` and `draw()` framework to enable quick iteration on designs.
 
 The [Getting Started](docs/getting-started.md) guide is a good place to start, and even walk through creating a "Hello Circle" sketch from scratch.
 
@@ -17,37 +17,18 @@ Below are a couple of screenshots from the example sketches:
 
 # Installation
 
-## Prerequisites
-Sketchy requires Go version 1.17 or higher. It assumes that `go` is in the system path. If you are running Windows, install Windows Subsystem for Linux (WSL), so that you have `bash`, which is used by the install script.
+## Build Prerequisites
+Sketchy requires Go version 1.23 or higher. It assumes that `go` is in the system path.
 
 ## Clone the repo
 
 ```shell
 git clone https://github.com/aldernero/sketchy.git
 ```
-## Install sketchy environment
+## Compile the sketchy binary
 ```shell
-cd sketchy/scripts
-./sketch_install.sh <target_directory>
+go build -o sketchy ./cmd/sketchy/main.go
 ```
-This will create a directory `target_directory`, build the sketchy binary, and copy the binary and template files to the newly created directory.
-
-Example:
-
-```bash
-❯ cd ~/sketchy/scripts
-❯ ./sketchy_install.sh ~/sketchy_files
-Sucessfully installed sketchy environment to /home/vernon/sketchy_files
-❯ tree ~/sketchy_files
-/home/vernon/sketchy_files
-├── sketchy
-└── template
-    ├── main.go
-    └── sketch.json
-
-1 directory, 3 files
-```
-Sketchy is now installed and ready to run from `target_directory`.
 
 ## Running the examples
 For any of the examples in the `examples` directory, run using standard go commands:

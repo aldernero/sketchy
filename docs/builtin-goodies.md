@@ -62,6 +62,7 @@ similar functionality that I found invaluable when experimenting with designs.
 
 There are two other builtin key bindings:
 
-- "Space Bar" : dumps the current state to the terminal. The output
+- "d": dumps the current state to the terminal. The output
 includes the current value for all GUI controls, as well as the current value of the PRNG seed.
-- "c" Key : saves the current sketch configuration as a JSON file, with the format `"<prefix>_config_<timestamp>.json`. This can then be used to get back to the same state at started using the `-c <config file>` CLI flag.
+- "c": saves the current sketch configuration as a JSON file, with the format `"<prefix>_config_<timestamp>.json`. This can then be used to get back to the same state at started using the `-c <config file>` CLI flag.
+- "Space": shows the control panel.
