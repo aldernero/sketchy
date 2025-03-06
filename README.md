@@ -58,6 +58,15 @@ The next step are to configure sketch parameter and controls in `sketch.json` an
 
 The syntax for running a sketch is `sketchy run project_name`. This is just a wrapper around running `go run main.go` from the project directory. Even the empty example above will run, althought you'll just see the 2 example controls and a blank drawing area.
 
+# The Control Panel
+
+The control panel contains both custom controls defined in the `sketch.json` file and builtin controls. Below is an example
+![control_panel](assets/images/control_panel.png)
+
+The builtins section controls the random seed and saving images and configurations. These also have keyboard shortcuts
+that are listed in the next section of README. The control panel will not show up in saved images. If you close the 
+control panel, you can reopen it by pressing the space bar.
+
 # Saving sketches and configurations
 
 There are three builtin keyboard shortcuts for saving sketch images and configurations:

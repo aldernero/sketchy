@@ -9,13 +9,13 @@ import (
 	"github.com/tdewolff/canvas"
 	"image/color"
 	"log"
-	"strconv"
 )
 
-var kdtree *gaul.KDTree
-
-var nearestPoints []gaul.IndexPoint
-var count int
+var (
+	kdtree        *gaul.KDTree
+	nearestPoints []gaul.IndexPoint
+	count         int
+)
 
 func update(s *sketchy.Sketch) {
 	// Update logic goes here
@@ -70,9 +70,6 @@ func draw(s *sketchy.Sketch, c *canvas.Context) {
 			p.Draw(pointSize, c)
 		}
 	}
-	ff := s.FontFamily.Face(14, canvas.Red, canvas.FontRegular, canvas.FontNormal)
-	textBox := canvas.NewTextBox(ff, strconv.FormatInt(int64(len(foundPoints)), 10), 100, 20, canvas.Left, canvas.Bottom, 0, 0)
-	c.DrawText(0.1*c.Width(), 0.95*c.Height(), textBox)
 }
 
 func main() {
