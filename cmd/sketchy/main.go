@@ -12,6 +12,8 @@ import (
 	"syscall"
 )
 
+const version = "v0.1.0"
+
 //go:embed template/*
 var template embed.FS
 
@@ -21,6 +23,10 @@ func main() {
 		log.Fatal(err)
 	}
 	if len(os.Args) < 3 {
+		if len(os.Args) == 2 && os.Args[1] == "version" {
+			fmt.Printf("Sketchy %s\n", version)
+			os.Exit(0)
+		}
 		fmt.Println("expected 'init' or 'run' subcommands")
 		usage()
 		os.Exit(1)
@@ -94,6 +100,7 @@ func usage() {
 	fmt.Println("Commands:")
 	fmt.Println("\tinit - create new project with name 'prefix'")
 	fmt.Println("\trun - run project with name 'prefix'")
+	fmt.Println("\tversion  - print Sketchy version")
 }
 
 func regularFileExists(fname string) (bool, error) {
