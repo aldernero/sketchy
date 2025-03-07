@@ -3,3 +3,5 @@
 /.idea/modules.xml
 /.idea/sketchy.iml
 /.idea/vcs.xml
+# Added by goreleaser init:
+dist/
