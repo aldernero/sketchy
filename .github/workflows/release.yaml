@@ -3,8 +3,6 @@ name: 📦 Release with GoReleaser
 
 on:
   push:
-    branches:
-      - 'main'
     tags:
       - 'v*'
 
