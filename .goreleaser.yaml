@@ -11,4 +11,4 @@ builds:
     goarch:
       - amd64
       - arm64
-    main: ./cmd/main.go
+    main: ./cmd/sketchy/main.go
