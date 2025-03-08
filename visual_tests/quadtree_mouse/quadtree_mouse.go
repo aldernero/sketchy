@@ -24,20 +24,20 @@ func update(s *sketchy.Sketch) {
 		count = 0
 	}
 	nearestPoints = []gaul.IndexPoint{}
-	if inpututil.IsMouseButtonJustReleased(ebiten.MouseButtonLeft) {
+	if !s.IsMouseOverControlPanel() && inpututil.IsMouseButtonJustReleased(ebiten.MouseButtonLeft) {
 		x, y := ebiten.CursorPosition()
 		if s.PointInSketchArea(float64(x), float64(y)) {
 			p := s.CanvasCoords(float64(x), float64(y))
 			qt.Insert(p.ToIndexPoint(count))
 			count++
 		}
-	} else {
-		x, y := ebiten.CursorPosition()
-		if s.PointInSketchArea(float64(x), float64(y)) {
-			p := s.CanvasCoords(float64(x), float64(y))
-			nearestPoints = qt.NearestNeighbors(p.ToIndexPoint(-1), int(s.Slider("Closest Neighbors")))
-		}
 	}
+	x, y := ebiten.CursorPosition()
+	if s.PointInSketchArea(float64(x), float64(y)) {
+		p := s.CanvasCoords(float64(x), float64(y))
+		nearestPoints = qt.NearestNeighbors(p.ToIndexPoint(-1), int(s.Slider("Closest Neighbors")))
+	}
+
 }
 
 func draw(s *sketchy.Sketch, c *canvas.Context) {

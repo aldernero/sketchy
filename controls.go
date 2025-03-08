@@ -105,13 +105,13 @@ func (s *Sketch) controlWindow(ctx *debugui.Context) {
 				ctx.Label(fmt.Sprintf("Seed: %d", s.RandomSeed))
 				ctx.SetLayoutRow([]int{40, 40, 40}, 0)
 				if ctx.Button("Decr") != 0 {
-					s.RandomSeed--
+					s.decrementRandomSeed()
 				}
 				if ctx.Button("Incr") != 0 {
-					s.RandomSeed++
+					s.incrementRandomSeed()
 				}
 				if ctx.Button("Rand") != 0 {
-					s.RandomSeed = rand.Int63()
+					s.randomizeRandomSeed()
 				}
 			})
 			ctx.TreeNode("Save Options", func(res debugui.Response) {

@@ -161,22 +161,13 @@ func (s *Sketch) UpdateControls() {
 		s.saveConfig()
 	}
 	if inpututil.IsKeyJustReleased(ebiten.KeyUp) {
-		s.RandomSeed++
-		s.Rand.SetSeed(s.RandomSeed)
-		s.DidControlsChange = true
-		fmt.Println("RandomSeed incremented: ", s.RandomSeed)
+		s.incrementRandomSeed()
 	}
 	if inpututil.IsKeyJustReleased(ebiten.KeyDown) {
-		s.RandomSeed--
-		s.Rand.SetSeed(s.RandomSeed)
-		s.DidControlsChange = true
-		fmt.Println("RandomSeed decremented: ", s.RandomSeed)
+		s.decrementRandomSeed()
 	}
 	if inpututil.IsKeyJustReleased(ebiten.KeySlash) {
-		s.RandomSeed = rand.Int63()
-		s.Rand.SetSeed(s.RandomSeed)
-		s.DidControlsChange = true
-		fmt.Println("RandomSeed changed: ", s.RandomSeed)
+		s.randomizeRandomSeed()
 	}
 	if inpututil.IsKeyJustReleased(ebiten.KeyD) {
 		s.DumpState()
@@ -226,11 +217,11 @@ func (s *Sketch) Layout(
 }
 
 func (s *Sketch) Update() error {
-	s.UpdateControls()
-	s.Updater(s)
 	s.ui.Update(func(ctx *debugui.Context) {
 		s.controlWindow(ctx)
 	})
+	s.UpdateControls()
+	s.Updater(s)
 	s.Tick++
 	return nil
 }
@@ -320,6 +311,10 @@ func (s *Sketch) RandomHeight() float64 {
 	return rand.Float64() * s.Height()
 }
 
+func (s *Sketch) IsMouseOverControlPanel() bool {
+	return s.ui.IsCapturingInput()
+}
+
 func (s *Sketch) buildMaps() {
 	s.sliderControlMap = make(map[string]int)
 	for i := range s.Sliders {
@@ -348,4 +343,25 @@ func (s *Sketch) getSketchImageRect() image.Rectangle {
 	right := int(s.SketchWidth)
 	bottom := int(s.SketchHeight)
 	return image.Rect(0, 0, right, bottom)
+}
+
+func (s *Sketch) decrementRandomSeed() {
+	s.RandomSeed--
+	s.Rand.SetSeed(s.RandomSeed)
+	s.DidControlsChange = true
+	fmt.Println("RandomSeed decremented: ", s.RandomSeed)
+}
+
+func (s *Sketch) incrementRandomSeed() {
+	s.RandomSeed++
+	s.Rand.SetSeed(s.RandomSeed)
+	s.DidControlsChange = true
+	fmt.Println("RandomSeed incremented: ", s.RandomSeed)
+}
+
+func (s *Sketch) randomizeRandomSeed() {
+	s.RandomSeed = rand.Int63()
+	s.Rand.SetSeed(s.RandomSeed)
+	s.DidControlsChange = true
+	fmt.Println("RandomSeed changed: ", s.RandomSeed)
 }
