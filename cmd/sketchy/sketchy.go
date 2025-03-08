@@ -65,7 +65,7 @@ func main() {
 		if _, err := os.Stat(dirPath); errors.Is(err, fs.ErrNotExist) {
 			log.Fatalf("directory %s doesn't exist: %v", dirPath, err)
 		}
-		appPath := path.Join(dirPath, "main.go")
+		appPath := path.Join(dirPath, "sketchy.go")
 		pathExists, err := regularFileExists(appPath)
 		if err != nil {
 			log.Fatal("error while looking for sketch file:", err)
