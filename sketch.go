@@ -120,7 +120,7 @@ func (s *Sketch) Init() {
 	if s.ButtonColumns == 0 {
 		s.ButtonColumns = DefaultButtonColumns
 	}
-	s.ui = debugui.New()
+	s.ui = &debugui.DebugUI{}
 	s.buildMaps()
 	s.Rand = gaul.NewRng(s.RandomSeed)
 	s.SketchCanvas = canvas.New(s.Width(), s.Height())
@@ -173,7 +173,7 @@ func (s *Sketch) UpdateControls() {
 		s.DumpState()
 	}
 	if inpututil.IsKeyJustReleased(ebiten.KeySpace) {
-		s.ui = debugui.New()
+		s.ui = &debugui.DebugUI{}
 	}
 	// check if the values of the sliders have changed
 	for i := range s.Sliders {
@@ -217,8 +217,9 @@ func (s *Sketch) Layout(
 }
 
 func (s *Sketch) Update() error {
-	s.ui.Update(func(ctx *debugui.Context) {
+	s.ui.Update(func(ctx *debugui.Context) error {
 		s.controlWindow(ctx)
+		return nil
 	})
 	s.UpdateControls()
 	s.Updater(s)
@@ -312,7 +313,8 @@ func (s *Sketch) RandomHeight() float64 {
 }
 
 func (s *Sketch) IsMouseOverControlPanel() bool {
-	return s.ui.IsCapturingInput()
+	state, _ := s.ui.Update(func(ctx *debugui.Context) error { return nil })
+	return state != 0
 }
 
 func (s *Sketch) buildMaps() {

@@ -2,12 +2,13 @@ package sketchy
 
 import (
 	"fmt"
-	"github.com/aldernero/gaul"
-	"github.com/ebitengine/debugui"
 	"image"
 	"math"
 	"math/rand"
 	"strconv"
+
+	"github.com/aldernero/gaul"
+	"github.com/ebitengine/debugui"
 )
 
 const (
@@ -99,70 +100,56 @@ func calcDigits(val float64) int {
 }
 
 func (s *Sketch) controlWindow(ctx *debugui.Context) {
-	ctx.Window("Control Panel", image.Rect(DefaultControlWindowX, DefaultControlWindowY, s.ControlWidth, s.ControlHeight), func(res debugui.Response, layout debugui.Layout) {
-		if ctx.Header("Builtins", true) != 0 {
-			ctx.TreeNode("Random Seed", func(res debugui.Response) {
-				ctx.Label(fmt.Sprintf("Seed: %d", s.RandomSeed))
-				ctx.SetLayoutRow([]int{40, 40, 40}, 0)
-				if ctx.Button("Decr") != 0 {
-					s.decrementRandomSeed()
-				}
-				if ctx.Button("Incr") != 0 {
-					s.incrementRandomSeed()
-				}
-				if ctx.Button("Rand") != 0 {
-					s.randomizeRandomSeed()
-				}
+	ctx.Window("Control Panel", image.Rect(DefaultControlWindowX, DefaultControlWindowY, s.ControlWidth, s.ControlHeight), func(layout debugui.ContainerLayout) {
+		ctx.Header("Builtins", true, func() {
+			ctx.TreeNode("Random Seed", func() {
+				ctx.Text(fmt.Sprintf("Seed: %d", s.RandomSeed))
+				ctx.SetGridLayout([]int{40, 40, 40}, nil)
+				ctx.Button("Decr").On(func() { s.decrementRandomSeed() })
+				ctx.Button("Incr").On(func() { s.incrementRandomSeed() })
+				ctx.Button("Rand").On(func() { s.randomizeRandomSeed() })
 			})
-			ctx.TreeNode("Save Options", func(res debugui.Response) {
-				ctx.SetLayoutRow([]int{80, 80}, 0)
-				if ctx.Button("Save as PNG") != 0 {
-					s.isSavingPNG = true
-				}
-				if ctx.Button("Save as SVG") != 0 {
-					s.isSavingSVG = true
-				}
-				if ctx.Button("Save Config") != 0 {
-					s.saveConfig()
-				}
-				if ctx.Button("Dump State") != 0 {
-					s.DumpState()
-				}
+			ctx.TreeNode("Save Options", func() {
+				ctx.SetGridLayout([]int{80, 80}, nil)
+				ctx.Button("Save as PNG").On(func() { s.isSavingPNG = true })
+				ctx.Button("Save as SVG").On(func() { s.isSavingSVG = true })
+				ctx.Button("Save Config").On(func() { s.saveConfig() })
+				ctx.Button("Dump State").On(func() { s.DumpState() })
 			})
-		}
-		if ctx.Header("Sliders", true) != 0 {
-			if ctx.Button("Randomize (unless checked)") != 0 {
+		})
+		ctx.Header("Sliders", true, func() {
+			ctx.Button("Randomize (unless checked)").On(func() {
 				for i := range s.Sliders {
 					if !s.Sliders[i].dontRandomize {
 						s.Sliders[i].Randomize()
 					}
 				}
-			}
-			ctx.SetLayoutRow([]int{20, s.SliderTextWidth, -1}, 0)
+			})
+			ctx.SetGridLayout([]int{20, s.SliderTextWidth, -1}, nil)
 			for i := range s.Sliders {
-				ctx.Checkbox("", &s.Sliders[i].dontRandomize)
-				ctx.Label(s.Sliders[i].Name)
-				ctx.Slider(&s.Sliders[i].Val, s.Sliders[i].MinVal, s.Sliders[i].MaxVal, s.Sliders[i].Incr, s.Sliders[i].digits)
+				ctx.Checkbox(&s.Sliders[i].dontRandomize, "")
+				ctx.Text(s.Sliders[i].Name)
+				ctx.SliderF(&s.Sliders[i].Val, s.Sliders[i].MinVal, s.Sliders[i].MaxVal, s.Sliders[i].Incr, s.Sliders[i].digits)
 			}
-		}
-		if ctx.Header("Checkboxes", true) != 0 {
-			ctx.SetLayoutRow(getRowIntSlice(s.CheckboxColumns), 0)
+		})
+		ctx.Header("Checkboxes", true, func() {
+			ctx.SetGridLayout(getRowIntSlice(s.CheckboxColumns), nil)
 			for i := range s.Toggles {
 				if !s.Toggles[i].IsButton {
-					ctx.Checkbox(s.Toggles[i].Name, &s.Toggles[i].Checked)
+					ctx.Checkbox(&s.Toggles[i].Checked, s.Toggles[i].Name)
 				}
 			}
-		}
-		if ctx.Header("Buttons", true) != 0 {
-			ctx.SetLayoutRow(getRowIntSlice(s.ButtonColumns), 0)
+		})
+		ctx.Header("Buttons", true, func() {
+			ctx.SetGridLayout(getRowIntSlice(s.ButtonColumns), nil)
 			for i := range s.Toggles {
 				if s.Toggles[i].IsButton {
-					if ctx.Button(s.Toggles[i].Name) != 0 {
+					ctx.Button(s.Toggles[i].Name).On(func() {
 						s.Toggles[i].Checked = !s.Toggles[i].Checked
-					}
+					})
 				}
 			}
-		}
+		})
 	})
 }
 
