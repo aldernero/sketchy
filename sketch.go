@@ -3,7 +3,6 @@ package sketchy
 import (
 	"encoding/json"
 	"fmt"
-	"image"
 	"image/color"
 	"log"
 	"math/rand"
@@ -52,23 +51,24 @@ type Sketch struct {
 	RandomSeed                int64         `json:"RandomSeed"`
 	Sliders                   []Slider      `json:"Sliders"`
 	Toggles                   []Toggle      `json:"Toggles"`
+	ColorPickers              []ColorPicker `json:"ColorPickers"`
 	Updater                   SketchUpdater `json:"-"`
 	Drawer                    SketchDrawer  `json:"-"`
 	DidControlsChange         bool          `json:"-"`
 	DidSlidersChange          bool          `json:"-"`
 	DidTogglesChange          bool          `json:"-"`
+	DidColorPickersChange     bool          `json:"-"`
 	Rand                      gaul.Rng      `json:"-"`
-	seedUpdateString          string
 	sliderControlMap          map[string]int
 	toggleControlMap          map[string]int
-	controlColorConfig        gaul.ColorConfig
-	sketchColorConfig         gaul.ColorConfig
+	colorPickerControlMap     map[string]int
 	isSavingPNG               bool
 	isSavingSVG               bool
 	needToClear               bool
 	Tick                      int64          `json:"-"`
 	SketchCanvas              *canvas.Canvas `json:"-"`
-	ui                        *debugui.DebugUI
+	ui                        debugui.DebugUI
+	IsControlPanelHovered     bool `json:"-"`
 }
 
 func (s *Sketch) Width() float64 {
@@ -120,7 +120,6 @@ func (s *Sketch) Init() {
 	if s.ButtonColumns == 0 {
 		s.ButtonColumns = DefaultButtonColumns
 	}
-	s.ui = &debugui.DebugUI{}
 	s.buildMaps()
 	s.Rand = gaul.NewRng(s.RandomSeed)
 	s.SketchCanvas = canvas.New(s.Width(), s.Height())
@@ -150,6 +149,14 @@ func (s *Sketch) Toggle(name string) bool {
 	return s.Toggles[i].Checked
 }
 
+func (s *Sketch) ColorPicker(name string) color.Color {
+	i, ok := s.colorPickerControlMap[name]
+	if !ok {
+		log.Fatalf("%s not a valid color picker name", name)
+	}
+	return s.ColorPickers[i].c
+}
+
 func (s *Sketch) UpdateControls() {
 	if inpututil.IsKeyJustReleased(ebiten.KeyP) {
 		s.isSavingPNG = true
@@ -172,9 +179,6 @@ func (s *Sketch) UpdateControls() {
 	if inpututil.IsKeyJustReleased(ebiten.KeyD) {
 		s.DumpState()
 	}
-	if inpututil.IsKeyJustReleased(ebiten.KeySpace) {
-		s.ui = &debugui.DebugUI{}
-	}
 	// check if the values of the sliders have changed
 	for i := range s.Sliders {
 		s.Sliders[i].UpdateState()
@@ -189,8 +193,16 @@ func (s *Sketch) UpdateControls() {
 			s.DidTogglesChange = true
 		}
 	}
+	// check if the color pickers have changed
+	for i := range s.ColorPickers {
+		// Update the state
+		s.ColorPickers[i].UpdateState()
+		if s.ColorPickers[i].DidJustChange {
+			s.DidColorPickersChange = true
+		}
+	}
 	// check if the controls have changed
-	if s.DidSlidersChange || s.DidTogglesChange {
+	if s.DidSlidersChange || s.DidTogglesChange || s.DidColorPickersChange {
 		s.DidControlsChange = true
 	}
 }
@@ -217,10 +229,13 @@ func (s *Sketch) Layout(
 }
 
 func (s *Sketch) Update() error {
-	s.ui.Update(func(ctx *debugui.Context) error {
+	_, err := s.ui.Update(func(ctx *debugui.Context) error {
 		s.controlWindow(ctx)
 		return nil
 	})
+	if err != nil {
+		return err
+	}
 	s.UpdateControls()
 	s.Updater(s)
 	s.Tick++
@@ -270,6 +285,7 @@ func (s *Sketch) Draw(screen *ebiten.Image) {
 	s.DidControlsChange = false
 	s.DidSlidersChange = false
 	s.DidTogglesChange = false
+	s.DidColorPickersChange = false
 }
 
 // CanvasCoords converts window coordinates (pixels, upper left origin) to canvas coordinates (mm, lower left origin)
@@ -301,6 +317,9 @@ func (s *Sketch) DumpState() {
 			fmt.Printf("%s: %t\n", s.Toggles[i].Name, s.Toggles[i].Checked)
 		}
 	}
+	for i := range s.ColorPickers {
+		fmt.Printf("%s: %s\n", s.ColorPickers[i].Name, s.ColorPickers[i].Color)
+	}
 	fmt.Println("RandomSeed: ", s.RandomSeed)
 }
 
@@ -329,6 +348,11 @@ func (s *Sketch) buildMaps() {
 		s.Toggles[i].lastVal = s.Toggles[i].Checked
 		s.toggleControlMap[s.Toggles[i].Name] = i
 	}
+	s.colorPickerControlMap = make(map[string]int)
+	for i := range s.ColorPickers {
+		s.ColorPickers[i] = NewColorPicker(s.ColorPickers[i].Name, s.ColorPickers[i].Color)
+		s.colorPickerControlMap[s.ColorPickers[i].Name] = i
+	}
 }
 
 func (s *Sketch) saveConfig() {
@@ -339,12 +363,6 @@ func (s *Sketch) saveConfig() {
 		fmt.Println(err)
 	}
 	fmt.Println("Saved config ", fname)
-}
-
-func (s *Sketch) getSketchImageRect() image.Rectangle {
-	right := int(s.SketchWidth)
-	bottom := int(s.SketchHeight)
-	return image.Rect(0, 0, right, bottom)
 }
 
 func (s *Sketch) decrementRandomSeed() {

@@ -2,9 +2,10 @@ package main
 
 import (
 	"flag"
+	"log"
+
 	"github.com/aldernero/gaul"
 	"github.com/tdewolff/canvas"
-	"log"
 
 	"github.com/aldernero/sketchy"
 	"github.com/hajimehoshi/ebiten/v2"
@@ -13,8 +14,18 @@ import (
 var cg1 gaul.SimpleGradient
 var cg2 gaul.Gradient
 
+func setup(s *sketchy.Sketch) {
+	cg1 = gaul.SimpleGradient{
+		StartColor: s.ColorPicker("start"),
+		EndColor:   s.ColorPicker("end"),
+	}
+}
+
 func update(s *sketchy.Sketch) {
 	// Update logic goes here
+	if s.DidColorPickersChange || s.DidSlidersChange {
+		setup(s)
+	}
 }
 
 func draw(s *sketchy.Sketch, c *canvas.Context) {
@@ -68,8 +79,8 @@ func main() {
 	s.Updater = update
 	s.Drawer = draw
 	s.Init()
-	cg1 = gaul.NewSimpleGradientFromNamed("cyan", "magenta")
 	cg2 = gaul.NewGradientFromNamed([]string{"blue", "green", "yellow", "red"})
+	setup(s)
 	ebiten.SetWindowSize(int(s.SketchWidth), int(s.SketchHeight))
 	ebiten.SetWindowTitle("Sketchy - " + s.Title)
 	ebiten.SetWindowResizingMode(ebiten.WindowResizingModeDisabled)

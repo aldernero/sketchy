@@ -3,12 +3,20 @@ package sketchy
 import (
 	"fmt"
 	"image"
+	"image/color"
 	"math"
 	"math/rand"
+	"regexp"
 	"strconv"
+	"strings"
 
 	"github.com/aldernero/gaul"
 	"github.com/ebitengine/debugui"
+	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/text/v2"
+	"github.com/hajimehoshi/ebiten/v2/vector"
+	"github.com/lucasb-eyer/go-colorful"
+	"golang.org/x/image/colornames"
 )
 
 const (
@@ -42,6 +50,17 @@ type Toggle struct {
 	IsButton      bool       `json:"IsButton"`
 	DidJustChange bool       `json:"-"`
 	lastVal       bool
+}
+
+type ColorPicker struct {
+	Name          string `json:"Name"`
+	Color         string `json:"Color"`
+	DidJustChange bool   `json:"-"`
+	lastColor     string
+	r             int
+	g             int
+	b             int
+	c             color.Color
 }
 
 func NewSlider(name string, min, max, val, incr float64) Slider {
@@ -92,6 +111,46 @@ func (t *Toggle) UpdateState() {
 	t.lastVal = t.Checked
 }
 
+func NewColorPicker(name, color string) ColorPicker {
+	clr := stringToColor(color)
+	r, g, b, _ := clr.RGBA()
+	hex := fmt.Sprintf("#%02X%02X%02X", r, g, b)
+	c := ColorPicker{
+		Name:  name,
+		Color: hex,
+	}
+	c.lastColor = color
+	c.c = clr
+	c.r, c.g, c.b = int(r), int(g), int(b)
+	return c
+}
+
+func (c *ColorPicker) GetColor() color.Color {
+	return color.RGBA{byte(c.r), byte(c.g), byte(c.b), 255}
+}
+
+func (c *ColorPicker) GetHex() string {
+	return fmt.Sprintf("#%02X%02X%02X", c.r, c.g, c.b)
+}
+
+func (c *ColorPicker) UpdateState() {
+	// Update hex string from RGB components
+	newColor := fmt.Sprintf("#%02X%02X%02X", c.r, c.g, c.b)
+	if newColor != c.Color {
+		c.Color = newColor
+		c.DidJustChange = true
+		// Update the color.Color value
+		clr, err := colorful.Hex(newColor)
+		if err != nil {
+			panic(err)
+		}
+		c.c = clr
+	} else {
+		c.DidJustChange = false
+	}
+	c.lastColor = c.Color
+}
+
 func calcDigits(val float64) int {
 	if val < 1 {
 		return int(math.Ceil(math.Abs(math.Log10(val))))
@@ -127,27 +186,70 @@ func (s *Sketch) controlWindow(ctx *debugui.Context) {
 			})
 			ctx.SetGridLayout([]int{20, s.SliderTextWidth, -1}, nil)
 			for i := range s.Sliders {
-				ctx.Checkbox(&s.Sliders[i].dontRandomize, "")
-				ctx.Text(s.Sliders[i].Name)
-				ctx.SliderF(&s.Sliders[i].Val, s.Sliders[i].MinVal, s.Sliders[i].MaxVal, s.Sliders[i].Incr, s.Sliders[i].digits)
+				ctx.IDScope(fmt.Sprintf("sliders%d", i), func() {
+					ctx.Checkbox(&s.Sliders[i].dontRandomize, "")
+					ctx.Text(s.Sliders[i].Name)
+					ctx.SliderF(&s.Sliders[i].Val, s.Sliders[i].MinVal, s.Sliders[i].MaxVal, s.Sliders[i].Incr, s.Sliders[i].digits)
+				})
 			}
 		})
 		ctx.Header("Checkboxes", true, func() {
 			ctx.SetGridLayout(getRowIntSlice(s.CheckboxColumns), nil)
 			for i := range s.Toggles {
-				if !s.Toggles[i].IsButton {
-					ctx.Checkbox(&s.Toggles[i].Checked, s.Toggles[i].Name)
-				}
+				ctx.IDScope(fmt.Sprintf("checkboxes%d", i), func() {
+					if !s.Toggles[i].IsButton {
+						ctx.Checkbox(&s.Toggles[i].Checked, s.Toggles[i].Name)
+					}
+				})
 			}
 		})
 		ctx.Header("Buttons", true, func() {
 			ctx.SetGridLayout(getRowIntSlice(s.ButtonColumns), nil)
 			for i := range s.Toggles {
-				if s.Toggles[i].IsButton {
-					ctx.Button(s.Toggles[i].Name).On(func() {
-						s.Toggles[i].Checked = !s.Toggles[i].Checked
+				ctx.IDScope(fmt.Sprintf("buttons%d", i), func() {
+					if s.Toggles[i].IsButton {
+						ctx.Button(s.Toggles[i].Name).On(func() {
+							s.Toggles[i].Checked = !s.Toggles[i].Checked
+						})
+					}
+				})
+			}
+		})
+		ctx.Header("Color Pickers", true, func() {
+			for i := range s.ColorPickers {
+				ctx.IDScope(fmt.Sprintf("pickers%d", i), func() {
+					ctx.Text(s.ColorPickers[i].Name)
+					ctx.SetGridLayout([]int{-3, -1}, []int{54})
+					ctx.GridCell(func(bounds image.Rectangle) {
+						ctx.SetGridLayout([]int{-1, -3}, nil)
+						ctx.Text("R")
+						ctx.Slider(&s.ColorPickers[i].r, 0, 255, 1)
+						ctx.Text("G")
+						ctx.Slider(&s.ColorPickers[i].g, 0, 255, 1)
+						ctx.Text("B")
+						ctx.Slider(&s.ColorPickers[i].b, 0, 255, 1)
 					})
-				}
+					ctx.GridCell(func(bounds image.Rectangle) {
+						ctx.DrawOnlyWidget(func(screen *ebiten.Image) {
+							scale := ctx.Scale()
+							vector.DrawFilledRect(
+								screen,
+								float32(bounds.Min.X*scale),
+								float32(bounds.Min.Y*scale),
+								float32(bounds.Dx()*scale),
+								float32(bounds.Dy()*scale),
+								color.RGBA{byte(s.ColorPickers[i].r), byte(s.ColorPickers[i].g), byte(s.ColorPickers[i].b), 255},
+								false)
+							txt := s.ColorPickers[i].GetHex()
+							op := &text.DrawOptions{}
+							op.GeoM.Translate(float64((bounds.Min.X+bounds.Max.X)/2), float64((bounds.Min.Y+bounds.Max.Y)/2))
+							op.GeoM.Scale(float64(scale), float64(scale))
+							op.PrimaryAlign = text.AlignCenter
+							op.SecondaryAlign = text.AlignCenter
+							debugui.DrawText(screen, txt, op)
+						})
+					})
+				})
 			}
 		})
 	})
@@ -159,4 +261,20 @@ func getRowIntSlice(col int) []int {
 		result[i] = -1
 	}
 	return result
+}
+
+func stringToColor(s string) color.Color {
+	hexColorRegex := regexp.MustCompile(`^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$`)
+	if hexColorRegex.MatchString(s) {
+		clr, err := colorful.Hex(s)
+		if err != nil {
+			panic(err)
+		}
+		return clr
+	}
+	clr, ok := colornames.Map[strings.ToLower(s)]
+	if !ok {
+		panic(fmt.Sprintf("Color %s not found", s))
+	}
+	return clr
 }
