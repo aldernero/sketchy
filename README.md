@@ -27,7 +27,7 @@ git clone https://github.com/aldernero/sketchy.git
 ```
 ## Compile the sketchy binary
 ```shell
-go build -o sketchy ./cmd/sketchy/main.go
+go build -o sketchy ./cmd/sketchy/sketchy.go
 ```
 
 ## Running the examples

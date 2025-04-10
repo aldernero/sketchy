@@ -2,13 +2,14 @@ package main
 
 import (
 	"flag"
-	"github.com/aldernero/gaul"
-	"github.com/tdewolff/canvas"
 	"image"
 	"image/color"
 	"log"
 	"runtime"
 	"sync"
+
+	"github.com/aldernero/gaul"
+	"github.com/tdewolff/canvas"
 
 	"github.com/aldernero/sketchy"
 	"github.com/hajimehoshi/ebiten/v2"
@@ -31,7 +32,7 @@ func calcNoise(s *sketchy.Sketch, mono bool, cs []pixel, results chan<- result, 
 	defer wg.Done()
 	res := make(result, len(cs))
 	for i, cell := range cs {
-		noise := s.Rand.Noise2D(float64(cell.x), float64(cell.y))
+		noise := s.Rand.Noise3D(float64(cell.x), float64(cell.y), float64(tick))
 		if !mono {
 			hue := gaul.Map(0, 1, 0, 360, noise)
 			cell.c = colorful.Hsl(hue, 0.5, 0.5)
@@ -92,9 +93,9 @@ func update(s *sketchy.Sketch) {
 		return
 	}
 	if s.Toggle("animate") {
-		s.Rand.SetNoiseOffsetZ(2 * float64(tick))
 		setup(s)
 		tick++
+		return
 	}
 }
 
