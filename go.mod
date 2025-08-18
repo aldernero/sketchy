@@ -3,11 +3,11 @@ module github.com/aldernero/sketchy
 go 1.24.2
 
 require (
-	github.com/aldernero/gaul v0.0.0-20250409020047-4455613a87ff
-	github.com/ebitengine/debugui v0.2.0-alpha.4
+	github.com/aldernero/gaul v0.0.0-20250818225927-b928fa250435
+	github.com/ebitengine/debugui v0.2.0-alpha.6
 	github.com/hajimehoshi/ebiten/v2 v2.8.8
 	github.com/lucasb-eyer/go-colorful v1.2.0
-	github.com/tdewolff/canvas v0.0.0-20250508181010-75987a1ae9cc
+	github.com/tdewolff/canvas v0.0.0-20250728095813-50d4cb1eee71
 )
 
 require (
@@ -44,15 +44,15 @@ require (
 	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/srwiley/rasterx v0.0.0-20220730225603-2ab79fcdd4ef // indirect
 	github.com/srwiley/scanx v0.0.0-20190309010443-e94503791388 // indirect
-	github.com/tdewolff/font v0.0.0-20250602165824-bf05faa75fda // indirect
-	github.com/tdewolff/minify/v2 v2.23.8 // indirect
-	github.com/tdewolff/parse/v2 v2.8.1 // indirect
+	github.com/tdewolff/font v0.0.0-20250724150151-83cb1696c2bd // indirect
+	github.com/tdewolff/minify/v2 v2.23.11 // indirect
+	github.com/tdewolff/parse/v2 v2.8.2-0.20250806174018-50048bb39781 // indirect
 	github.com/wcharczuk/go-chart/v2 v2.1.2 // indirect
-	golang.org/x/image v0.28.0
-	golang.org/x/net v0.41.0 // indirect
-	golang.org/x/sync v0.15.0 // indirect
-	golang.org/x/sys v0.33.0 // indirect
-	golang.org/x/text v0.26.0 // indirect
+	golang.org/x/image v0.30.0
+	golang.org/x/net v0.43.0 // indirect
+	golang.org/x/sync v0.16.0 // indirect
+	golang.org/x/sys v0.35.0 // indirect
+	golang.org/x/text v0.28.0 // indirect
 	gonum.org/v1/plot v0.16.0 // indirect
 	star-tex.org/x/tex v0.7.1 // indirect
 )
