@@ -3,7 +3,6 @@ package main
 import (
 	"flag"
 	"image"
-	"image/color"
 	"log"
 	"runtime"
 	"sync"
@@ -19,13 +18,13 @@ import (
 var tick int64
 
 type pixel struct {
-	x, y int
-	c    color.Color
+	x, y       int
+	r, g, b, a uint8
 }
 
 type result []pixel
 
-var img *image.RGBA64
+var img *image.RGBA
 var pxPerMm float64
 
 func calcNoise(s *sketchy.Sketch, mono bool, cs []pixel, results chan<- result, wg *sync.WaitGroup) {
@@ -35,10 +34,13 @@ func calcNoise(s *sketchy.Sketch, mono bool, cs []pixel, results chan<- result, 
 		noise := s.Rand.Noise3D(float64(cell.x), float64(cell.y), float64(tick))
 		if !mono {
 			hue := gaul.Map(0, 1, 0, 360, noise)
-			cell.c = colorful.Hsl(hue, 0.5, 0.5)
+			c := colorful.Hsl(hue, 0.5, 0.5)
+			cell.r, cell.g, cell.b = c.RGB255()
+			cell.a = 255
 		} else {
 			gray := gaul.Map(0, 1, 0, 255, noise)
-			cell.c = color.Gray{Y: uint8(gray)}
+			grayVal := uint8(gray)
+			cell.r, cell.g, cell.b, cell.a = grayVal, grayVal, grayVal, 255
 		}
 		res[i] = cell
 	}
@@ -55,16 +57,21 @@ func setup(s *sketchy.Sketch) {
 	s.Rand.SetNoiseOffsetX(s.Slider("xoffset"))
 	s.Rand.SetNoiseOffsetY(s.Slider("yoffset"))
 	s.Rand.SetNoiseScaleZ(0.005)
-	img = image.NewRGBA64(image.Rect(0, 0, int(s.SketchWidth), int(s.SketchHeight)))
-	rect := img.Rect
-	W := rect.Dx()
-	H := rect.Dy()
+
+	// Reuse existing image buffer if possible
+	W := int(s.SketchWidth)
+	H := int(s.SketchHeight)
+	if img == nil || img.Bounds().Dx() != W || img.Bounds().Dy() != H {
+		img = image.NewRGBA(image.Rect(0, 0, W, H))
+	}
+
 	pixels := make([]pixel, W*H)
 	for i := 0; i < W; i++ {
 		for j := 0; j < H; j++ {
-			pixels[i*H+j] = pixel{i, j, nil}
+			pixels[i*H+j] = pixel{x: i, y: j}
 		}
 	}
+
 	numWorkers := runtime.NumCPU()
 	results := make(chan result, numWorkers)
 	var wg sync.WaitGroup
@@ -75,10 +82,17 @@ func setup(s *sketchy.Sketch) {
 		go calcNoise(s, mono, cs, results, &wg)
 	}
 	wg.Wait()
+
+	// Write directly to pixel buffer for better performance
+	stride := img.Stride
 	for i := 0; i < numWorkers; i++ {
 		r := <-results
 		for _, p := range r {
-			img.Set(p.x, p.y, p.c)
+			idx := p.y*stride + p.x*4
+			img.Pix[idx] = p.r
+			img.Pix[idx+1] = p.g
+			img.Pix[idx+2] = p.b
+			img.Pix[idx+3] = p.a
 		}
 	}
 	close(results)
@@ -90,11 +104,13 @@ func update(s *sketchy.Sketch) {
 			tick = 0
 		}
 		setup(s)
+		s.MarkDirty() // Mark for re-render
 		return
 	}
 	if s.Toggle("animate") {
 		setup(s)
 		tick++
+		s.MarkDirty() // Mark for re-render
 		return
 	}
 }
@@ -123,7 +139,6 @@ func main() {
 	s.Drawer = draw
 	s.Init()
 	pxPerMm = s.SketchWidth / s.Width()
-	img = image.NewRGBA64(image.Rect(0, 0, int(s.SketchWidth), int(s.SketchHeight)))
 	setup(s)
 	ebiten.SetWindowSize(int(s.SketchWidth), int(s.SketchHeight))
 	ebiten.SetWindowTitle("Sketchy - " + s.Title)

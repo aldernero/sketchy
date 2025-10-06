@@ -48,6 +48,8 @@ github.com/ebitengine/debugui v0.1.2 h1:7FgzqNz8GQt7eIrTDKPePJx271b5LfjSJYopttZy
 github.com/ebitengine/debugui v0.1.2/go.mod h1:wIKIq5RvNFb3+nFfJcYqSLvpC1ioD/BglWDtuWFSDz0=
 github.com/ebitengine/debugui v0.2.0-alpha.6 h1:pXjR6IuNKt6LqkZYZut8OmbWox9/WxMr0EBtwk+xTvA=
 github.com/ebitengine/debugui v0.2.0-alpha.6/go.mod h1:9sJAf0xB5bg8z+IOz6tdKF4WyQZzZrFDhQbR6gZ1+9s=
+github.com/ebitengine/debugui v0.2.0 h1:FPAgRRzB8QqsyRnMVlzyiVcZTg5l69BMpHlnHktdQg8=
+github.com/ebitengine/debugui v0.2.0/go.mod h1:I9KvQiFgUVO+a3GntY7k+t6QZBESqwKcoegEbYuddw4=
 github.com/ebitengine/gomobile v0.0.0-20250329061421-6d0a8e981e4c h1:Ccgks2VROTr6bIm1FFxG2jT6P1DaCBMj8g/O9xbOQ08=
 github.com/ebitengine/gomobile v0.0.0-20250329061421-6d0a8e981e4c/go.mod h1:M6DDA2RbegvWBVv4Dq482lwyFTtMczT1A7UNm1qOYzY=
 github.com/ebitengine/gomobile v0.0.0-20250923094054-ea854a63cce1 h1:+kz5iTT3L7uU+VhlMfTb8hHcxLO3TlaELlX8wa4XjA0=
@@ -71,8 +73,12 @@ github.com/hajimehoshi/bitmapfont/v3 v3.3.0 h1:KUVwvYndITE354fC4Mia2S6wNe7Fdw7ko
 github.com/hajimehoshi/bitmapfont/v3 v3.3.0/go.mod h1:xr0I489RlJqH1gmliAbPQjcRvMPp+uk/UCqKk1SMmx8=
 github.com/hajimehoshi/bitmapfont/v4 v4.0.0 h1:faekbO0nmay1NZJTeckpvf6hKuqIY7HOTmQFbNM0/M0=
 github.com/hajimehoshi/bitmapfont/v4 v4.0.0/go.mod h1:9KdLJljAPdDiSz6KZK6s3iZl0m1HVvBgU68CYw3U2dk=
+github.com/hajimehoshi/bitmapfont/v4 v4.1.0 h1:eE3qa5Do4qhowZVIHjsrX5pYyyPN6sAFWMsO7QREm3U=
+github.com/hajimehoshi/bitmapfont/v4 v4.1.0/go.mod h1:/PD+aLjAJ0F2UoQx6hkOfXqWN7BkroDUMr5W+IT1dpE=
 github.com/hajimehoshi/ebiten/v2 v2.8.8 h1:xyMxOAn52T1tQ+j3vdieZ7auDBOXmvjUprSrxaIbsi8=
 github.com/hajimehoshi/ebiten/v2 v2.8.8/go.mod h1:durJ05+OYnio9b8q0sEtOgaNeBEQG7Yr7lRviAciYbs=
+github.com/hajimehoshi/ebiten/v2 v2.8.9 h1:qUkI++Dq5Jzcwio5vOIZj6kAkzvei9S3X9zrUJIKJDA=
+github.com/hajimehoshi/ebiten/v2 v2.8.9/go.mod h1:2W03LiNMJj7+mFtYbnZlSLoxovd2bpg4FzQR0pZhzAA=
 github.com/jezek/xgb v1.1.1 h1:bE/r8ZZtSv7l9gk6nU0mYx51aXrvnyb44892TwSaqS4=
 github.com/jezek/xgb v1.1.1/go.mod h1:nrhwO0FX/enq75I7Y7G8iN1ubpSGZEiA3v9e9GyRFlk=
 github.com/kolesa-team/go-webp v1.0.5 h1:GZQHJBaE8dsNKZltfwqsL0qVJ7vqHXsfA+4AHrQW3pE=
@@ -107,6 +113,8 @@ github.com/tdewolff/canvas v0.0.0-20250728095813-50d4cb1eee71 h1:CIWvhVDNsEQd9T3
 github.com/tdewolff/canvas v0.0.0-20250728095813-50d4cb1eee71/go.mod h1:r5O5UHm7WMj6o9mbY1gdBHkg308r0EcfS/10YBbBLHI=
 github.com/tdewolff/canvas v0.0.0-20250929160959-70c2d357b2e3 h1:tNGZoYHq/SiH64mwPSbi4r0kzKUMQ05POANmkjl7muo=
 github.com/tdewolff/canvas v0.0.0-20250929160959-70c2d357b2e3/go.mod h1:r5O5UHm7WMj6o9mbY1gdBHkg308r0EcfS/10YBbBLHI=
+github.com/tdewolff/canvas v0.0.0-20251001161249-3bdd22b825c9 h1:YAsrkYzrSdxEgkRlnuybJNMIpBgKrbTpZ83SqPQuYiE=
+github.com/tdewolff/canvas v0.0.0-20251001161249-3bdd22b825c9/go.mod h1:r5O5UHm7WMj6o9mbY1gdBHkg308r0EcfS/10YBbBLHI=
 github.com/tdewolff/font v0.0.0-20250724150151-83cb1696c2bd h1:h3Np3eVJXvIjw7ogqOzxijBz4XnSTW+qgqucemZ6NFI=
 github.com/tdewolff/font v0.0.0-20250724150151-83cb1696c2bd/go.mod h1:eDnkgh2pt95UFXk0GsUv2JNj5gumg78c02QX0TdcwTA=
 github.com/tdewolff/font v0.0.0-20250902141222-fb72ecc1bc0a h1:IuR6wFg9mSxhxcCogXcG5bte813psi1PE4KTjMAkM6k=

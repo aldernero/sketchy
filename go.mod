@@ -1,18 +1,18 @@
 module github.com/aldernero/sketchy
 
-go 1.24.2
+go 1.25.1
 
 require (
 	github.com/aldernero/gaul v0.0.0-20250818225927-b928fa250435
-	github.com/ebitengine/debugui v0.1.2
-	github.com/hajimehoshi/ebiten/v2 v2.8.8
+	github.com/ebitengine/debugui v0.2.0
+	github.com/hajimehoshi/ebiten/v2 v2.8.9
 	github.com/lucasb-eyer/go-colorful v1.3.0
-	github.com/tdewolff/canvas v0.0.0-20250929160959-70c2d357b2e3
+	github.com/tdewolff/canvas v0.0.0-20251001161249-3bdd22b825c9
 )
 
 require (
 	codeberg.org/go-pdf/fpdf v0.11.1 // indirect
-	github.com/hajimehoshi/bitmapfont/v4 v4.0.0 // indirect
+	github.com/hajimehoshi/bitmapfont/v4 v4.1.0 // indirect
 	modernc.org/knuth v0.5.5 // indirect
 	modernc.org/token v1.1.0 // indirect
 )

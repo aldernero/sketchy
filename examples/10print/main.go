@@ -2,15 +2,15 @@ package main
 
 import (
 	"flag"
-	"fmt"
+	"image/color"
+	"log"
+	"math"
+
 	"github.com/aldernero/gaul"
 	"github.com/aldernero/sketchy"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"github.com/tdewolff/canvas"
-	"image/color"
-	"log"
-	"math"
 )
 
 // Define a grid of tiles and a random number generator
@@ -48,7 +48,7 @@ func (t *Truchet) init(cellSize float64, s *sketchy.Sketch) {
 		}
 		t.tiles[i] = tile
 	}
-	fmt.Println(t.rows, t.cols, t.originX, t.originY, t.cellSize)
+	// Debug info removed for performance
 }
 
 func (t *Truchet) flip(x, y float64) {
@@ -57,8 +57,8 @@ func (t *Truchet) flip(x, y float64) {
 	c := int(math.Floor((x - t.originX) / t.cellSize))
 	i := r*t.cols + c
 	if i < 0 || i >= len(t.tiles) {
-		fmt.Println(x, y, r, c, i)
-		fmt.Printf("Invalid tile index: %d Tile count: %d", i, len(t.tiles))
+		// Invalid tile index - skip
+		return
 	}
 	val := t.tiles[i]
 	switch val {
@@ -101,12 +101,14 @@ func update(s *sketchy.Sketch) {
 	// Need to reinitialize board
 	if s.DidControlsChange {
 		setup(s)
+		s.MarkDirty() // Mark for re-render
 	}
 	// flip one tile
 	if inpututil.IsMouseButtonJustReleased(ebiten.MouseButtonRight) {
 		x, y := ebiten.CursorPosition()
 		p := s.CanvasCoords(float64(x), float64(y))
 		board.flip(p.X, p.Y)
+		s.MarkDirty() // Mark for re-render
 	}
 }
 
@@ -160,8 +162,6 @@ func main() {
 	s.Drawer = draw
 	s.Init()
 	setup(s)
-	fmt.Println(s.SketchWidth, s.SketchHeight)
-	fmt.Println(s.Width(), s.Height())
 	ebiten.SetWindowSize(int(s.SketchWidth), int(s.SketchHeight))
 	ebiten.SetWindowTitle("Sketchy - " + s.Title)
 	ebiten.SetWindowResizingMode(ebiten.WindowResizingModeDisabled)

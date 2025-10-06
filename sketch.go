@@ -3,10 +3,12 @@ package sketchy
 import (
 	"encoding/json"
 	"fmt"
+	"image"
 	"image/color"
 	"log"
 	"math/rand"
 	"os"
+	"sync"
 	"time"
 
 	"github.com/aldernero/gaul"
@@ -24,12 +26,22 @@ const (
 	DefaultPrefix = "sketch"
 	MmPerPx       = 0.26458333
 	DefaultDPI    = 96.0
+	// Performance tuning constants
+	DefaultPreviewDPI = 48.0 // Lower DPI for preview mode
+	SaveChannelBuffer = 10   // Buffer size for async save requests
 )
 
 type (
 	SketchUpdater func(s *Sketch)
 	SketchDrawer  func(s *Sketch, ctx *canvas.Context)
 )
+
+// SaveRequest represents an async save operation
+type SaveRequest struct {
+	Filename string
+	Format   string // "png" or "svg"
+	DPI      float64
+}
 
 type Sketch struct {
 	Title                     string        `json:"Title"`
@@ -48,6 +60,7 @@ type Sketch struct {
 	DisableClearBetweenFrames bool          `json:"DisableClearBetweenFrames"`
 	ShowFPS                   bool          `json:"ShowFPS"`
 	RasterDPI                 float64       `json:"RasterDPI"`
+	PreviewMode               bool          `json:"PreviewMode"` // Use lower DPI for preview
 	RandomSeed                int64         `json:"RandomSeed"`
 	Sliders                   []Slider      `json:"Sliders"`
 	Toggles                   []Toggle      `json:"Toggles"`
@@ -68,7 +81,15 @@ type Sketch struct {
 	Tick                      int64          `json:"-"`
 	SketchCanvas              *canvas.Canvas `json:"-"`
 	ui                        debugui.DebugUI
-	IsControlPanelHovered     bool `json:"-"`
+	showDebugUI               bool `json:"-"`
+
+	// Performance optimization fields
+	offscreen    *ebiten.Image    `json:"-"`
+	cachedRGBA   *image.RGBA      `json:"-"`
+	ctx          *canvas.Context  `json:"-"`
+	dirty        bool             `json:"-"`
+	saveRequests chan SaveRequest `json:"-"`
+	saveMutex    sync.Mutex       `json:"-"`
 }
 
 func (s *Sketch) Width() float64 {
@@ -124,6 +145,17 @@ func (s *Sketch) Init() {
 	s.Rand = gaul.NewRng(s.RandomSeed)
 	s.SketchCanvas = canvas.New(s.Width(), s.Height())
 	s.needToClear = true
+	s.showDebugUI = true
+	s.dirty = true // Mark as dirty for initial render
+
+	// Initialize performance optimization fields
+	s.offscreen = ebiten.NewImage(int(s.SketchWidth), int(s.SketchHeight))
+	s.ctx = canvas.NewContext(s.SketchCanvas)
+	s.saveRequests = make(chan SaveRequest, SaveChannelBuffer)
+
+	// Start background save worker
+	go s.saveWorker()
+
 	if s.DisableClearBetweenFrames {
 		ebiten.SetScreenClearedEveryFrame(false)
 	}
@@ -179,6 +211,9 @@ func (s *Sketch) UpdateControls() {
 	if inpututil.IsKeyJustReleased(ebiten.KeyD) {
 		s.DumpState()
 	}
+	if inpututil.IsKeyJustReleased(ebiten.KeySpace) {
+		s.showDebugUI = !s.showDebugUI
+	}
 	// check if the values of the sliders have changed
 	for i := range s.Sliders {
 		s.Sliders[i].UpdateState()
@@ -204,6 +239,7 @@ func (s *Sketch) UpdateControls() {
 	// check if the controls have changed
 	if s.DidSlidersChange || s.DidTogglesChange || s.DidColorPickersChange {
 		s.DidControlsChange = true
+		s.dirty = true // Mark for re-render when controls change
 	}
 }
 
@@ -229,59 +265,105 @@ func (s *Sketch) Layout(
 }
 
 func (s *Sketch) Update() error {
-	_, err := s.ui.Update(func(ctx *debugui.Context) error {
-		s.controlWindow(ctx)
-		return nil
-	})
-	if err != nil {
-		return err
+	if s.showDebugUI {
+		_, err := s.ui.Update(func(ctx *debugui.Context) error {
+			s.controlWindow(ctx)
+			return nil
+		})
+		if err != nil {
+			return err
+		}
 	}
 	s.UpdateControls()
 	s.Updater(s)
 	s.Tick++
+
+	// Mark dirty if this is an animated sketch (Updater does work)
+	// This is a simple heuristic - sketches that need per-frame updates should set dirty=true
+	// in their Updater function when they actually change content
 	return nil
 }
 
 func (s *Sketch) Clear() {
 	s.needToClear = true
+	s.dirty = true
 }
 
 func (s *Sketch) Draw(screen *ebiten.Image) {
-	s.SketchCanvas.Reset()
-	ctx := canvas.NewContext(s.SketchCanvas)
-	if !s.DisableClearBetweenFrames || s.needToClear {
-		ctx.SetFillColor(color.Black)
-		ctx.SetStrokeColor(color.Transparent)
-		ctx.DrawPath(0, 0, canvas.Rectangle(ctx.Width(), ctx.Height()))
-		ctx.Close()
-		s.needToClear = false
+	// Only re-render if dirty
+	if s.dirty {
+		s.SketchCanvas.Reset()
+		s.ctx = canvas.NewContext(s.SketchCanvas)
+
+		if !s.DisableClearBetweenFrames || s.needToClear {
+			s.ctx.SetFillColor(color.Black)
+			s.ctx.SetStrokeColor(color.Transparent)
+			s.ctx.DrawPath(0, 0, canvas.Rectangle(s.ctx.Width(), s.ctx.Height()))
+			s.needToClear = false
+		}
+
+		s.Drawer(s, s.ctx)
+
+		// Determine DPI based on preview mode
+		dpi := s.RasterDPI
+		if s.PreviewMode {
+			dpi = DefaultPreviewDPI
+		}
+
+		// Rasterize to cached image
+		rasterizedImg := rasterizer.Draw(s.SketchCanvas, canvas.DPI(dpi), canvas.DefaultColorSpace)
+
+		// Convert to RGBA and update offscreen buffer
+		bounds := rasterizedImg.Bounds()
+		if s.cachedRGBA == nil || s.cachedRGBA.Bounds() != bounds {
+			s.cachedRGBA = image.NewRGBA(bounds)
+		}
+
+		// Convert image to RGBA format
+		for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
+			for x := bounds.Min.X; x < bounds.Max.X; x++ {
+				s.cachedRGBA.Set(x, y, rasterizedImg.At(x, y))
+			}
+		}
+
+		// Update offscreen buffer
+		s.offscreen.WritePixels(s.cachedRGBA.Pix)
+		s.dirty = false
 	}
-	s.Drawer(s, ctx)
-	if s.ShowFPS {
-		ebitenutil.DebugPrint(screen, fmt.Sprintf("FPS: %0.2f", ebiten.ActualFPS()))
-	}
+
+	// Always draw the cached offscreen buffer
+	screen.DrawImage(s.offscreen, nil)
+
+	// Handle async save requests
 	if s.isSavingPNG {
 		fname := s.Prefix + "_" + gaul.GetTimestampString() + ".png"
-		err := renderers.Write(fname, s.SketchCanvas, canvas.DPI(s.RasterDPI))
-		if err != nil {
-			panic(err)
+		select {
+		case s.saveRequests <- SaveRequest{Filename: fname, Format: "png", DPI: s.RasterDPI}:
+			fmt.Println("Queued PNG save: ", fname)
+		default:
+			fmt.Println("Save queue full, skipping PNG save")
 		}
-		fmt.Println("Saved ", fname)
 		s.isSavingPNG = false
 	}
 	if s.isSavingSVG {
 		fname := s.Prefix + "_" + gaul.GetTimestampString() + ".svg"
-		err := renderers.Write(fname, s.SketchCanvas)
-		if err != nil {
-			panic(err)
+		select {
+		case s.saveRequests <- SaveRequest{Filename: fname, Format: "svg", DPI: s.RasterDPI}:
+			fmt.Println("Queued SVG save: ", fname)
+		default:
+			fmt.Println("Save queue full, skipping SVG save")
 		}
-		fmt.Println("Saved ", fname)
 		s.isSavingSVG = false
 	}
-	img := rasterizer.Draw(s.SketchCanvas, canvas.DefaultResolution, canvas.DefaultColorSpace)
-	op := &ebiten.DrawImageOptions{}
-	screen.DrawImage(ebiten.NewImageFromImage(img), op)
-	s.ui.Draw(screen)
+
+	if s.ShowFPS {
+		ebitenutil.DebugPrint(screen, fmt.Sprintf("FPS: %0.2f", ebiten.ActualFPS()))
+	}
+
+	if s.showDebugUI {
+		s.ui.Draw(screen)
+	}
+
 	s.DidControlsChange = false
 	s.DidSlidersChange = false
 	s.DidTogglesChange = false
@@ -369,6 +451,7 @@ func (s *Sketch) decrementRandomSeed() {
 	s.RandomSeed--
 	s.Rand.SetSeed(s.RandomSeed)
 	s.DidControlsChange = true
+	s.dirty = true
 	fmt.Println("RandomSeed decremented: ", s.RandomSeed)
 }
 
@@ -376,6 +459,7 @@ func (s *Sketch) incrementRandomSeed() {
 	s.RandomSeed++
 	s.Rand.SetSeed(s.RandomSeed)
 	s.DidControlsChange = true
+	s.dirty = true
 	fmt.Println("RandomSeed incremented: ", s.RandomSeed)
 }
 
@@ -383,5 +467,32 @@ func (s *Sketch) randomizeRandomSeed() {
 	s.RandomSeed = rand.Int63()
 	s.Rand.SetSeed(s.RandomSeed)
 	s.DidControlsChange = true
+	s.dirty = true
 	fmt.Println("RandomSeed changed: ", s.RandomSeed)
+}
+
+// MarkDirty marks the sketch for re-rendering (useful for animated sketches)
+func (s *Sketch) MarkDirty() {
+	s.dirty = true
+}
+
+// saveWorker processes save requests in the background
+func (s *Sketch) saveWorker() {
+	for req := range s.saveRequests {
+		s.saveMutex.Lock()
+		var err error
+		switch req.Format {
+		case "png":
+			err = renderers.Write(req.Filename, s.SketchCanvas, canvas.DPI(req.DPI))
+		case "svg":
+			err = renderers.Write(req.Filename, s.SketchCanvas)
+		}
+		s.saveMutex.Unlock()
+
+		if err != nil {
+			fmt.Printf("Error saving %s: %v\n", req.Filename, err)
+		} else {
+			fmt.Println("Saved ", req.Filename)
+		}
+	}
 }
