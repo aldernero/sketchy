@@ -3,11 +3,11 @@ module github.com/aldernero/sketchy
 go 1.25.1
 
 require (
-	github.com/aldernero/gaul v0.0.0-20250818225927-b928fa250435
+	github.com/aldernero/gaul v0.0.0-20251026180158-3ba2ccf4597e
 	github.com/ebitengine/debugui v0.2.0
-	github.com/hajimehoshi/ebiten/v2 v2.8.9
+	github.com/hajimehoshi/ebiten/v2 v2.9.3
 	github.com/lucasb-eyer/go-colorful v1.3.0
-	github.com/tdewolff/canvas v0.0.0-20251001161249-3bdd22b825c9
+	github.com/tdewolff/canvas v0.0.0-20251024143420-72e8297cc234
 )
 
 require (
@@ -35,7 +35,6 @@ require (
 	github.com/go-fonts/latin-modern v0.3.3 // indirect
 	github.com/go-text/typesetting v0.3.0 // indirect
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0 // indirect
-	github.com/hajimehoshi/bitmapfont/v3 v3.3.0 // indirect
 	github.com/jezek/xgb v1.1.1 // indirect
 	github.com/kolesa-team/go-webp v1.0.5 // indirect
 	github.com/ojrac/opensimplex-go v1.0.2 // indirect
@@ -45,14 +44,14 @@ require (
 	github.com/srwiley/rasterx v0.0.0-20220730225603-2ab79fcdd4ef // indirect
 	github.com/srwiley/scanx v0.0.0-20190309010443-e94503791388 // indirect
 	github.com/tdewolff/font v0.0.0-20250902141222-fb72ecc1bc0a // indirect
-	github.com/tdewolff/minify/v2 v2.24.3 // indirect
-	github.com/tdewolff/parse/v2 v2.8.4-0.20250902141113-be7b6b11bb1b // indirect
+	github.com/tdewolff/minify/v2 v2.24.5 // indirect
+	github.com/tdewolff/parse/v2 v2.8.5-0.20251020133559-0efcf90bef1a // indirect
 	github.com/wcharczuk/go-chart/v2 v2.1.2 // indirect
-	golang.org/x/image v0.31.0
-	golang.org/x/net v0.44.0 // indirect
+	golang.org/x/image v0.32.0
+	golang.org/x/net v0.46.0 // indirect
 	golang.org/x/sync v0.17.0 // indirect
-	golang.org/x/sys v0.36.0 // indirect
-	golang.org/x/text v0.29.0 // indirect
+	golang.org/x/sys v0.37.0 // indirect
+	golang.org/x/text v0.30.0 // indirect
 	gonum.org/v1/plot v0.16.0 // indirect
 	star-tex.org/x/tex v0.7.1 // indirect
 )
