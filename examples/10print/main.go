@@ -43,7 +43,7 @@ func (t *Truchet) init(cellSize float64, s *sketchy.Sketch) {
 		// Use opensimplex noise to make it more interesting
 		noise := s.Rand.Noise2D(float64(i%t.rows), float64(i)/float64(t.cols))
 		tile := BackSlash
-		if noise > 0.5 {
+		if noise > 0.0 {
 			tile = ForwardSlash
 		}
 		t.tiles[i] = tile

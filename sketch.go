@@ -11,8 +11,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/aldernero/debugui"
 	"github.com/aldernero/gaul"
-	"github.com/ebitengine/debugui"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"

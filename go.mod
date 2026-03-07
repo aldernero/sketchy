@@ -1,18 +1,19 @@
 module github.com/aldernero/sketchy
 
-go 1.25.1
+go 1.26.1
 
 require (
-	github.com/aldernero/gaul v0.0.0-20251026180158-3ba2ccf4597e
-	github.com/ebitengine/debugui v0.2.0
-	github.com/hajimehoshi/ebiten/v2 v2.9.3
+	github.com/aldernero/debugui v0.0.0-20260307025759-e55e3a5d0903
+	github.com/aldernero/gaul v0.0.0-20260224014828-ce083ef84aca
+	github.com/hajimehoshi/ebiten/v2 v2.9.9
 	github.com/lucasb-eyer/go-colorful v1.3.0
-	github.com/tdewolff/canvas v0.0.0-20251024143420-72e8297cc234
+	github.com/tdewolff/canvas v0.0.0-20260306132702-8921d53f210f
 )
 
 require (
 	codeberg.org/go-pdf/fpdf v0.11.1 // indirect
 	github.com/hajimehoshi/bitmapfont/v4 v4.1.0 // indirect
+	github.com/yuin/goldmark v1.7.16 // indirect
 	modernc.org/knuth v0.5.5 // indirect
 	modernc.org/token v1.1.0 // indirect
 )
@@ -27,31 +28,31 @@ require (
 	github.com/Kagami/go-avif v0.1.0 // indirect
 	github.com/aldernero/interp v0.0.0-20231114035812-9ab0a3e37bf6 // indirect
 	github.com/andybalholm/brotli v1.2.0 // indirect
-	github.com/benoitkugler/textlayout v0.3.1 // indirect
-	github.com/benoitkugler/textprocessing v0.0.3 // indirect
-	github.com/ebitengine/gomobile v0.0.0-20250923094054-ea854a63cce1 // indirect
+	github.com/benoitkugler/textlayout v0.3.2 // indirect
+	github.com/benoitkugler/textprocessing v0.0.5 // indirect
+	github.com/ebitengine/gomobile v0.0.0-20260211053922-3d992dae95d1 // indirect
 	github.com/ebitengine/hideconsole v1.0.0 // indirect
-	github.com/ebitengine/purego v0.9.0 // indirect
+	github.com/ebitengine/purego v0.10.0 // indirect
 	github.com/go-fonts/latin-modern v0.3.3 // indirect
-	github.com/go-text/typesetting v0.3.0 // indirect
+	github.com/go-text/typesetting v0.3.4 // indirect
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0 // indirect
-	github.com/jezek/xgb v1.1.1 // indirect
+	github.com/jezek/xgb v1.3.0 // indirect
 	github.com/kolesa-team/go-webp v1.0.5 // indirect
 	github.com/ojrac/opensimplex-go v1.0.2 // indirect
 	github.com/peterhellberg/gfx v0.0.0-20250602150231-2e41f5fad310 // indirect
-	github.com/pierrec/lz4/v4 v4.1.22 // indirect
+	github.com/pierrec/lz4/v4 v4.1.26 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/srwiley/rasterx v0.0.0-20220730225603-2ab79fcdd4ef // indirect
 	github.com/srwiley/scanx v0.0.0-20190309010443-e94503791388 // indirect
-	github.com/tdewolff/font v0.0.0-20250902141222-fb72ecc1bc0a // indirect
-	github.com/tdewolff/minify/v2 v2.24.5 // indirect
-	github.com/tdewolff/parse/v2 v2.8.5-0.20251020133559-0efcf90bef1a // indirect
+	github.com/tdewolff/font v0.0.0-20260129133509-0361ac0c5234 // indirect
+	github.com/tdewolff/minify/v2 v2.24.10 // indirect
+	github.com/tdewolff/parse/v2 v2.8.10 // indirect
 	github.com/wcharczuk/go-chart/v2 v2.1.2 // indirect
-	golang.org/x/image v0.32.0
-	golang.org/x/net v0.46.0 // indirect
-	golang.org/x/sync v0.17.0 // indirect
-	golang.org/x/sys v0.37.0 // indirect
-	golang.org/x/text v0.30.0 // indirect
+	golang.org/x/image v0.36.0
+	golang.org/x/net v0.51.0 // indirect
+	golang.org/x/sync v0.19.0 // indirect
+	golang.org/x/sys v0.41.0 // indirect
+	golang.org/x/text v0.34.0 // indirect
 	gonum.org/v1/plot v0.16.0 // indirect
 	star-tex.org/x/tex v0.7.1 // indirect
 )
