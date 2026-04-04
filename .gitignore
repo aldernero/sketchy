@@ -1,3 +1,6 @@
+saves/
+sketch.db
+
 .idea
 /.idea/.gitignore
 /.idea/modules.xml

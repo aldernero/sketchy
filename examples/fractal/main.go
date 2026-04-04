@@ -12,6 +12,13 @@ import (
 
 var synthwavePalette gaul.Gradient
 
+func buildUI(_ *sketchy.Sketch, ui *sketchy.UI) {
+	ui.Folder("Fractal", func() {
+		ui.IntSlider("depth", 1, 10, 4, 1)
+		ui.FloatSlider("persistence", 0, 1, 0.9, 0.01)
+	})
+}
+
 func drawLines(l gaul.Line, n int, p float64, ctx *canvas.Context) {
 	if n == 0 {
 		return
@@ -46,22 +53,22 @@ func draw(s *sketchy.Sketch, c *canvas.Context) {
 		Q: gaul.Point{X: c.Width() - 10, Y: c.Height() / 2},
 	}
 	line.Draw(c)
-	drawLines(line, int(s.Slider("depth")), s.Slider("persistence"), c)
+	drawLines(line, s.GetInt("Fractal", "depth"), s.GetFloat("Fractal", "persistence"), c)
 	c.Stroke()
 }
 
 func main() {
-	var configFile string
 	var prefix string
 	var randomSeed int64
-	flag.StringVar(&configFile, "c", "sketch.json", "Sketch config file")
 	flag.StringVar(&prefix, "p", "", "Output file prefix")
 	flag.Int64Var(&randomSeed, "s", 0, "Random number generator seed")
 	flag.Parse()
-	s, err := sketchy.NewSketchFromFile(configFile)
-	if err != nil {
-		log.Fatal(err)
-	}
+	s := sketchy.New(sketchy.Config{
+		Title:        "Fractal Sketch",
+		SketchWidth:  1080,
+		SketchHeight: 768,
+	})
+	s.BuildUI = buildUI
 	if prefix != "" {
 		s.Prefix = prefix
 	}
@@ -70,9 +77,10 @@ func main() {
 	s.Drawer = draw
 	s.Init()
 	synthwavePalette = gaul.NewGradientFromNamed([]string{"#1bbbd9", "#f900a4"})
-	ebiten.SetWindowSize(int(s.SketchWidth), int(s.SketchHeight))
+	ww, wh := s.WindowSize()
+	ebiten.SetWindowSize(ww, wh)
 	ebiten.SetWindowTitle("Sketchy - " + s.Title)
-	ebiten.SetWindowResizingMode(ebiten.WindowResizingModeDisabled)
+	ebiten.SetWindowResizingMode(ebiten.WindowResizingModeEnabled)
 	if err := ebiten.RunGame(s); err != nil {
 		log.Fatal(err)
 	}

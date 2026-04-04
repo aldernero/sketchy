@@ -14,6 +14,14 @@ import (
 var cg1 gaul.SimpleGradient
 var cg2 gaul.Gradient
 
+func buildUI(_ *sketchy.Sketch, ui *sketchy.UI) {
+	ui.Folder("Gradient", func() {
+		ui.FloatSlider("percentage", 0, 1, 0.5, 0.01)
+		ui.ColorPicker("start", "cyan")
+		ui.ColorPicker("end", "magenta")
+	})
+}
+
 func setup(s *sketchy.Sketch) {
 	cg1 = gaul.SimpleGradient{
 		StartColor: s.ColorPicker("start"),
@@ -50,7 +58,7 @@ func draw(s *sketchy.Sketch, c *canvas.Context) {
 		c.SetStrokeColor(cg2.Color(p))
 		c.DrawPath(i, H-30, canvas.Rectangle(dx, dy))
 	}
-	p := s.Slider("percentage")
+	p := s.GetFloat("Gradient", "percentage")
 	xPos := gaul.Map(0, 1, 0.05*W, 0.95*W, p)
 	c.SetFillColor(cg1.Color(p))
 	c.SetStrokeColor(cg1.Color(p))
@@ -61,17 +69,17 @@ func draw(s *sketchy.Sketch, c *canvas.Context) {
 }
 
 func main() {
-	var configFile string
 	var prefix string
 	var randomSeed int64
-	flag.StringVar(&configFile, "c", "sketch.json", "Sketch config file")
 	flag.StringVar(&prefix, "p", "", "Output file prefix")
 	flag.Int64Var(&randomSeed, "s", 0, "Random number generator seed")
 	flag.Parse()
-	s, err := sketchy.NewSketchFromFile(configFile)
-	if err != nil {
-		log.Fatal(err)
-	}
+	s := sketchy.New(sketchy.Config{
+		Title:        "Color gradient",
+		SketchWidth:  800,
+		SketchHeight: 800,
+	})
+	s.BuildUI = buildUI
 	if prefix != "" {
 		s.Prefix = prefix
 	}
@@ -81,9 +89,10 @@ func main() {
 	s.Init()
 	cg2 = gaul.NewGradientFromNamed([]string{"blue", "green", "yellow", "red"})
 	setup(s)
-	ebiten.SetWindowSize(int(s.SketchWidth), int(s.SketchHeight))
+	ww, wh := s.WindowSize()
+	ebiten.SetWindowSize(ww, wh)
 	ebiten.SetWindowTitle("Sketchy - " + s.Title)
-	ebiten.SetWindowResizingMode(ebiten.WindowResizingModeDisabled)
+	ebiten.SetWindowResizingMode(ebiten.WindowResizingModeEnabled)
 	if err := ebiten.RunGame(s); err != nil {
 		log.Fatal(err)
 	}

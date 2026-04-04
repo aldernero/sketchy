@@ -12,9 +12,9 @@ import (
 	"syscall"
 )
 
-const version = "v0.1.0"
+const version = "v0.2.0"
 
-//go:embed template/*
+//go:embed template
 var template embed.FS
 
 func main() {
@@ -65,13 +65,13 @@ func main() {
 		if _, err := os.Stat(dirPath); errors.Is(err, fs.ErrNotExist) {
 			log.Fatalf("directory %s doesn't exist: %v", dirPath, err)
 		}
-		appPath := path.Join(dirPath, "sketchy.go")
+		appPath := path.Join(dirPath, "main.go")
 		pathExists, err := regularFileExists(appPath)
 		if err != nil {
 			log.Fatal("error while looking for sketch file:", err)
 		}
 		if !pathExists {
-			log.Fatalf("sketch file %s doesn't exist", appPath)
+			log.Fatalf("main.go %s doesn't exist", appPath)
 		}
 		err = os.Chdir(dirPath)
 		if err != nil {
@@ -81,7 +81,7 @@ func main() {
 		if binErr != nil {
 			log.Fatal(binErr)
 		}
-		args := []string{"go", "run", appPath}
+		args := []string{"go", "run", "."}
 		execErr := syscall.Exec(bin, args, os.Environ())
 		if execErr != nil {
 			log.Fatal("error while running sketch: ", execErr)

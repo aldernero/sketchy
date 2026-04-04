@@ -1,175 +1,147 @@
-This guide covers installation of sketchy and creating your first sketch.
+This guide covers installing Sketchy and creating your first sketch. For a concise feature overview (builtins, snapshots, keyboard shortcuts), see the [README](../README.md).
 
 # Installation
 
 ## Prerequisites
-Sketchy requires Go version 1.17 or higher. It assumes that `go` is in the system path. If you are running Windows, install Windows Subsystem for Linux (WSL), so that you have `bash`, which is used by the install script.
+
+Sketchy needs a recent Go toolchain (see the root [`go.mod`](../go.mod) for the minimum version). Ensure `go` is on your `PATH`.
+
+On Windows you can use the native Go toolchain; you do not need WSL unless you prefer it.
 
 ## Clone the repo
 
 ```shell
 git clone https://github.com/aldernero/sketchy.git
+cd sketchy
 ```
-## Install sketchy environment
+
+## Build the `sketchy` CLI (optional)
+
+From the repository root:
+
 ```shell
-cd sketchy/scripts
-./sketch_install.sh <target_directory>
+go build -o sketchy ./cmd/sketchy/sketchy.go
 ```
-This will create a directory `target_directory`, build the sketchy binary, and copy the binary and template files to the newly created directory.
 
-Example:
-
-```bash
-❯ cd ~/sketchy/scripts
-❯ ./sketchy_install.sh ~/sketchy_files
-Sucessfully installed sketchy environment to /home/vernon/sketchy_files
-❯ tree ~/sketchy_files
-/home/vernon/sketchy_files
-├── sketchy
-└── template
-    ├── main.go
-    └── sketch.json
-
-1 directory, 3 files
-```
-Sketchy is now installed and ready to run from `target_directory`.
+You can put the binary on your `PATH`, or invoke it with `./sketchy`.
 
 ## Running the examples
-For any of the examples in the `examples` directory, run using standard go commands:
+
+Each example is a small Go module. From the example directory:
+
 ```shell
-❯ cd ~/sketchy/examples/lissajous
-❯ go run main.go
+cd examples/simple
+go run .
 ```
 
-# Creating a new sketch
+# How a sketch is structured
 
-The syntax for creating a new sketch is `sketchy init project_name`. This will create a new directory with a configuration file and base sketch file:
+A sketch is plain Go code—there is **no** `sketch.json` for controls.
+
+1. Call [`sketchy.New`](../sketch.go) with a [`sketchy.Config`](../config.go) (window title, sketch size, colors, optional defaults for canvas background/foreground/stroke width, etc.).
+2. Set [`BuildUI`](../sketch.go) to a function that registers controls with [`sketchy.UI`](../ui_builder.go) (`FloatSlider`, `IntSlider`, `Checkbox`, `ColorPicker`, `Dropdown`, `Folder`, …).
+3. Set [`Updater`](../sketch.go) and [`Drawer`](../sketch.go).
+4. Call [`Init`](../sketch.go) (opens `sketch.db`, builds the control map, applies defaults).
+5. Configure Ebitengine (window size/title from [`WindowSize`](../sketch.go), etc.) and run [`ebiten.RunGame`](../cmd/sketchy/template/main.go).
+
+Control values are read by **folder** and **name**. Use `""` for the root folder. Helpers like [`Slider`](../sketch.go) / [`Int`](../sketch.go) are shorthand for the root folder only.
+
+# Creating a new sketch with the CLI
+
 ```shell
-❯ ./sketchy init mysketch
-❯ tree mysketch
-mysketch
+./sketchy init hello_circle
+cd hello_circle
+```
+
+Typical layout after `init`:
+
+```text
+hello_circle/
 ├── go.mod
 ├── go.sum
 ├── main.go
-└── sketch.json
+└── .gitignore
 ```
-Sketchy init's a go module and runs `go mod tidy` to get all of the go dependencies.
 
-The next step are to configure sketch parameter and controls in `sketch.json` and add the drawing code to `main.go`. See the `examples` directory and documentation for more details.
+`sketchy init` copies the embedded template, runs `go mod init` and `go mod tidy`. The template includes a sample `buildUI`, empty `update`/`draw`, and optional `icon.png` loading if you add that file next to `main.go`.
 
-# Example: creating a "Hello Circle" sketch
-Rather than a typical "Hello World!" program, let's create something graphical that illustrates how to use controls and draw in the sketch area.
+Run the project from its directory:
 
-Create a new sketch called `hello_circle`
 ```shell
-❯ ./sketchy init hello_circle
-❯ cd hello_circle
-❯ ls
-go.mod  go.sum  main.go  sketch.json
+go run .
 ```
-So far this is identical to the previous section. Let's look at the contents of `sketch.json`:
-```json
-{
-    "SketchWidth": 800,
-    "SketchHeight": 800,
-    "ControlWidth": 240,
-    "Sliders": [
-        {
-            "Name": "control1",
-            "MinVal": 1,
-            "MaxVal": 100,
-            "Val": 10,
-            "Incr": 1
-        },
-        {
-            "Name": "control2",
-            "MinVal": 0,
-            "MaxVal": 2,
-            "Val": 0.9,
-            "Incr": 0.01
-        }
-    ]
-}
-```
-This is the default configuration with 2 example controls. The first 3 lines define the sketch area size (800 x 800 pixels), and the the control area width (240 pixels). The "Controls" section lists the controls that will appear as sliders in the sketch. Let's make them more meaningful. The first one will represent the radius of a circle we draw in the sketch area. The second one will represent the line width of the circle. Change the values to the following:
-```json
-{
-    "SketchWidth": 800,
-    "SketchHeight": 800,
-    "ControlWidth": 240,
-    "Sliders": [
-        {
-            "Name": "radius",
-            "MinVal": 0,
-            "MaxVal": 80,
-            "Val": 40,
-            "Incr": 0.5
-        },
-        {
-            "Name": "thickness",
-            "MinVal": 0,
-            "MaxVal": 10,
-            "Val": 2,
-            "Incr": 0.1
-        }
-    ]
-}
-```
-Notice that the radius can vary from 0 to 80 mm and the line thickness can vary from 0 to 10 mm.
 
-Run the sketch to see the controls in action:
-You can run `sketchy run hello_circle` from sketchy's base directory, or if you are inside the project directory, you can use go directly:
+Or from anywhere above it:
+
 ```shell
-go run main.go
+sketchy run hello_circle
 ```
-![hello_circle_blank](../assets/images/hello_circle_blank.png)
 
-You should see 2 sliders in the control area on the left. You can change the values by clicking or dragging within the slider bar area. The sketch area is blank at the moment, let's change that!
+# Example: “Hello Circle”
 
-Close the sketch and open `main.go` in an editor. There are two functions `update` and `draw` where you implement the drawing. For a simple case like this we don't need `update`, we can do everything in the `draw` function.
+We’ll turn the template into a minimal circle demo: two float sliders at the **root** folder (`radius` and `thickness`), an 800×800 sketch, and a `draw` function that reads those values.
+
+## 1. Adjust `buildUI`
+
+Replace the template’s `buildUI` with two sliders (names must match what you pass to `Slider` / `GetFloat`):
+
 ```go
-func update(s *sketchy.Sketch) {
-	// Update logic goes here
+func buildUI(_ *sketchy.Sketch, ui *sketchy.UI) {
+	ui.FloatSlider("radius", 0, 80, 40, 0.5)
+	ui.FloatSlider("thickness", 0, 10, 2, 0.1)
 }
-
-func draw(s *sketchy.Sketch, c *canvas.Context) {
-	// Drawing code goes here
-}
 ```
-Notice that the `draw` function takes two arguments. The first argument stores the Sketch struct used to store our sketch information, including the two slider controls. Here is how you get the value from a slider:
+
+`FloatSlider` takes `name`, `min`, `max`, `initial`, `step` (all in canvas/mm units as elsewhere in Sketchy). The value column is a **text field** (you can type numbers, including forms like `1e-3`); the track shows position only.
+
+To group controls under a header, wrap them in `ui.Folder("Shape", func() { … })` and then use `s.GetFloat("Shape", "radius")` instead of `s.Slider("radius")`.
+
+## 2. Set sketch size in `Config`
+
+In `main`, pass the size you want (template defaults are larger):
 
 ```go
-val := s.Slider("slider name")
+s := sketchy.New(sketchy.Config{
+	Title:        "Hello Circle",
+	SketchWidth:  800,
+	SketchHeight: 800,
+})
 ```
 
-The value will be a float64. For our case we could define two variables that are tied to the controls we defined earlier:
-```go
-radius := s.Slider("radius")
-thickness := s.Slider("thickness")
-```
-Notice the argument to `Var` is the same name we used in `sketch.json`.
+You can also set `SketchBackgroundColor`, `ControlOutlineColor`, and other fields on [`Config`](../config.go).
 
-The other argument to `draw` is a `canvas` drawing context. See the [canvas](https://github.com/tdewolff/canvas) documentation for full details. For this example we will simply 1) set a drawing color, 2) set the line thickness, 3) define the circle object, and 4) draw the circle.  Here is the entire draw function:
+## 3. Implement `draw`
+
+Import `image/color` for explicit stroke color if you like (the framework also sets default stroke from Builtins before `Drawer` runs):
+
 ```go
 func draw(s *sketchy.Sketch, c *canvas.Context) {
-	// Drawing code goes here
 	radius := s.Slider("radius")
 	thickness := s.Slider("thickness")
 	c.SetStrokeColor(color.White)
 	c.SetStrokeWidth(thickness)
-    circle := canvas.Circle(radius)
-    c.DrawPath(c.Width()/2, c.Height()/2, circle)
+	circle := canvas.Circle(radius)
+	c.DrawPath(c.Width()/2, c.Height()/2, circle)
 }
 ```
-The `canvas.Circle` creates a circular path with a given radius. The `DrawPath` function draws a path at a given (x, y) position. We can reference the canvas width and height values using the context functions. Halving these values places the circle at the center of the drawing area.
 
-Run the sketch again, and you should see a white circle in the sketch area, and you should be able to vary the radius and thickness with the sliders. 
+[`Slider`](../sketch.go) is equivalent to [`GetFloat("", "radius")`](../sketch.go). The second argument to `draw` is a [tdewolff/canvas](https://github.com/tdewolff/canvas) context; see that project for paths, transforms, and text.
+
+Leave `update` empty for this example, or use it when you need animation or to react to [`DidControlsChange`](../sketch.go).
+
+Run `go run .` again. You should see the sliders and a centered circle whose radius and stroke you can edit.
+
+![hello_circle_blank](../assets/images/hello_circle_blank.png)
+
 ![simple_example_screenshot](../assets/images/simple_example_screenshot.png)
-Congratulations, you made your first sketch!
 
-# Saving sketches and configurations
+A finished version of this idea (with a `Shape` folder) lives in [`examples/simple/main.go`](../examples/simple/main.go).
 
-There are three builtin keyboard shortcuts for saving sketch images and configurations:
-- "s" key - saves the current frame as an SVG file. The filename has the format `<prefix>_<timestamp>.svg`, where `<prefix>` by default is the project name (what you used during `sketchy init project_name`)
-- "p" key - same as above but saves the current frame as a PNG image.
-- "c" key - saves the configuration (control values and sketch parameters) as JSON. The filename has the format `<prefix>_config_<timestamp>.json`, where `<prefix>` by default is the project name (what you used during `sketchy init project_name`)
+# Saving images and snapshots
+
+Quick saves are not bound to single-letter keys by default. Use the **Builtins** section of the control panel:
+
+- **Save Image…** — PNG and/or SVG under `saves/png` and `saves/svg` (relative to the process working directory, usually your project).
+- **Take Snapshot…** / **Load Snapshot…** — Store and restore control state in **`sketch.db`**, including a **`builtin_json`** payload (default colors, stroke width, seed) alongside **`control_json`**.
+
+See the [README](../README.md) for keyboard shortcuts (seed nudge, panel visibility) and other builtins.
