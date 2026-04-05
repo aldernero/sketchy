@@ -21,9 +21,6 @@ func (s *Sketch) openColorModal(i int) {
 		return
 	}
 	s.colorModalIdx = i
-	if i == s.builtinColorBGIdx {
-		s.colorModalUpdateSketchBG = false
-	}
 	cp := &s.ColorPickers[i]
 	s.modalR, s.modalG, s.modalB = cp.r, cp.g, cp.b
 	c := colorful.Color{
@@ -305,10 +302,6 @@ func (s *Sketch) drawColorModal(ctx *debugui.Context) {
 			ctx.Text(s.modalErr)
 		}
 
-		if s.colorModalIdx == s.builtinColorBGIdx {
-			ctx.Checkbox(&s.colorModalUpdateSketchBG, "Update current background")
-		}
-
 		modalActionRow(ctx, "OK", func() { s.closeColorModal() }, func() {
 			i := s.colorModalIdx
 			if i >= 0 && i < len(s.ColorPickers) {
@@ -324,9 +317,6 @@ func (s *Sketch) drawColorModal(ctx *debugui.Context) {
 				}
 				if i == s.builtinColorFGIdx {
 					s.DefaultForeground = cp.GetColor()
-				}
-				if i == s.builtinColorBGIdx && s.colorModalUpdateSketchBG {
-					s.SketchBackgroundColor = cp.GetHex()
 				}
 			}
 			s.closeColorModal()

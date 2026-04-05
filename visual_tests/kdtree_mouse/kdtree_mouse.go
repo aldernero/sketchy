@@ -2,20 +2,31 @@ package main
 
 import (
 	"flag"
+	"log"
+	"math"
+
 	"github.com/aldernero/gaul"
 	"github.com/aldernero/sketchy"
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"github.com/tdewolff/canvas"
 	"image/color"
-	"log"
 )
 
 var (
-	kdtree        *gaul.KDTree
-	nearestPoints []gaul.IndexPoint
-	count         int
+	kdtree         *gaul.KDTree
+	nearestPoints  []gaul.IndexPoint
+	count          int
+	prevNeighborFP uint64
 )
+
+func neighborFingerprint(pts []gaul.IndexPoint) uint64 {
+	var h uint64
+	for i, p := range pts {
+		h ^= uint64(p.Index)*uint64(i*31+1) ^ math.Float64bits(p.X) ^ (math.Float64bits(p.Y) << 1)
+		h *= 0x9e3779b97f4a7c15
+	}
+	return h
+}
 
 func buildUI(_ *sketchy.Sketch, ui *sketchy.UI) {
 	ui.Folder("Display", func() {
@@ -28,26 +39,27 @@ func buildUI(_ *sketchy.Sketch, ui *sketchy.UI) {
 }
 
 func update(s *sketchy.Sketch) {
-	// Update logic goes here
-	if s.Toggle("Clear") {
+	if s.DidTogglesChange && s.Toggle("Clear") {
 		kdtree.Clear()
 		count = 0
+		s.SetBool("", "Clear", false)
+		s.MarkDirty()
 	}
 	nearestPoints = []gaul.IndexPoint{}
-	if !s.IsMouseOverControlPanel() && inpututil.IsMouseButtonJustReleased(ebiten.MouseButtonLeft) {
-		x, y := ebiten.CursorPosition()
-		if s.PointInSketchArea(float64(x), float64(y)) {
-			p := s.CanvasCoords(float64(x), float64(y))
-			kdtree.Insert(p.ToIndexPoint(count))
-			count++
-		}
+	if ok, wx, wy := s.PrimaryPointerPressInSketch(); ok {
+		p := s.CanvasCoords(wx, wy)
+		kdtree.Insert(p.ToIndexPoint(count))
+		count++
 	}
 	x, y := ebiten.CursorPosition()
 	if s.PointInSketchArea(float64(x), float64(y)) {
 		p := s.CanvasCoords(float64(x), float64(y))
 		nearestPoints = kdtree.NearestNeighbors(p.ToIndexPoint(-1), s.GetInt("Display", "Closest Neighbors"))
 	}
-
+	if fp := neighborFingerprint(nearestPoints); fp != prevNeighborFP {
+		prevNeighborFP = fp
+		s.MarkDirty()
+	}
 }
 
 func draw(s *sketchy.Sketch, c *canvas.Context) {

@@ -19,35 +19,30 @@ Below are a couple of screenshots from the example sketches:
 
 # Installation
 
-## Build prerequisites
-Sketchy tracks a recent Go toolchain (see [`go.mod`](go.mod) for the exact minimum). It assumes that `go` is on your `PATH`.
-
-## Clone the repo
+Sketchy tracks a recent Go toolchain (see [`go.mod`](go.mod) for the exact minimum). Install the **`sketchy`** CLI with:
 
 ```shell
-git clone https://github.com/aldernero/sketchy.git
+go install github.com/aldernero/sketchy/cmd/sketchy@latest
 ```
 
-## Compile the sketchy CLI
-
-```shell
-go build -o sketchy ./cmd/sketchy/sketchy.go
-```
+Ensure `$(go env GOPATH)/bin` (or your `GOBIN` directory) is on your `PATH` so the `sketchy` command is found.
 
 ## Running the examples
-For any of the examples in the `examples` directory, run using standard Go commands:
+
+From any directory, run a tagged example package with `go run` (no separate clone required):
 
 ```shell
-❯ cd ~/sketchy/examples/lissajous
-❯ go run .
+go run github.com/aldernero/sketchy/examples/lissajous@latest
 ```
+
+Swap `lissajous` for another folder name under [`examples/`](examples/).
 
 # Creating a new sketch
 
 The CLI syntax is `sketchy init project_name`. That creates a new directory, copies the embedded template (`main.go`, `.gitignore`), runs `go mod init` and `go mod tidy`:
 
 ```shell
-❯ ./sketchy init mysketch
+❯ sketchy init mysketch
 ❯ tree mysketch
 mysketch
 ├── go.mod
@@ -75,14 +70,12 @@ The control panel is built with [debugui](https://github.com/aldernero/debugui),
 - **Int sliders** — Same pattern with integer-only text validation and stepping.
 - **Checkboxes, buttons, color pickers, dropdowns** — See [`ui_builder.go`](ui_builder.go).
 
-The numeric value is **not** drawn on top of the slider thumb (only the thumb on the track), so it does not duplicate the text field.
-
 ## Builtins
 
 The **Builtins** header is fixed by Sketchy (not part of your `uiPlan`):
 
 - **Seed** — Integer seed and **Rand** button; mirrors [`RandomSeed`](sketch.go).
-- **Default background** / **Default foreground** — Color pickers; define the canvas clear color and the initial stroke color before your [`Drawer`](sketch.go) runs. In the default-background color modal, **Update current background** (optional) also sets [`SketchBackgroundColor`](config.go) (letterbox around the sketch).
+- **Default background** / **Default foreground** — Color pickers; define the canvas clear color and the initial stroke color before your [`Drawer`](sketch.go) runs. The margin around the letterboxed sketch uses a **dark grey** (Dark theme) or **light grey** (Light theme) so the drawable area reads clearly against the window border.
 - **Default stroke width** — Millimeters, text field with clamped range.
 - **Save Image…** / **Take Snapshot…** / **Load Snapshot…** — Dialogs for PNG/SVG export and SQLite-backed snapshots (see below).
 

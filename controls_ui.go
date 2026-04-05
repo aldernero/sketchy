@@ -38,7 +38,7 @@ func (s *Sketch) entriesForFolder(folder string) []controlEntry {
 }
 
 func (s *Sketch) controlWindow(ctx *debugui.Context) {
-	ctx.Window("Control Panel", image.Rect(DefaultControlWindowX, DefaultControlWindowY, s.ControlWidth, s.ControlHeight), func(layout debugui.ContainerLayout) {
+	ctx.Window("Control Panel", s.ControlPanelScreenRect(), func(layout debugui.ContainerLayout) {
 		s.builtinsPanel(ctx)
 		root := s.entriesForFolder("")
 		if len(root) > 0 {
@@ -100,6 +100,14 @@ func (s *Sketch) builtinsPanel(ctx *debugui.Context) {
 				s.dlgLoadPreviewRow = nil
 				s.dlgLoadMissing = nil
 			}
+		})
+
+		ctx.SetGridLayout([]int{ControlLabelColumnWidth, -1}, nil)
+		ctx.Text("UI theme")
+		ctx.IDScope("builtinUITheme", func() {
+			ctx.Dropdown(&s.debugUIThemeIndex, debugUIThemeLabels).On(func() {
+				s.applyDebugUITheme()
+			})
 		})
 	})
 }

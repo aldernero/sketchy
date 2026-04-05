@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"image/color"
 	"log"
 
 	"github.com/aldernero/gaul"
@@ -26,16 +25,23 @@ func buildUI(_ *sketchy.Sketch, ui *sketchy.UI) {
 func update(s *sketchy.Sketch) {
 	lissa.Nx = s.GetInt("Curve", "nx")
 	lissa.Ny = s.GetInt("Curve", "ny")
-	lissa.Px += s.GetFloat("Curve", "phaseChange")
+	pc := s.GetFloat("Curve", "phaseChange")
+	lissa.Px += pc
 	lissa.Py = gaul.Deg2Rad(float64(s.GetInt("Curve", "yphase")))
+	// Px advances every Update; Drawer only runs when dirty. Without a per-frame
+	// MarkDirty while animating, redraws (clicks, controls) would show a large
+	// phase jump vs the last cached frame.
+	if pc != 0 {
+		s.MarkDirty()
+	}
 }
 
 func draw(s *sketchy.Sketch, c *canvas.Context) {
 	radius := s.GetFloat("Curve", "radius")
 	origin := gaul.Point{X: c.Width() / 2, Y: c.Height() / 2}
 	curve := gaul.GenLissajous(lissa, 1000, origin, radius)
-	c.SetStrokeColor(color.CMYK{C: 200})
-	c.SetStrokeWidth(1)
+	c.SetStrokeColor(s.DefaultForeground)
+	c.SetStrokeWidth(s.DefaultStrokeWidth)
 	c.MoveTo(curve.Points[0].X, curve.Points[0].Y)
 	for _, p := range curve.Points {
 		c.LineTo(p.X, p.Y)

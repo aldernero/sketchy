@@ -11,9 +11,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/aldernero/sketchy/internal/sketchdb"
 	"github.com/aldernero/debugui"
 	"github.com/aldernero/gaul"
+	"github.com/aldernero/sketchy/internal/sketchdb"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
@@ -50,22 +50,24 @@ type SaveRequest struct {
 }
 
 type Sketch struct {
-	Title                     string
-	Prefix                    string
-	SketchWidth               float64
-	SketchHeight              float64
-	ControlWidth              int
-	ControlHeight             int
-	ControlBackgroundColor    string
-	ControlOutlineColor       string
-	SketchBackgroundColor     string
-	SketchOutlineColor        string
+	Title                  string
+	Prefix                 string
+	SketchWidth            float64
+	SketchHeight           float64
+	ControlWidth           int
+	ControlHeight          int
+	ControlBackgroundColor string
+	ControlOutlineColor    string
+	// SketchBackgroundColor is unused for window filling; letterbox margins follow the Builtins UI theme.
+	// Kept for API compatibility; may be used again if margins become configurable.
+	SketchBackgroundColor string
+	SketchOutlineColor    string
 	// DefaultBackground is the canvas clear color before each draw (image/color, default black).
 	DefaultBackground color.Color
 	// DefaultForeground is the initial stroke color for the canvas context before Drawer (default white).
 	DefaultForeground color.Color
 	// DefaultStrokeWidth is the initial stroke width in millimeters (default 0.5).
-	DefaultStrokeWidth float64
+	DefaultStrokeWidth        float64
 	DisableClearBetweenFrames bool
 	ShowFPS                   bool
 	RasterDPI                 float64
@@ -112,7 +114,7 @@ type Sketch struct {
 	db      *sketchdb.DB
 
 	viewportW, viewportH int
-	scrollX, scrollY       float64
+	scrollX, scrollY     float64
 
 	dlgSaveImageOpen   bool
 	dlgSaveImagePrefix string
@@ -136,8 +138,6 @@ type Sketch struct {
 	builtinColorFGIdx int
 
 	colorModalIdx int // >= 0 => editing ColorPickers[idx]
-	// colorModalUpdateSketchBG: default-background modal only; if OK with checked, set SketchBackgroundColor.
-	colorModalUpdateSketchBG bool
 
 	modalH, modalS, modalV float64
 	modalR, modalG, modalB int
@@ -157,6 +157,13 @@ type Sketch struct {
 
 	// builtinSeedInt mirrors RandomSeed for the Builtins NumberField (debugui uses *int).
 	builtinSeedInt int
+
+	// debugUIThemeIndex selects the control-panel style (Builtins dropdown); 0 = themes/dark.json, 1 = themes/light.json.
+	debugUIThemeIndex int
+
+	// Primary mouse edge (see refreshPrimaryMouseEdge): avoids relying on inpututil JustPressed tick matching.
+	sketchPrimaryMouseDown     bool
+	sketchPrimaryMouseJustDown bool
 }
 
 func (s *Sketch) Width() float64 {
@@ -205,9 +212,6 @@ func (s *Sketch) Init() {
 	}
 	if s.ControlHeight == 0 {
 		s.ControlHeight = DefaultControlWindowHeight
-	}
-	if s.SketchBackgroundColor == "" {
-		s.SketchBackgroundColor = "#1e1e1e"
 	}
 	if s.ControlBackgroundColor == "" {
 		s.ControlBackgroundColor = "#1e1e1e"
@@ -273,6 +277,8 @@ func (s *Sketch) Init() {
 	if err := os.Setenv("EBITEN_SCREENSHOT_KEY", "escape"); err != nil {
 		log.Fatal("error while setting ebiten screenshot key: ", err)
 	}
+
+	s.applyDebugUITheme()
 }
 
 // GetFloat returns a float slider value in folder (use "" for root).
@@ -343,6 +349,7 @@ func (s *Sketch) SetBool(folder, name string, v bool) {
 		log.Fatalf("%q is not a toggle", k)
 	}
 	s.Toggles[i].Checked = v
+	s.Toggles[i].lastVal = v
 }
 
 // Toggle returns root-folder checkbox/button state.
@@ -594,6 +601,7 @@ func (s *Sketch) Layout(outsideWidth, outsideHeight int) (int, int) {
 }
 
 func (s *Sketch) Update() error {
+	s.refreshPrimaryMouseEdge()
 	if s.showDebugUI {
 		var err error
 		s.uiCaptureState, err = s.ui.Update(func(ctx *debugui.Context) error {
@@ -614,6 +622,9 @@ func (s *Sketch) Update() error {
 	}
 	s.UpdateControls()
 	s.Updater(s)
+	if ok, _, _ := s.PrimaryPointerPressInSketch(); ok {
+		s.MarkDirty()
+	}
 	s.Tick++
 	return nil
 }
@@ -623,10 +634,16 @@ func (s *Sketch) Clear() {
 	s.dirty = true
 }
 
-func (s *Sketch) sketchBackgroundRGBA() color.RGBA {
-	c := stringToColor(s.SketchBackgroundColor)
-	r, g, b, a := c.RGBA()
-	return color.RGBA{R: uint8(r >> 8), G: uint8(g >> 8), B: uint8(b >> 8), A: uint8(a >> 8)}
+// letterboxMarginRGBA fills the window behind the letterboxed sketch bitmap. It follows
+// the Builtins UI theme (dark vs light) so margins stay visually separate from the canvas
+// ([Sketch.DefaultBackground] inside the rasterized sketch area).
+func (s *Sketch) letterboxMarginRGBA() color.RGBA {
+	switch s.debugUIThemeIndex {
+	case 1: // Light (themes/light.json)
+		return color.RGBA{R: 0xe8, G: 0xe8, B: 0xe8, A: 0xff}
+	default: // Dark (themes/dark.json) and unknown indices
+		return color.RGBA{R: 0x2a, G: 0x2a, B: 0x2a, A: 0xff}
+	}
 }
 
 func colorToRGBHex(c color.Color) string {
@@ -671,11 +688,15 @@ func (s *Sketch) Draw(screen *ebiten.Image) {
 			}
 		}
 
+		rw, rh := bounds.Dx(), bounds.Dy()
+		if s.offscreen == nil || s.offscreen.Bounds().Dx() != rw || s.offscreen.Bounds().Dy() != rh {
+			s.offscreen = ebiten.NewImage(rw, rh)
+		}
 		s.offscreen.WritePixels(s.cachedRGBA.Pix)
 		s.dirty = false
 	}
 
-	screen.Fill(s.sketchBackgroundRGBA())
+	screen.Fill(s.letterboxMarginRGBA())
 	op := &ebiten.DrawImageOptions{}
 	op.GeoM.Translate(s.viewPadX()-s.scrollX, s.viewPadY()-s.scrollY)
 	screen.DrawImage(s.offscreen, op)
@@ -696,19 +717,111 @@ func (s *Sketch) Draw(screen *ebiten.Image) {
 }
 
 func (s *Sketch) CanvasCoords(x, y float64) gaul.Point {
-	xs := x - s.viewPadX() + s.scrollX
-	ys := y - s.viewPadY() + s.scrollY
-	return gaul.Point{X: MmPerPx * xs, Y: MmPerPx * (s.SketchHeight - ys)}
+	sx, sy := s.WindowToSketchPixels(x, y)
+	dx, dy := s.sketchBitmapSizeF()
+	if dx <= 0 || dy <= 0 {
+		return gaul.Point{}
+	}
+	// Proportional map from raster pixels to canvas mm (matches rasterizer output vs canvas size).
+	return gaul.Point{
+		X: (sx / dx) * s.Width(),
+		Y: ((dy - sy) / dy) * s.Height(),
+	}
 }
 
-func (s *Sketch) SketchCoords(x, y float64) gaul.Point {
-	return gaul.Point{X: x / MmPerPx, Y: s.SketchHeight - y/MmPerPx}
+// SketchCoords maps sketch bitmap pixel coordinates (origin top-left of the raster) to canvas mm.
+func (s *Sketch) SketchCoords(sx, sy float64) gaul.Point {
+	dx, dy := s.sketchBitmapSizeF()
+	if dx <= 0 || dy <= 0 {
+		return gaul.Point{}
+	}
+	return gaul.Point{
+		X: (sx / dx) * s.Width(),
+		Y: ((dy - sy) / dy) * s.Height(),
+	}
 }
 
 func (s *Sketch) PointInSketchArea(x, y float64) bool {
-	xs := x - s.viewPadX() + s.scrollX
-	ys := y - s.viewPadY() + s.scrollY
-	return xs >= 0 && xs <= s.SketchWidth && ys >= 0 && ys <= s.SketchHeight
+	dx, dy := s.sketchBitmapSizeF()
+	if dx <= 0 || dy <= 0 {
+		return false
+	}
+	xs, ys := s.WindowToSketchPixels(x, y)
+	// Half-open interval matches image pixel indices [0, Dx); same quad as Draw(screen).DrawImage(s.offscreen, …).
+	return xs >= 0 && xs < dx && ys >= 0 && ys < dy
+}
+
+// WindowToSketchPixels maps game-surface coordinates into the sketch bitmap drawn at
+// Translate(viewPad - scroll), i.e. the inverse of the Draw path for s.offscreen.
+func (s *Sketch) WindowToSketchPixels(wx, wy float64) (sx, sy float64) {
+	sx = wx - s.viewPadX() + s.scrollX
+	sy = wy - s.viewPadY() + s.scrollY
+	return sx, sy
+}
+
+func (s *Sketch) sketchBitmapSizeF() (dx, dy float64) {
+	if s.offscreen == nil {
+		return float64(s.SketchWidth), float64(s.SketchHeight)
+	}
+	b := s.offscreen.Bounds()
+	return float64(b.Dx()), float64(b.Dy())
+}
+
+func (s *Sketch) refreshPrimaryMouseEdge() {
+	down := ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft)
+	s.sketchPrimaryMouseJustDown = down && !s.sketchPrimaryMouseDown
+	s.sketchPrimaryMouseDown = down
+}
+
+// ControlPanelScreenRect returns the screen-space bounds of the control panel window
+// (must match [Sketch.controlWindow]).
+func (s *Sketch) ControlPanelScreenRect() image.Rectangle {
+	return image.Rect(DefaultControlWindowX, DefaultControlWindowY,
+		DefaultControlWindowX+s.ControlWidth, DefaultControlWindowY+s.ControlHeight)
+}
+
+// PrimaryPointerPressInSketch reports whether the left mouse button or a newly pressed
+// touch just went down over the sketch (not on the control panel's default rectangle).
+// It returns the window coordinates of that press. For the mouse, Sketch uses an edge
+// detector ([Sketch.refreshPrimaryMouseEdge]) instead of [inpututil.IsMouseButtonJustPressed],
+// because the latter only holds when the press timestamp matches the current UI tick,
+// which can fail depending on platform and frame timing. For touch, use the returned
+// coordinates — not [ebiten.CursorPosition], which is unset on many mobile builds.
+// If this is true for the current frame, [Sketch.Update] marks the sketch dirty after
+// [Sketch.Updater] returns, so the next [Sketch.Draw] re-rasterizes without [Sketch.MarkDirty].
+func (s *Sketch) PrimaryPointerPressInSketch() (ok bool, wx, wy float64) {
+	for _, tid := range inpututil.AppendJustPressedTouchIDs(nil) {
+		x, y := ebiten.TouchPosition(tid)
+		fx, fy := float64(x), float64(y)
+		if s.pressInSketchIgnoringPanel(fx, fy) {
+			return true, fx, fy
+		}
+	}
+	if s.sketchPrimaryMouseJustDown {
+		x, y := ebiten.CursorPosition()
+		fx, fy := float64(x), float64(y)
+		if s.pressInSketchIgnoringPanel(fx, fy) {
+			return true, fx, fy
+		}
+	}
+	return false, 0, 0
+}
+
+// PrimaryPressInSketch is like [Sketch.PrimaryPointerPressInSketch] but only reports whether
+// a qualifying press occurred.
+func (s *Sketch) PrimaryPressInSketch() bool {
+	ok, _, _ := s.PrimaryPointerPressInSketch()
+	return ok
+}
+
+func (s *Sketch) pressInSketchIgnoringPanel(px, py float64) bool {
+	if !s.PointInSketchArea(px, py) {
+		return false
+	}
+	if s.showDebugUI && image.Pt(int(px), int(py)).In(s.ControlPanelScreenRect()) {
+		return false
+	}
+	return true
 }
 
 func (s *Sketch) CanvasRect() gaul.Rect {
@@ -723,8 +836,18 @@ func (s *Sketch) RandomHeight() float64 {
 	return rand.Float64() * s.Height()
 }
 
+// IsMouseOverControlPanel reports whether the cursor is over the control panel's
+// default screen rectangle or any debug UI hover surface (dialogs, dropdowns, a dragged panel).
 func (s *Sketch) IsMouseOverControlPanel() bool {
-	return s.uiCaptureState != 0
+	if !s.showDebugUI {
+		return false
+	}
+	x, y := ebiten.CursorPosition()
+	pt := image.Pt(x, y)
+	if pt.In(s.ControlPanelScreenRect()) {
+		return true
+	}
+	return s.uiCaptureState&debugui.InputCapturingStateHover != 0
 }
 
 func (s *Sketch) setRandomSeed(v int64) {
@@ -750,6 +873,11 @@ func (s *Sketch) randomizeRandomSeed() {
 	fmt.Println("RandomSeed changed: ", s.RandomSeed)
 }
 
+// MarkDirty schedules a full sketch raster pass on the next Draw.
+// Sketchy also sets dirty when a primary pointer press lands in the sketch
+// (same rules as [Sketch.PrimaryPointerPressInSketch]). Call MarkDirty when
+// the picture changes without such a press (keyboard, timers, other mouse
+// buttons, or state updates that bypass control-driven invalidation).
 func (s *Sketch) MarkDirty() {
 	s.dirty = true
 }

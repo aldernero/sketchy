@@ -4,14 +4,15 @@ import "image/color"
 
 // Config holds sketch options set from code (no JSON).
 type Config struct {
-	Title                     string
-	Prefix                    string
-	SketchWidth               float64
-	SketchHeight              float64
-	ControlWidth              int
-	ControlHeight             int
-	ControlBackgroundColor    string
-	ControlOutlineColor       string
+	Title                  string
+	Prefix                 string
+	SketchWidth            float64
+	SketchHeight           float64
+	ControlWidth           int
+	ControlHeight          int
+	ControlBackgroundColor string
+	ControlOutlineColor    string
+	// SketchBackgroundColor is currently unused at runtime (letterbox uses Builtins dark/light theme).
 	SketchBackgroundColor     string
 	SketchOutlineColor        string
 	DisableClearBetweenFrames bool

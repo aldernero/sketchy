@@ -1,0 +1,32 @@
+{
+  "version": 1,
+  "comment": "Sketchy packaged dark theme: same colors and layout as github.com/aldernero/debugui DefaultStyle(), except thumbSize is 2 (upstream uses 8). Use as a complete template — every JSON field debugui accepts is set explicitly.",
+  "defaultWidth": 60,
+  "defaultHeight": 18,
+  "padding": 5,
+  "spacing": 4,
+  "indent": 16,
+  "titleHeight": 24,
+  "scrollbarSize": 12,
+  "thumbSize": 2,
+  "colors": {
+    "text": "#e6e6e6ff",
+    "border": "#3c3c3cff",
+    "windowBG": "#2d2d2de6",
+    "titleBG": "#1e1e1eff",
+    "titleBGTransparent": "#141414cc",
+    "titleText": "#f0f0f0ff",
+    "panelBG": "#00000000",
+    "button": "#4b4b4bff",
+    "buttonHover": "#5f5f5fff",
+    "buttonFocus": "#737373ff",
+    "sliderThumb": "#4b4b4bff",
+    "sliderThumbHover": "#5f5f5fff",
+    "sliderThumbFocus": "#737373ff",
+    "base": "#1e1e1eff",
+    "baseHover": "#232323ff",
+    "baseFocus": "#282828ff",
+    "scrollBase": "#2b2b2bff",
+    "scrollThumb": "#1e1e1eff"
+  }
+}

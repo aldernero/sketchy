@@ -8,26 +8,25 @@ Sketchy needs a recent Go toolchain (see the root [`go.mod`](../go.mod) for the 
 
 On Windows you can use the native Go toolchain; you do not need WSL unless you prefer it.
 
-## Clone the repo
+## Install the `sketchy` CLI
 
 ```shell
-git clone https://github.com/aldernero/sketchy.git
-cd sketchy
+go install github.com/aldernero/sketchy/cmd/sketchy@latest
 ```
 
-## Build the `sketchy` CLI (optional)
-
-From the repository root:
-
-```shell
-go build -o sketchy ./cmd/sketchy/sketchy.go
-```
-
-You can put the binary on your `PATH`, or invoke it with `./sketchy`.
+Put `$(go env GOPATH)/bin` (or your `GOBIN` directory) on your `PATH` so the `sketchy` command is available in any terminal.
 
 ## Running the examples
 
-Each example is a small Go module. From the example directory:
+Each program under [`examples/`](../examples/) is a `main` package in the same module. From any directory you can run one with a tagged version:
+
+```shell
+go run github.com/aldernero/sketchy/examples/simple@latest
+```
+
+Change `simple` to another example folder name as needed.
+
+If you have a [local clone](https://github.com/aldernero/sketchy) of the repository, you can instead:
 
 ```shell
 cd examples/simple
@@ -49,7 +48,7 @@ Control values are read by **folder** and **name**. Use `""` for the root folder
 # Creating a new sketch with the CLI
 
 ```shell
-./sketchy init hello_circle
+sketchy init hello_circle
 cd hello_circle
 ```
 
@@ -108,7 +107,7 @@ s := sketchy.New(sketchy.Config{
 })
 ```
 
-You can also set `SketchBackgroundColor`, `ControlOutlineColor`, and other fields on [`Config`](../config.go).
+You can also set `ControlOutlineColor`, [`DefaultBackground`](../config.go), and other fields on [`Config`](../config.go). The margin around the sketch follows the Builtins Dark/Light theme (grey), not `SketchBackgroundColor`.
 
 ## 3. Implement `draw`
 

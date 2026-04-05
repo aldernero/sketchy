@@ -24,8 +24,8 @@ func buildUI(_ *sketchy.Sketch, ui *sketchy.UI) {
 
 func setup(s *sketchy.Sketch) {
 	cg1 = gaul.SimpleGradient{
-		StartColor: s.ColorPicker("start"),
-		EndColor:   s.ColorPicker("end"),
+		StartColor: s.GetColor("Gradient", "start"),
+		EndColor:   s.GetColor("Gradient", "end"),
 	}
 }
 
