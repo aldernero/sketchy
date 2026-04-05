@@ -64,7 +64,7 @@ Edit `main.go`: set fields on [`sketchy.Config`](config.go) (title, size, colors
 
 # The control panel
 
-The panel is implemented with [debugui](https://github.com/aldernero/debugui) (this repo often uses a **local replace** to that module for small UI tweaks).
+The control panel is built with [debugui](https://github.com/aldernero/debugui), an Ebitengine-oriented UI toolkit; see that repository for API details and licensing.
 
 ![control_panel](assets/images/control_panel.png)
 

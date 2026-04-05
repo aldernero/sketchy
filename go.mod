@@ -3,7 +3,7 @@ module github.com/aldernero/sketchy
 go 1.26.1
 
 require (
-	github.com/aldernero/debugui v0.0.0-20260404164331-b6df846f4a47
+	github.com/aldernero/debugui v0.0.0-20260405005820-3de1cef69f33
 	github.com/aldernero/gaul v0.0.0-20260224014828-ce083ef84aca
 	github.com/hajimehoshi/ebiten/v2 v2.9.9
 	github.com/lucasb-eyer/go-colorful v1.3.0
@@ -64,5 +64,3 @@ require (
 	gonum.org/v1/plot v0.16.0 // indirect
 	star-tex.org/x/tex v0.7.1 // indirect
 )
-
-replace github.com/aldernero/debugui => ../debugui
