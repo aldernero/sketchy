@@ -15,6 +15,10 @@ import (
 var line gaul.Line
 var curve1, curve2, curve3 gaul.Curve
 
+func buildUI(_ *sketchy.Sketch, ui *sketchy.UI) {
+	ui.IntSlider("num_points", 1, 100, 10, 1)
+}
+
 func update(s *sketchy.Sketch) {
 	// Update logic goes here
 }
@@ -38,7 +42,7 @@ func draw(s *sketchy.Sketch, c *canvas.Context) {
 	curve3.Draw(c)
 	c.Stroke()
 	c.SetStrokeColor(color.CMYK{M: 255})
-	percs := gaul.Linspace(0, 1, int(s.Slider("num_points")), true)
+	percs := gaul.Linspace(0, 1, s.GetInt("", "num_points"), true)
 	for _, p := range percs {
 		point := line.Lerp(p)
 		c.DrawPath(point.X, point.Y, canvas.Circle(3))
@@ -53,17 +57,17 @@ func draw(s *sketchy.Sketch, c *canvas.Context) {
 }
 
 func main() {
-	var configFile string
 	var prefix string
 	var randomSeed int64
-	flag.StringVar(&configFile, "c", "sketch.json", "Sketch config file")
 	flag.StringVar(&prefix, "p", "", "Output file prefix")
 	flag.Int64Var(&randomSeed, "s", 0, "Random number generator seed")
 	flag.Parse()
-	s, err := sketchy.NewSketchFromFile(configFile)
-	if err != nil {
-		log.Fatal(err)
-	}
+	s := sketchy.New(sketchy.Config{
+		Title:        "Curve lerp",
+		SketchWidth:  800,
+		SketchHeight: 800,
+	})
+	s.BuildUI = buildUI
 	if prefix != "" {
 		s.Prefix = prefix
 	}
@@ -102,9 +106,10 @@ func main() {
 		curve3.Points = append(curve3.Points, p)
 	}
 	curve3.Closed = true
-	ebiten.SetWindowSize(int(s.SketchWidth), int(s.SketchHeight))
+	ww, wh := s.WindowSize()
+	ebiten.SetWindowSize(ww, wh)
 	ebiten.SetWindowTitle("Sketchy - " + s.Title)
-	ebiten.SetWindowResizingMode(ebiten.WindowResizingModeDisabled)
+	ebiten.SetWindowResizingMode(ebiten.WindowResizingModeEnabled)
 	if err := ebiten.RunGame(s); err != nil {
 		log.Fatal(err)
 	}

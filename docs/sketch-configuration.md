@@ -58,7 +58,7 @@ There are other parameters not listed in the template. Here are the missing para
 | SketchHeight              | float  | 800       | sketch area height in pixels           |
 | ControlWidth              | float  | 240       | control area width in pixels           |
 | RandomSeed                | int    | 0         | seed to builtin PRNG                   |
-| SketchBackgroundColor     | string | "#1e1e1e" | sketch area background color           |
+| SketchBackgroundColor     | string | (unused)  | reserved; window margins use Builtins UI theme (dark/light grey) |
 | SketchOutlineColor        | string | "#ffdb00" | sketch area outline color              |
 | ControlBackgroundColor    | string | "#1e1e1e" | control area background color          |
 | ControlOutlineColor       | string | "#ffdb00" | control area background color          |

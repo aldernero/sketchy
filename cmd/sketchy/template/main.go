@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"github.com/tdewolff/canvas"
 	"image"
 	"image/png"
 	"log"
@@ -11,7 +10,18 @@ import (
 
 	"github.com/aldernero/sketchy"
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/tdewolff/canvas"
 )
+
+func buildUI(_ *sketchy.Sketch, ui *sketchy.UI) {
+	ui.Folder("Controls", func() {
+		ui.IntSlider("control1", 1, 100, 10, 1)
+		ui.FloatSlider("control2", 0, 2, 0.9, 0.01)
+	})
+	ui.Checkbox("checkbox", false)
+	ui.Button("button")
+	ui.ColorPicker("accent", "#f3b709")
+}
 
 func setup(s *sketchy.Sketch) {
 	// Setup logic goes here
@@ -19,9 +29,6 @@ func setup(s *sketchy.Sketch) {
 
 func update(s *sketchy.Sketch) {
 	// Update logic goes here
-	//if s.DidControlsChange {
-	//	setup(s)
-	//}
 }
 
 func draw(s *sketchy.Sketch, c *canvas.Context) {
@@ -29,13 +36,11 @@ func draw(s *sketchy.Sketch, c *canvas.Context) {
 }
 
 func main() {
-	var configFile string
 	var prefix string
 	var randomSeed int64
 	var cpuprofile = flag.String("pprof", "", "Collect CPU profile")
-	flag.StringVar(&configFile, "c", "sketch.json", "Sketch config file")
 	flag.StringVar(&prefix, "p", "", "Output file prefix")
-	flag.Int64Var(&randomSeed, "s", 0, "Random number generator seed")
+	flag.Int64Var(&randomSeed, "s", 0, "Random number generator seed (0 = auto)")
 	flag.Parse()
 	if *cpuprofile != "" {
 		f, err := os.Create(*cpuprofile)
@@ -45,7 +50,6 @@ func main() {
 		pprof.StartCPUProfile(f)
 		defer pprof.StopCPUProfile()
 	}
-	// look for icon file
 	var iconImages []image.Image
 	fd, err := os.Open("icon.png")
 	if err == nil {
@@ -54,10 +58,16 @@ func main() {
 			iconImages = append(iconImages, img)
 		}
 	}
-	s, err := sketchy.NewSketchFromFile(configFile)
-	if err != nil {
-		log.Fatal(err)
-	}
+
+	s := sketchy.New(sketchy.Config{
+		Title:                  "Sketch",
+		SketchWidth:            1080,
+		SketchHeight:           1080,
+		SketchBackgroundColor:  "#1e1e1e",
+		ControlBackgroundColor: "#1e1e1e",
+		ControlOutlineColor:    "#ffdb00",
+	})
+	s.BuildUI = buildUI
 	if prefix != "" {
 		s.Prefix = prefix
 	}
@@ -66,9 +76,11 @@ func main() {
 	s.Drawer = draw
 	s.Init()
 	setup(s)
-	ebiten.SetWindowSize(int(s.SketchWidth), int(s.SketchHeight))
+
+	ww, wh := s.WindowSize()
+	ebiten.SetWindowSize(ww, wh)
 	ebiten.SetWindowTitle("Sketchy - " + s.Title)
-	ebiten.SetWindowResizingMode(ebiten.WindowResizingModeDisabled)
+	ebiten.SetWindowResizingMode(ebiten.WindowResizingModeEnabled)
 	ebiten.SetVsyncEnabled(true)
 	ebiten.SetTPS(ebiten.SyncWithFPS)
 	if iconImages != nil {

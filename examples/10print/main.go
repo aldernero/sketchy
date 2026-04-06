@@ -84,15 +84,15 @@ func (t *Truchet) rectForTile(i int) gaul.Rect {
 }
 
 func setup(s *sketchy.Sketch) {
-	cellSize := s.Slider("cellSize")
+	cellSize := s.GetFloat("Grid", "cellSize")
 	s.Rand.SetSeed(s.RandomSeed)
-	s.Rand.SetNoiseOctaves(int(s.Slider("octaves")))
-	s.Rand.SetNoisePersistence(s.Slider("persistence"))
-	s.Rand.SetNoiseLacunarity(s.Slider("lacunarity"))
-	s.Rand.SetNoiseScaleX(s.Slider("xscale"))
-	s.Rand.SetNoiseScaleY(s.Slider("yscale"))
-	s.Rand.SetNoiseOffsetX(s.Slider("xoffset"))
-	s.Rand.SetNoiseOffsetY(s.Slider("yoffset"))
+	s.Rand.SetNoiseOctaves(s.GetInt("Grid", "octaves"))
+	s.Rand.SetNoisePersistence(s.GetFloat("Grid", "persistence"))
+	s.Rand.SetNoiseLacunarity(s.GetFloat("Grid", "lacunarity"))
+	s.Rand.SetNoiseScaleX(s.GetFloat("Grid", "xscale"))
+	s.Rand.SetNoiseScaleY(s.GetFloat("Grid", "yscale"))
+	s.Rand.SetNoiseOffsetX(float64(s.GetInt("Grid", "xoffset")))
+	s.Rand.SetNoiseOffsetY(float64(s.GetInt("Grid", "yoffset")))
 	board.init(cellSize, s)
 }
 
@@ -142,18 +142,34 @@ func draw(s *sketchy.Sketch, c *canvas.Context) {
 
 var board Truchet
 
+func buildUI(_ *sketchy.Sketch, ui *sketchy.UI) {
+	ui.Folder("Grid", func() {
+		ui.FloatSlider("cellSize", 1, 60, 20, 0.5)
+		ui.IntSlider("octaves", 1, 10, 2, 1)
+		ui.FloatSlider("persistence", 0, 2, 0.95, 0.01)
+		ui.FloatSlider("lacunarity", 0, 10, 2.7, 0.1)
+		ui.FloatSlider("xscale", 0, 0.1, 0.04, 0.0001)
+		ui.FloatSlider("yscale", 0, 0.1, 0.07, 0.0001)
+		ui.IntSlider("xoffset", -1000, 1000, 0, 1)
+		ui.IntSlider("yoffset", -1000, 1000, 0, 1)
+	})
+}
+
 func main() {
-	var configFile string
 	var prefix string
 	var randomSeed int64
-	flag.StringVar(&configFile, "c", "sketch.json", "Sketch config file")
 	flag.StringVar(&prefix, "p", "", "Output file prefix")
 	flag.Int64Var(&randomSeed, "s", 0, "Random number generator seed")
 	flag.Parse()
-	s, err := sketchy.NewSketchFromFile(configFile)
-	if err != nil {
-		log.Fatal(err)
-	}
+	s := sketchy.New(sketchy.Config{
+		Title:                 "10PRINT Interaction",
+		Prefix:                "sketch",
+		SketchWidth:           1080,
+		SketchHeight:          768,
+		SketchBackgroundColor: "#1e1e1e",
+		SketchOutlineColor:    "#1e1e1e",
+	})
+	s.BuildUI = buildUI
 	if prefix != "" {
 		s.Prefix = prefix
 	}
@@ -162,9 +178,10 @@ func main() {
 	s.Drawer = draw
 	s.Init()
 	setup(s)
-	ebiten.SetWindowSize(int(s.SketchWidth), int(s.SketchHeight))
+	ww, wh := s.WindowSize()
+	ebiten.SetWindowSize(ww, wh)
 	ebiten.SetWindowTitle("Sketchy - " + s.Title)
-	ebiten.SetWindowResizingMode(ebiten.WindowResizingModeDisabled)
+	ebiten.SetWindowResizingMode(ebiten.WindowResizingModeEnabled)
 	if err := ebiten.RunGame(s); err != nil {
 		log.Fatal(err)
 	}

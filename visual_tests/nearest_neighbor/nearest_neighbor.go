@@ -18,6 +18,11 @@ var points []gaul.Point
 var tree *gaul.KDTree
 var currentPoint gaul.IndexPoint
 
+func buildUI(_ *sketchy.Sketch, ui *sketchy.UI) {
+	ui.IntSlider("numPoints", 1, 10000, 100, 1)
+	ui.Checkbox("Show Points", false)
+}
+
 func setup(s *sketchy.Sketch) {
 	points = []gaul.Point{}
 	rect := s.CanvasRect()
@@ -27,7 +32,7 @@ func setup(s *sketchy.Sketch) {
 		Point: gaul.Point{X: 0, Y: 0},
 	}
 	// Get a sample of random points, add them to the tree
-	numPoints := int(s.Slider("numPoints"))
+	numPoints := s.GetInt("", "numPoints")
 	radius := 0.25 * rect.W
 	for i := 0; i < numPoints; i++ {
 		r := rand.Float64() * radius
@@ -82,17 +87,19 @@ func draw(s *sketchy.Sketch, c *canvas.Context) {
 }
 
 func main() {
-	var configFile string
 	var prefix string
 	var randomSeed int64
-	flag.StringVar(&configFile, "c", "sketch.json", "Sketch config file")
 	flag.StringVar(&prefix, "p", "", "Output file prefix")
 	flag.Int64Var(&randomSeed, "s", 0, "Random number generator seed")
 	flag.Parse()
-	s, err := sketchy.NewSketchFromFile(configFile)
-	if err != nil {
-		log.Fatal(err)
-	}
+	s := sketchy.New(sketchy.Config{
+		Title:                 "Nearest neighbor walk",
+		SketchWidth:           800,
+		SketchHeight:          800,
+		SketchBackgroundColor: "#1e1e1e",
+		ControlOutlineColor:   "#ffdb00",
+	})
+	s.BuildUI = buildUI
 	if prefix != "" {
 		s.Prefix = prefix
 	}
@@ -101,9 +108,10 @@ func main() {
 	s.Drawer = draw
 	s.Init()
 	setup(s)
-	ebiten.SetWindowSize(int(s.SketchWidth), int(s.SketchHeight))
+	ww, wh := s.WindowSize()
+	ebiten.SetWindowSize(ww, wh)
 	ebiten.SetWindowTitle("Sketchy - " + s.Title)
-	ebiten.SetWindowResizingMode(ebiten.WindowResizingModeDisabled)
+	ebiten.SetWindowResizingMode(ebiten.WindowResizingModeEnabled)
 	if err := ebiten.RunGame(s); err != nil {
 		log.Fatal(err)
 	}

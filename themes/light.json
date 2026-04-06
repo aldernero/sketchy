@@ -1,0 +1,32 @@
+{
+  "version": 1,
+  "comment": "Sketchy packaged light theme: same colors as github.com/aldernero/debugui ThemeLight() (built on DefaultStyle layout), except thumbSize is 2 (upstream uses 8). indent matches debugui DefaultStyle (font line height ≈ 16px). Every JSON field debugui accepts is set explicitly.",
+  "defaultWidth": 60,
+  "defaultHeight": 18,
+  "padding": 5,
+  "spacing": 4,
+  "indent": 16,
+  "titleHeight": 24,
+  "scrollbarSize": 12,
+  "thumbSize": 2,
+  "colors": {
+    "text": "#1e1e1eff",
+    "border": "#8c8c96ff",
+    "windowBG": "#f5f5f8f0",
+    "titleBG": "#e4e4ebff",
+    "titleBGTransparent": "#dcdce4dc",
+    "titleText": "#141418ff",
+    "panelBG": "#00000000",
+    "button": "#d2d2daff",
+    "buttonHover": "#c3c3d0ff",
+    "buttonFocus": "#afb4c8ff",
+    "sliderThumb": "#c8c8d4ff",
+    "sliderThumbHover": "#b9b9c8ff",
+    "sliderThumbFocus": "#a5aac3ff",
+    "base": "#ececf2ff",
+    "baseHover": "#e4e4ecff",
+    "baseFocus": "#dadce8ff",
+    "scrollBase": "#dcdce4ff",
+    "scrollThumb": "#b4b4c3ff"
+  }
+}

@@ -19,7 +19,7 @@ Most of the time you would use the first two options, the "s" or "p" keys. This 
 
 The second option, the "q" key, is useful when you want to capture the all the drawing done so far, i.e. if you
 are using the `DisableClearBetweenFrames` feature. In this case you should also set `SketchOutlineColor` to `""` or
-to the same values as `SketchBackgroundColor`, as this screenshot captures all pixels in the sketch area.
+to the same values as your canvas background ([`DefaultBackground`](../config.go)), as this screenshot captures all pixels in the sketch area.
 
 The last option would be useful if you want to capture the entire Sketchy window for some reason, for example to
 use in a blog post or something.
@@ -65,4 +65,4 @@ There are two other builtin key bindings:
 - "d": dumps the current state to the terminal. The output
 includes the current value for all GUI controls, as well as the current value of the PRNG seed.
 - "c": saves the current sketch configuration as a JSON file, with the format `"<prefix>_config_<timestamp>.json`. This can then be used to get back to the same state at started using the `-c <config file>` CLI flag.
-- "Space": shows the control panel.
+- **Ctrl+Space**: toggles the control panel (plain Space is for text fields inside the panel).

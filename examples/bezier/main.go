@@ -20,6 +20,18 @@ var curves3 []gaul.Curve
 var presses int
 var rng gaul.LFSRLarge
 
+func buildUI(_ *sketchy.Sketch, ui *sketchy.UI) {
+	ui.Folder("Bezier", func() {
+		ui.IntSlider("num", 1, 400, 200, 1)
+		ui.FloatSlider("radius", 0, 1, 0.16, 0.01)
+		ui.FloatSlider("xoffset", 0, 1, 0.30, 0.01)
+		ui.FloatSlider("yoffset", 0, 1, 0.45, 0.01)
+	})
+	ui.Checkbox("show triangles", false)
+	ui.Checkbox("symmetric", false)
+	ui.Button("next")
+}
+
 func genCurves(num int, triangle gaul.Triangle) ([]gaul.Curve, []gaul.Curve, []gaul.Curve) {
 	AB := gaul.Line{P: triangle.A, Q: triangle.B}
 	BC := gaul.Line{P: triangle.B, Q: triangle.C}
@@ -83,12 +95,12 @@ func genCurves(num int, triangle gaul.Triangle) ([]gaul.Curve, []gaul.Curve, []g
 
 func setup(s *sketchy.Sketch) {
 	// Setup logic goes here
-	num := int(s.Slider("num"))
-	radius := s.Slider("radius")
+	num := s.GetInt("Bezier", "num")
+	radius := s.GetFloat("Bezier", "radius")
 	W := s.Width()
 	H := s.Height()
-	xoffset := s.Slider("xoffset") * W
-	yoffset := s.Slider("yoffset") * H
+	xoffset := s.GetFloat("Bezier", "xoffset") * W
+	yoffset := s.GetFloat("Bezier", "yoffset") * H
 	R := radius * W
 	rng = gaul.NewLFSRLargeWithSeed(uint64(s.RandomSeed))
 	curves1 = []gaul.Curve{}
@@ -178,11 +190,9 @@ func draw(s *sketchy.Sketch, c *canvas.Context) {
 }
 
 func main() {
-	var configFile string
 	var prefix string
 	var randomSeed int64
 	var cpuprofile = flag.String("pprof", "", "Collect CPU profile")
-	flag.StringVar(&configFile, "c", "sketch.json", "Sketch config file")
 	flag.StringVar(&prefix, "p", "", "Output file prefix")
 	flag.Int64Var(&randomSeed, "s", 0, "Random number generator seed")
 	flag.Parse()
@@ -194,10 +204,14 @@ func main() {
 		pprof.StartCPUProfile(f)
 		defer pprof.StopCPUProfile()
 	}
-	s, err := sketchy.NewSketchFromFile(configFile)
-	if err != nil {
-		log.Fatal(err)
-	}
+	s := sketchy.New(sketchy.Config{
+		Title:                 "Bezier Sketch",
+		SketchWidth:           1920,
+		SketchHeight:          1080,
+		SketchBackgroundColor: "#1e1e1e",
+		ControlOutlineColor:   "#ffdb00",
+	})
+	s.BuildUI = buildUI
 	if prefix != "" {
 		s.Prefix = prefix
 	}
@@ -206,9 +220,10 @@ func main() {
 	s.Drawer = draw
 	s.Init()
 	setup(s)
-	ebiten.SetWindowSize(int(s.SketchWidth), int(s.SketchHeight))
+	ww, wh := s.WindowSize()
+	ebiten.SetWindowSize(ww, wh)
 	ebiten.SetWindowTitle("Sketchy - " + s.Title)
-	ebiten.SetWindowResizingMode(ebiten.WindowResizingModeDisabled)
+	ebiten.SetWindowResizingMode(ebiten.WindowResizingModeEnabled)
 	ebiten.SetVsyncEnabled(true)
 	ebiten.SetTPS(ebiten.SyncWithFPS)
 	if err := ebiten.RunGame(s); err != nil {

@@ -2,42 +2,64 @@ package main
 
 import (
 	"flag"
+	"log"
+	"math"
+
 	"github.com/aldernero/gaul"
 	"github.com/aldernero/sketchy"
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"github.com/tdewolff/canvas"
 	"image/color"
-	"log"
 )
 
 var (
-	qt            *gaul.QuadTree
-	nearestPoints []gaul.IndexPoint
-	count         int
+	qt             *gaul.QuadTree
+	nearestPoints  []gaul.IndexPoint
+	count          int
+	prevNeighborFP uint64
 )
 
+func neighborFingerprint(pts []gaul.IndexPoint) uint64 {
+	var h uint64
+	for i, p := range pts {
+		h ^= uint64(p.Index)*uint64(i*31+1) ^ math.Float64bits(p.X) ^ (math.Float64bits(p.Y) << 1)
+		h *= 0x9e3779b97f4a7c15
+	}
+	return h
+}
+
+func buildUI(_ *sketchy.Sketch, ui *sketchy.UI) {
+	ui.Folder("Display", func() {
+		ui.FloatSlider("Line Thickness", 0.05, 2, 0.3, 0.05)
+		ui.FloatSlider("Point Size", 0, 5, 0.5, 0.1)
+		ui.IntSlider("Closest Neighbors", 0, 10, 2, 1)
+	})
+	ui.Checkbox("Show Points", true)
+	ui.Button("Clear")
+}
+
 func update(s *sketchy.Sketch) {
-	// Update logic goes here
-	if s.Toggle("Clear") {
+	if s.DidTogglesChange && s.Toggle("Clear") {
 		qt.Clear()
 		count = 0
+		s.SetBool("", "Clear", false)
+		s.MarkDirty()
 	}
 	nearestPoints = []gaul.IndexPoint{}
-	if !s.IsMouseOverControlPanel() && inpututil.IsMouseButtonJustReleased(ebiten.MouseButtonLeft) {
-		x, y := ebiten.CursorPosition()
-		if s.PointInSketchArea(float64(x), float64(y)) {
-			p := s.CanvasCoords(float64(x), float64(y))
-			qt.Insert(p.ToIndexPoint(count))
-			count++
-		}
+	if ok, wx, wy := s.PrimaryPointerPressInSketch(); ok {
+		p := s.CanvasCoords(wx, wy)
+		qt.Insert(p.ToIndexPoint(count))
+		count++
 	}
 	x, y := ebiten.CursorPosition()
 	if s.PointInSketchArea(float64(x), float64(y)) {
 		p := s.CanvasCoords(float64(x), float64(y))
-		nearestPoints = qt.NearestNeighbors(p.ToIndexPoint(-1), int(s.Slider("Closest Neighbors")))
+		nearestPoints = qt.NearestNeighbors(p.ToIndexPoint(-1), s.GetInt("Display", "Closest Neighbors"))
 	}
-
+	if fp := neighborFingerprint(nearestPoints); fp != prevNeighborFP {
+		prevNeighborFP = fp
+		s.MarkDirty()
+	}
 }
 
 func draw(s *sketchy.Sketch, c *canvas.Context) {
@@ -45,8 +67,8 @@ func draw(s *sketchy.Sketch, c *canvas.Context) {
 	c.SetStrokeColor(color.White)
 	c.SetFillColor(color.Transparent)
 	c.SetStrokeCapper(canvas.ButtCap)
-	c.SetStrokeWidth(s.Slider("Line Thickness"))
-	pointSize := s.Slider("Point Size")
+	c.SetStrokeWidth(s.GetFloat("Display", "Line Thickness"))
+	pointSize := s.GetFloat("Display", "Point Size")
 	if s.Toggle("Show Points") {
 		qt.DrawWithPoints(pointSize, c)
 	} else {
@@ -73,17 +95,19 @@ func draw(s *sketchy.Sketch, c *canvas.Context) {
 }
 
 func main() {
-	var configFile string
 	var prefix string
 	var randomSeed int64
-	flag.StringVar(&configFile, "c", "sketch.json", "Sketch config file")
 	flag.StringVar(&prefix, "p", "", "Output file prefix")
 	flag.Int64Var(&randomSeed, "s", 0, "Random number generator seed")
 	flag.Parse()
-	s, err := sketchy.NewSketchFromFile(configFile)
-	if err != nil {
-		log.Fatal(err)
-	}
+	s := sketchy.New(sketchy.Config{
+		Title:                 "QuadTree Interaction Test",
+		SketchWidth:           800,
+		SketchHeight:          800,
+		SketchBackgroundColor: "#1e1e1e",
+		ControlOutlineColor:   "#ffdb00",
+	})
+	s.BuildUI = buildUI
 	if prefix != "" {
 		s.Prefix = prefix
 	}
@@ -97,9 +121,10 @@ func main() {
 		W: s.Width(),
 		H: s.Height(),
 	})
-	ebiten.SetWindowSize(int(s.SketchWidth), int(s.SketchHeight))
+	ww, wh := s.WindowSize()
+	ebiten.SetWindowSize(ww, wh)
 	ebiten.SetWindowTitle("Sketchy - " + s.Title)
-	ebiten.SetWindowResizingMode(ebiten.WindowResizingModeDisabled)
+	ebiten.SetWindowResizingMode(ebiten.WindowResizingModeEnabled)
 	if err := ebiten.RunGame(s); err != nil {
 		log.Fatal(err)
 	}

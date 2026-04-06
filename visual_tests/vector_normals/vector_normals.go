@@ -13,6 +13,11 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
+func buildUI(_ *sketchy.Sketch, ui *sketchy.UI) {
+	ui.IntSlider("num_points", 4, 1000, 200, 1)
+	ui.FloatSlider("scale", 0, 15, 5, 0.1)
+}
+
 func update(s *sketchy.Sketch) {
 	// Update logic goes here
 }
@@ -20,7 +25,7 @@ func update(s *sketchy.Sketch) {
 func draw(s *sketchy.Sketch, c *canvas.Context) {
 	// Drawing code goes here
 	var points []gaul.Point
-	ls := gaul.Linspace(0, gaul.Tau, int(s.Slider("num_points"))+1, true)
+	ls := gaul.Linspace(0, gaul.Tau, s.GetInt("", "num_points")+1, true)
 	for _, i := range ls {
 		x := 0.5*c.Width() + 50*math.Cos(i)
 		y := 0.5*c.Height() + 50*math.Sin(i)
@@ -38,7 +43,7 @@ func draw(s *sketchy.Sketch, c *canvas.Context) {
 		m := l.Midpoint()
 		vec := gaul.Vec2{X: q.X - p.X, Y: q.Y - p.Y}
 		norm := vec.UnitNormal()
-		norm = norm.Scale(s.Slider("scale"))
+		norm = norm.Scale(s.GetFloat("", "scale"))
 		if s.Tick == 1 {
 			fmt.Println(m.X, m.Y, norm.X, norm.Y)
 		}
@@ -49,17 +54,17 @@ func draw(s *sketchy.Sketch, c *canvas.Context) {
 }
 
 func main() {
-	var configFile string
 	var prefix string
 	var randomSeed int64
-	flag.StringVar(&configFile, "c", "sketch.json", "Sketch config file")
 	flag.StringVar(&prefix, "p", "", "Output file prefix")
 	flag.Int64Var(&randomSeed, "s", 0, "Random number generator seed")
 	flag.Parse()
-	s, err := sketchy.NewSketchFromFile(configFile)
-	if err != nil {
-		log.Fatal(err)
-	}
+	s := sketchy.New(sketchy.Config{
+		Title:        "Vector normals",
+		SketchWidth:  800,
+		SketchHeight: 800,
+	})
+	s.BuildUI = buildUI
 	if prefix != "" {
 		s.Prefix = prefix
 	}
@@ -67,9 +72,10 @@ func main() {
 	s.Updater = update
 	s.Drawer = draw
 	s.Init()
-	ebiten.SetWindowSize(int(s.SketchWidth), int(s.SketchHeight))
+	ww, wh := s.WindowSize()
+	ebiten.SetWindowSize(ww, wh)
 	ebiten.SetWindowTitle("Sketchy - " + s.Title)
-	ebiten.SetWindowResizingMode(ebiten.WindowResizingModeDisabled)
+	ebiten.SetWindowResizingMode(ebiten.WindowResizingModeEnabled)
 	if err := ebiten.RunGame(s); err != nil {
 		log.Fatal(err)
 	}

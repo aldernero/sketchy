@@ -12,22 +12,35 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
+func buildUI(_ *sketchy.Sketch, ui *sketchy.UI) {
+	ui.Folder("Points", func() {
+		ui.IntSlider("points", 0, 10000, 1000, 100)
+		ui.FloatSlider("threshold", 0, 0.75, 0.5, 0.01)
+		ui.IntSlider("octaves", 1, 10, 1, 1)
+		ui.FloatSlider("persistence", 0, 2, 0.9, 0.01)
+		ui.FloatSlider("lacunarity", 0, 10, 2, 0.1)
+		ui.FloatSlider("xscale", 0, 0.1, 0.005, 0.0001)
+		ui.FloatSlider("yscale", 0, 0.1, 0.005, 0.0001)
+	})
+	ui.Checkbox("OpenSimplex", false)
+}
+
 func update(s *sketchy.Sketch) {
 	s.Rand.SetSeed(s.RandomSeed)
-	s.Rand.SetNoiseOctaves(int(s.Slider("octaves")))
-	s.Rand.SetNoisePersistence(s.Slider("persistence"))
-	s.Rand.SetNoiseLacunarity(s.Slider("lacunarity"))
-	s.Rand.SetNoiseScaleX(s.Slider("xscale"))
-	s.Rand.SetNoiseScaleY(s.Slider("yscale"))
+	s.Rand.SetNoiseOctaves(s.GetInt("Points", "octaves"))
+	s.Rand.SetNoisePersistence(s.GetFloat("Points", "persistence"))
+	s.Rand.SetNoiseLacunarity(s.GetFloat("Points", "lacunarity"))
+	s.Rand.SetNoiseScaleX(s.GetFloat("Points", "xscale"))
+	s.Rand.SetNoiseScaleY(s.GetFloat("Points", "yscale"))
 }
 
 func draw(s *sketchy.Sketch, c *canvas.Context) {
 	c.SetStrokeColor(color.White)
 	c.SetFillColor(color.Transparent)
 	var points []gaul.Point
-	num := int(s.Slider("points"))
+	num := s.GetInt("Points", "points")
 	if s.Toggle("OpenSimplex") {
-		points = s.Rand.NoisyRandomPoints(num, s.Slider("threshold"), s.CanvasRect())
+		points = s.Rand.NoisyRandomPoints(num, s.GetFloat("Points", "threshold"), s.CanvasRect())
 	} else {
 		points = s.Rand.UniformRandomPoints(num, s.CanvasRect())
 	}
@@ -40,17 +53,17 @@ func draw(s *sketchy.Sketch, c *canvas.Context) {
 }
 
 func main() {
-	var configFile string
 	var prefix string
 	var randomSeed int64
-	flag.StringVar(&configFile, "c", "sketch.json", "Sketch config file")
 	flag.StringVar(&prefix, "p", "", "Output file prefix")
 	flag.Int64Var(&randomSeed, "s", 0, "Random number generator seed")
 	flag.Parse()
-	s, err := sketchy.NewSketchFromFile(configFile)
-	if err != nil {
-		log.Fatal(err)
-	}
+	s := sketchy.New(sketchy.Config{
+		Title:        "Random Points",
+		SketchWidth:  800,
+		SketchHeight: 800,
+	})
+	s.BuildUI = buildUI
 	if prefix != "" {
 		s.Prefix = prefix
 	}
@@ -58,9 +71,10 @@ func main() {
 	s.Updater = update
 	s.Drawer = draw
 	s.Init()
-	ebiten.SetWindowSize(int(s.SketchWidth), int(s.SketchHeight))
+	ww, wh := s.WindowSize()
+	ebiten.SetWindowSize(ww, wh)
 	ebiten.SetWindowTitle("Sketchy - " + s.Title)
-	ebiten.SetWindowResizingMode(ebiten.WindowResizingModeDisabled)
+	ebiten.SetWindowResizingMode(ebiten.WindowResizingModeEnabled)
 	if err := ebiten.RunGame(s); err != nil {
 		log.Fatal(err)
 	}
