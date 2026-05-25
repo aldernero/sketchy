@@ -63,6 +63,7 @@ There are other parameters not listed in the template. Here are the missing para
 | ControlBackgroundColor    | string | "#1e1e1e" | control area background color          |
 | ControlOutlineColor       | string | "#ffdb00" | control area background color          |
 | DisableClearBetweenFrames | bool   | false     | don't clear sketch area between frames |
+| DisableFastStroke         | bool   | false     | use precise canvas stroke settling (slower); default enables `canvas.FastStroke` |
 
 ## Slider Parameters
 | Parameter       | Type   | Default      | Description              |

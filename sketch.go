@@ -69,6 +69,7 @@ type Sketch struct {
 	// DefaultStrokeWidth is the initial stroke width in millimeters (default 0.5).
 	DefaultStrokeWidth        float64
 	DisableClearBetweenFrames bool
+	DisableFastStroke         bool
 	ShowFPS                   bool
 	RasterDPI                 float64
 	PreviewMode               bool
@@ -259,6 +260,9 @@ func (s *Sketch) Init() {
 
 	s.Rand = gaul.NewRng(s.RandomSeed)
 	s.builtinSeedInt = int(s.RandomSeed)
+	if !s.DisableFastStroke {
+		canvas.FastStroke = true
+	}
 	s.SketchCanvas = canvas.New(s.Width(), s.Height())
 	s.needToClear = true
 	s.showDebugUI = true

@@ -16,6 +16,9 @@ type Config struct {
 	SketchBackgroundColor     string
 	SketchOutlineColor        string
 	DisableClearBetweenFrames bool
+	// DisableFastStroke leaves canvas path settling enabled (slower, more precise strokes).
+	// When false (default), Init sets canvas.FastStroke for generative-art performance.
+	DisableFastStroke         bool
 	ShowFPS                   bool
 	RasterDPI                 float64
 	PreviewMode               bool
@@ -42,6 +45,7 @@ func New(cfg Config) *Sketch {
 		SketchBackgroundColor:     cfg.SketchBackgroundColor,
 		SketchOutlineColor:        cfg.SketchOutlineColor,
 		DisableClearBetweenFrames: cfg.DisableClearBetweenFrames,
+		DisableFastStroke:         cfg.DisableFastStroke,
 		ShowFPS:                   cfg.ShowFPS,
 		RasterDPI:                 cfg.RasterDPI,
 		PreviewMode:               cfg.PreviewMode,
