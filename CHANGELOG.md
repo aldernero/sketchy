@@ -5,6 +5,25 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2026-05-25
+
+### Added
+
+- **Named image assets**: `sketchy.Config.Images` (`ImageAsset` name + path), loaded at `Init`; `Image`, `DrawImage`, `DrawNamedImage`, `DrawImageAt`, `DrawNamedImageAt`, and `RegisterImage` for runtime bitmaps (`images.go`).
+- **`DisableFastStroke`** on `Config` to opt out of the new default fast stroke path in tdewolff/canvas.
+- **Example**: `examples/photo_stripes` — horizontal/vertical strip shifts with uniform, Gaussian, alternating, and cumulative modes (cylindrical wrap).
+- **Example**: `examples/voronoi` — Voronoi diagram simulation.
+
+### Changed
+
+- **Default stroke rendering**: `Init` enables `canvas.FastStroke` unless `DisableFastStroke` is set (better performance for generative strokes).
+- **Examples and visual tests**: Stroke color and width now come from Builtins **Default foreground** and **Default stroke width** (removed duplicate per-sketch thickness controls where applicable).
+- **Example**: `examples/noise` uses `RegisterImage` and `DrawNamedImage` for the generated noise bitmap.
+- **Template**: Commented `Images` / draw helpers in `cmd/sketchy/template/main.go`.
+- **Dependencies**:
+  - **gaul**, **tdewolff/canvas** (and font/minify/parse), **modernc.org/sqlite**, **golang.org/x/image**, and assorted indirects updated.
+- **Example**: `examples/voronoi` updated for `gaul.VoronoiWithRect` (replaces removed `VoronoiCells`).
+
 ## [0.2.0] - 2026-04-05
 
 ### Added
@@ -53,4 +72,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Initial published release (tag `v0.1.0`). Use `git log v0.1.0` for commit-level history before this changelog existed.
 
+[0.3.0]: https://github.com/aldernero/sketchy/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/aldernero/sketchy/compare/v0.1.0...v0.2.0

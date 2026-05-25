@@ -66,9 +66,9 @@ func resetSimulation(s *sketchy.Sketch) {
 	}
 
 	var err error
-	cells, err = gaul.VoronoiCells(bounds, sites)
+	cells, err = gaul.VoronoiWithRect(bounds, sites)
 	if err != nil {
-		log.Printf("VoronoiCells: %v", err)
+		log.Printf("VoronoiWithRect: %v", err)
 		cells = nil
 	}
 }
@@ -104,9 +104,9 @@ func stepSimulation(s *sketchy.Sketch) {
 	}
 
 	var err error
-	cells, err = gaul.VoronoiCells(bounds, sites)
+	cells, err = gaul.VoronoiWithRect(bounds, sites)
 	if err != nil {
-		log.Printf("VoronoiCells: %v", err)
+		log.Printf("VoronoiWithRect: %v", err)
 	}
 }
 
