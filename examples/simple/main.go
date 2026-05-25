@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"image/color"
 	"log"
 
 	"github.com/aldernero/sketchy"
@@ -13,15 +12,12 @@ import (
 func buildUI(_ *sketchy.Sketch, ui *sketchy.UI) {
 	ui.Folder("Shape", func() {
 		ui.FloatSlider("radius", 0, 80, 40, 0.5)
-		ui.FloatSlider("thickness", 0, 10, 2, 0.1)
 	})
 }
 
 func update(s *sketchy.Sketch) {}
 
 func draw(s *sketchy.Sketch, c *canvas.Context) {
-	c.SetStrokeWidth(s.GetFloat("Shape", "thickness"))
-	c.SetStrokeColor(color.White)
 	circle := canvas.Circle(s.GetFloat("Shape", "radius"))
 	c.DrawPath(c.Width()/2, c.Height()/2, circle)
 }

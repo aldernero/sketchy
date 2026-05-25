@@ -71,14 +71,10 @@ func draw(s *sketchy.Sketch, c *canvas.Context) {
 	// Drawing code goes here
 	if s.Toggle("Show Points") {
 		c.SetFillColor(color.Transparent)
-		c.SetStrokeColor(canvas.Blue)
-		c.SetStrokeWidth(0.3)
 		for _, p := range points {
 			p.Draw(1, c)
 		}
 	}
-	c.SetStrokeColor(color.White)
-	c.SetStrokeWidth(0.3)
 	curve := gaul.Curve{
 		Points: points,
 		Closed: false,

@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"image/color"
 	"log"
 	"math"
 
@@ -113,9 +112,6 @@ func update(s *sketchy.Sketch) {
 }
 
 func draw(s *sketchy.Sketch, c *canvas.Context) {
-	// Drawing code goes here
-	c.SetStrokeColor(color.White)
-	c.SetStrokeWidth(0.5)
 	// draw board rectangle
 	c.MoveTo(board.originX, board.originY)
 	c.LineTo(board.originX+float64(board.cols)*board.cellSize, board.originY)
@@ -123,7 +119,6 @@ func draw(s *sketchy.Sketch, c *canvas.Context) {
 	c.LineTo(board.originX, board.originY+float64(board.rows)*board.cellSize)
 	c.LineTo(board.originX, board.originY)
 	// draw tiles
-	c.SetStrokeWidth(0.5)
 	for i, t := range board.tiles {
 		rect := board.rectForTile(i)
 		switch t {

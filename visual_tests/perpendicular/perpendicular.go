@@ -4,7 +4,6 @@ import (
 	"flag"
 	"github.com/aldernero/gaul"
 	"github.com/tdewolff/canvas"
-	"image/color"
 	"log"
 	"math"
 
@@ -25,12 +24,10 @@ func update(s *sketchy.Sketch) {
 
 func draw(s *sketchy.Sketch, c *canvas.Context) {
 	// Drawing code goes here
-	c.SetStrokeColor(color.White)
 	line.Draw(c)
 	curve1.Draw(c)
 	curve2.Draw(c)
 	curve3.Draw(c)
-	c.SetStrokeColor(color.CMYK{M: 255})
 	percs := gaul.Linspace(0, 1, s.GetInt("", "num_lines"), true)
 	for _, p := range percs {
 		pb := line.PerpendicularAt(p, 5)

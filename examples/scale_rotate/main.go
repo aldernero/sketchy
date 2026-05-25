@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"image/color"
 	"log"
 	"math"
 
@@ -29,13 +28,6 @@ func draw(s *sketchy.Sketch, c *canvas.Context) {
 	sides := s.GetInt("Pattern", "sides")
 	rotate := s.GetFloat("Pattern", "rotate")
 	scale := s.GetFloat("Pattern", "scale")
-	c.SetStrokeColor(color.CMYK{
-		C: 200,
-		M: 0,
-		Y: 0,
-		K: 0,
-	})
-	c.SetStrokeWidth(0.5)
 	for i := 0; i < N; i++ {
 		x := c.Width() / 2
 		y := c.Height() / 2

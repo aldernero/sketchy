@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/aldernero/gaul"
 	"github.com/tdewolff/canvas"
-	"image/color"
 	"log"
 	"math"
 
@@ -32,10 +31,7 @@ func draw(s *sketchy.Sketch, c *canvas.Context) {
 		points = append(points, gaul.Point{X: x, Y: y})
 	}
 	curve := gaul.Curve{Points: points, Closed: true}
-	c.SetStrokeColor(color.White)
 	curve.Draw(c)
-	c.SetStrokeColor(gaul.StringToColor("magenta"))
-	c.SetStrokeWidth(0.3)
 	for i := 0; i < len(points)-1; i++ {
 		p := points[i]
 		q := points[i+1]

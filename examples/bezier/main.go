@@ -170,8 +170,6 @@ func update(s *sketchy.Sketch) {
 func draw(s *sketchy.Sketch, c *canvas.Context) {
 	// Drawing code goes here
 	c.SetFillColor(canvas.Transparent)
-	c.SetStrokeColor(canvas.White)
-	c.SetStrokeWidth(0.25)
 	if s.Toggle("show triangles") {
 		for _, triangle := range triangles {
 			triangle.Draw(c)

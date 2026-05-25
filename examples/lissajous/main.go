@@ -40,8 +40,6 @@ func draw(s *sketchy.Sketch, c *canvas.Context) {
 	radius := s.GetFloat("Curve", "radius")
 	origin := gaul.Point{X: c.Width() / 2, Y: c.Height() / 2}
 	curve := gaul.GenLissajous(lissa, 1000, origin, radius)
-	c.SetStrokeColor(s.DefaultForeground)
-	c.SetStrokeWidth(s.DefaultStrokeWidth)
 	c.MoveTo(curve.Points[0].X, curve.Points[0].Y)
 	for _, p := range curve.Points {
 		c.LineTo(p.X, p.Y)

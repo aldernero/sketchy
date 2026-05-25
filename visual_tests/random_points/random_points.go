@@ -35,7 +35,6 @@ func update(s *sketchy.Sketch) {
 }
 
 func draw(s *sketchy.Sketch, c *canvas.Context) {
-	c.SetStrokeColor(color.White)
 	c.SetFillColor(color.Transparent)
 	var points []gaul.Point
 	num := s.GetInt("Points", "points")

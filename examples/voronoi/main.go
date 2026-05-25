@@ -124,12 +124,10 @@ func draw(s *sketchy.Sketch, c *canvas.Context) {
 			continue
 		}
 		c.SetFillColor(fills[i])
-		c.SetStrokeColor(s.DefaultForeground)
-		c.SetStrokeWidth(s.DefaultStrokeWidth)
 		cells[i].Draw(c)
 	}
 
-	c.SetFillColor(color.White)
+	c.SetFillColor(s.DefaultForeground)
 	c.SetStrokeColor(color.Transparent)
 	c.SetStrokeWidth(0)
 	for _, p := range sites {

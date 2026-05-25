@@ -46,8 +46,6 @@ func update(s *sketchy.Sketch) {
 }
 
 func draw(s *sketchy.Sketch, c *canvas.Context) {
-	// Drawing code goes here
-	c.SetStrokeWidth(0.5)
 	line := gaul.Line{
 		P: gaul.Point{X: 10, Y: c.Height() / 2},
 		Q: gaul.Point{X: c.Width() - 10, Y: c.Height() / 2},

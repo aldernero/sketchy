@@ -30,7 +30,6 @@ func neighborFingerprint(pts []gaul.IndexPoint) uint64 {
 
 func buildUI(_ *sketchy.Sketch, ui *sketchy.UI) {
 	ui.Folder("Display", func() {
-		ui.FloatSlider("Line Thickness", 0.05, 2, 0.3, 0.05)
 		ui.FloatSlider("Point Size", 0, 5, 0.5, 0.1)
 		ui.IntSlider("Closest Neighbors", 0, 10, 2, 1)
 	})
@@ -64,10 +63,8 @@ func update(s *sketchy.Sketch) {
 
 func draw(s *sketchy.Sketch, c *canvas.Context) {
 	// Drawing code goes here
-	c.SetStrokeColor(color.White)
 	c.SetFillColor(color.Transparent)
 	c.SetStrokeCapper(canvas.ButtCap)
-	c.SetStrokeWidth(s.GetFloat("Display", "Line Thickness"))
 	pointSize := s.GetFloat("Display", "Point Size")
 	if s.Toggle("Show Points") {
 		qt.DrawWithPoints(pointSize, c)

@@ -26,7 +26,6 @@ func update(s *sketchy.Sketch) {
 func draw(s *sketchy.Sketch, c *canvas.Context) {
 	// Drawing code goes here
 	c.SetFillColor(color.Transparent)
-	c.SetStrokeColor(color.White)
 	line.Draw(c)
 	for _, p := range curve1.Points {
 		c.DrawPath(p.X, p.Y, canvas.Circle(10))
@@ -41,7 +40,6 @@ func draw(s *sketchy.Sketch, c *canvas.Context) {
 	//}
 	curve3.Draw(c)
 	c.Stroke()
-	c.SetStrokeColor(color.CMYK{M: 255})
 	percs := gaul.Linspace(0, 1, s.GetInt("", "num_points"), true)
 	for _, p := range percs {
 		point := line.Lerp(p)

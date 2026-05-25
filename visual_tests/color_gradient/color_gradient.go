@@ -46,7 +46,6 @@ func draw(s *sketchy.Sketch, c *canvas.Context) {
 	x := gaul.Linspace(left, right, N, true)
 	dx := 1.10 * (right - left) / float64(N)
 	dy := 5.0
-	c.SetStrokeWidth(1)
 	c.SetStrokeCapper(canvas.ButtCap)
 	c.SetStrokeJoiner(canvas.MiterJoin)
 	for _, i := range x {
