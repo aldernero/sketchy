@@ -33,6 +33,8 @@ func update(s *sketchy.Sketch) {
 
 func draw(s *sketchy.Sketch, c *canvas.Context) {
 	// Drawing code goes here
+	// s.DrawNamedImage(c, "photo")
+	// s.DrawImage(c, myGeneratedRGBA)
 }
 
 func main() {
@@ -66,6 +68,7 @@ func main() {
 		SketchBackgroundColor:  "#1e1e1e",
 		ControlBackgroundColor: "#1e1e1e",
 		ControlOutlineColor:    "#ffdb00",
+		// Images: []sketchy.ImageAsset{{Name: "photo", Path: "assets/photo.png"}},
 	})
 	s.BuildUI = buildUI
 	if prefix != "" {

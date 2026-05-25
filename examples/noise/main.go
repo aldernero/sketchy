@@ -24,8 +24,9 @@ type pixel struct {
 
 type result []pixel
 
+const noiseImageName = "noise"
+
 var img *image.RGBA
-var pxPerMm float64
 
 func buildUI(_ *sketchy.Sketch, ui *sketchy.UI) {
 	ui.Folder("Noise", func() {
@@ -109,6 +110,7 @@ func setup(s *sketchy.Sketch) {
 		}
 	}
 	close(results)
+	s.RegisterImage(noiseImageName, img)
 }
 
 func update(s *sketchy.Sketch) {
@@ -129,7 +131,7 @@ func update(s *sketchy.Sketch) {
 }
 
 func draw(s *sketchy.Sketch, c *canvas.Context) {
-	c.DrawImage(0, 0, img, canvas.Resolution(pxPerMm))
+	s.DrawNamedImage(c, noiseImageName)
 }
 
 func main() {
@@ -152,7 +154,6 @@ func main() {
 	s.Updater = update
 	s.Drawer = draw
 	s.Init()
-	pxPerMm = s.SketchWidth / s.Width()
 	setup(s)
 	ww, wh := s.WindowSize()
 	ebiten.SetWindowSize(ww, wh)

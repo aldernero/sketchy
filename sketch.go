@@ -74,6 +74,8 @@ type Sketch struct {
 	RasterDPI                 float64
 	PreviewMode               bool
 	RandomSeed                int64
+	imageAssets               []ImageAsset
+	images                    map[string]image.Image
 	FloatSliders              []FloatSlider
 	IntSliders                []IntSlider
 	Toggles                   []Toggle
@@ -195,6 +197,10 @@ func (s *Sketch) Init() {
 		log.Fatal(err)
 	}
 	s.workDir = wd
+	if err := validateImageAssets(s.imageAssets); err != nil {
+		log.Fatalf("sketchy: %v", err)
+	}
+	s.loadImages()
 
 	if s.Title == "" {
 		s.Title = DefaultTitle
