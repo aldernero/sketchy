@@ -3,9 +3,9 @@ module github.com/aldernero/sketchy
 go 1.26.1
 
 require (
-	github.com/aldernero/debugui v0.0.0-20260405005820-3de1cef69f33
+	github.com/aldernero/debugui v0.0.0-20260617154400-cd84edcbb7c2
 	github.com/aldernero/gaul v0.0.0-20260525175513-d9b5c701af41
-	github.com/hajimehoshi/ebiten/v2 v2.9.9
+	github.com/hajimehoshi/ebiten/v2 v2.10.0-alpha.11.0.20260608065240-2765ca1188d3
 	github.com/lucasb-eyer/go-colorful v1.4.0
 	github.com/tdewolff/canvas v0.0.0-20260508100355-63a7228e682d
 	modernc.org/sqlite v1.50.1
@@ -41,9 +41,9 @@ require (
 	github.com/benoitkugler/textprocessing v0.0.6 // indirect
 	github.com/ebitengine/gomobile v0.0.0-20260211053922-3d992dae95d1 // indirect
 	github.com/ebitengine/hideconsole v1.0.0 // indirect
-	github.com/ebitengine/purego v0.10.0 // indirect
+	github.com/ebitengine/purego v0.11.0-alpha.4 // indirect
 	github.com/go-fonts/latin-modern v0.3.3 // indirect
-	github.com/go-text/typesetting v0.3.5-0.20260309142344-94fe510e6837 // indirect
+	github.com/go-text/typesetting v0.3.5-0.20260505125104-04e4e76f9371 // indirect
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0 // indirect
 	github.com/jezek/xgb v1.3.1 // indirect
 	github.com/kolesa-team/go-webp v1.0.5 // indirect
