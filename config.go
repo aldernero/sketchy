@@ -18,11 +18,11 @@ type Config struct {
 	DisableClearBetweenFrames bool
 	// DisableFastStroke leaves canvas path settling enabled (slower, more precise strokes).
 	// When false (default), Init sets canvas.FastStroke for generative-art performance.
-	DisableFastStroke         bool
-	ShowFPS                   bool
-	RasterDPI                 float64
-	PreviewMode               bool
-	RandomSeed                int64
+	DisableFastStroke bool
+	ShowFPS           bool
+	RasterDPI         float64
+	PreviewMode       bool
+	RandomSeed        int64
 	// DefaultBackground is the canvas clear color before Drawer runs; nil means black at Init.
 	DefaultBackground color.Color
 	// DefaultForeground is the initial stroke (and default pen) color for the canvas context; nil means white at Init.

@@ -12,12 +12,12 @@ const snapshotSchemaVersion = 2
 // snapshotPayload is stored in sqlite control_json.
 // Schema 1 had only "sliders" (float). Schema 2 adds "int_sliders" for IntSlider values.
 type snapshotPayload struct {
-	Schema      int                `json:"_schema"`
-	Sliders     map[string]float64 `json:"sliders,omitempty"`
-	IntSliders  map[string]int     `json:"int_sliders,omitempty"`
-	Toggles     map[string]bool    `json:"toggles"`
-	Colors      map[string]string  `json:"colors"`
-	Dropdowns   map[string]int     `json:"dropdowns"`
+	Schema     int                `json:"_schema"`
+	Sliders    map[string]float64 `json:"sliders,omitempty"`
+	IntSliders map[string]int     `json:"int_sliders,omitempty"`
+	Toggles    map[string]bool    `json:"toggles"`
+	Colors     map[string]string  `json:"colors"`
+	Dropdowns  map[string]int     `json:"dropdowns"`
 }
 
 func controlMapKey(folder, name string) string {

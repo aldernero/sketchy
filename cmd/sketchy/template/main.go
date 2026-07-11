@@ -49,7 +49,9 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
-		pprof.StartCPUProfile(f)
+		if err := pprof.StartCPUProfile(f); err != nil {
+			log.Fatal(err)
+		}
 		defer pprof.StopCPUProfile()
 	}
 	var iconImages []image.Image

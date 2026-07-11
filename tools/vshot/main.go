@@ -5,13 +5,13 @@
 // Adapted from the "run-ebitengine-app-headless" skill shipped inside the ebiten module
 // (.agents/skills/run-ebitengine-app-headless/driver/main.go in github.com/hajimehoshi/ebiten/v2).
 //
-// Copyright 2026 The Ebitengine Authors
+// # Copyright 2026 The Ebitengine Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//     http://www.apache.org/licenses/LICENSE-2.0
+//	http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -125,7 +125,9 @@ func (d *driver) dump() error {
 	if err != nil {
 		return err
 	}
-	defer f.Close()
+	defer func() {
+		_ = f.Close()
+	}()
 	return png.Encode(f, img)
 }
 

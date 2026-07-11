@@ -17,7 +17,6 @@ var triangles []gaul.Triangle
 var curves1 []gaul.Curve
 var curves2 []gaul.Curve
 var curves3 []gaul.Curve
-var presses int
 var rng gaul.LFSRLarge
 
 func buildUI(_ *sketchy.Sketch, ui *sketchy.UI) {
@@ -159,7 +158,6 @@ func setup(s *sketchy.Sketch) {
 func update(s *sketchy.Sketch) {
 	// Update logic goes here
 	if s.Toggle("next") {
-		presses++
 		return
 	}
 	if s.DidControlsChange {
@@ -199,7 +197,9 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
-		pprof.StartCPUProfile(f)
+		if err := pprof.StartCPUProfile(f); err != nil {
+			log.Fatal(err)
+		}
 		defer pprof.StopCPUProfile()
 	}
 	s := sketchy.New(sketchy.Config{

@@ -19,11 +19,11 @@ const (
 	DefaultControlWindowHeight = 500
 	DefaultControlWindowX      = 25
 	DefaultControlWindowY      = 25
-	DefaultSliderTextWidth  = 100
+	DefaultSliderTextWidth     = 100
 	// ControlLabelColumnWidth: name column for sliders, colors, dropdowns (~20 chars at 6px/glyph + debugui padding).
 	ControlLabelColumnWidth = 136
-	DefaultCheckboxColumns     = 1
-	DefaultButtonColumns       = 1
+	DefaultCheckboxColumns  = 1
+	DefaultButtonColumns    = 1
 )
 
 // FloatSlider is a continuous control backed by debugui SliderF and a text field for the value.

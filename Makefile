@@ -38,3 +38,11 @@ screenshots:
 .PHONY: clean-screenshots
 clean-screenshots:
 	rm -rf $(SHOTS_DIR)
+
+.PHONY: lint
+lint:
+	@command -v golangci-lint >/dev/null 2>&1 || { \
+		echo "golangci-lint not found; install it: https://golangci-lint.run/welcome/install/"; \
+		exit 1; \
+	}
+	golangci-lint run

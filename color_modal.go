@@ -146,7 +146,7 @@ func (s *Sketch) drawColorModal(ctx *debugui.Context) {
 						col := colorful.Hsv(hue, 1, 1)
 						r16, g16, b16, _ := col.RGBA()
 						cl := color.RGBA{uint8(r16 >> 8), uint8(g16 >> 8), uint8(b16 >> 8), 255}
-						vector.DrawFilledRect(
+						vector.FillRect(
 							screen,
 							float32((bounds.Min.X+x)*scale),
 							float32(bounds.Min.Y*scale),
@@ -203,7 +203,7 @@ func (s *Sketch) drawColorModal(ctx *debugui.Context) {
 							col := colorful.Hsv(s.modalH, sat, v)
 							r16, g16, b16, _ := col.RGBA()
 							cl := color.RGBA{uint8(r16 >> 8), uint8(g16 >> 8), uint8(b16 >> 8), 255}
-							vector.DrawFilledRect(
+							vector.FillRect(
 								screen,
 								float32((bounds.Min.X+x)*scale),
 								float32((bounds.Min.Y+y)*scale),

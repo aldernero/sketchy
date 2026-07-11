@@ -81,7 +81,9 @@ func (d *DB) ensureSnapshotDescriptionColumn() error {
 	if err != nil {
 		return err
 	}
-	defer rows.Close()
+	defer func() {
+		_ = rows.Close()
+	}()
 	var hasDesc bool
 	for rows.Next() {
 		var cid, notnull, pk int
@@ -109,7 +111,9 @@ func (d *DB) ensureSnapshotBuiltinJSONColumn() error {
 	if err != nil {
 		return err
 	}
-	defer rows.Close()
+	defer func() {
+		_ = rows.Close()
+	}()
 	var hasBuiltin bool
 	for rows.Next() {
 		var cid, notnull, pk int
@@ -185,7 +189,9 @@ func (d *DB) ListSnapshotNames() ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() {
+		_ = rows.Close()
+	}()
 	var names []string
 	for rows.Next() {
 		var n string
