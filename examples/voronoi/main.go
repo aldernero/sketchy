@@ -14,8 +14,8 @@ import (
 
 func buildUI(_ *sketchy.Sketch, ui *sketchy.UI) {
 	ui.Folder("Voronoi", func() {
-		ui.IntSlider("stops", 1, 50, 5, 1)
-		ui.IntSlider("seed points", 20, 200, 20, 1)
+		ui.IntSlider("stops", 1, 50, 25, 1)
+		ui.IntSlider("seed points", 20, 200, 100, 1)
 	})
 }
 

@@ -7,5 +7,6 @@ sketch.db
 /.idea/modules.xml
 /.idea/sketchy.iml
 /.idea/vcs.xml
+.junie
 # Added by goreleaser init:
 dist/
