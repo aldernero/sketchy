@@ -687,6 +687,10 @@ func colorToRGBHex(c color.Color) string {
 
 func (s *Sketch) Draw(screen *ebiten.Image) {
 	if s.dirty {
+		// saveWorker renders SketchCanvas on its own goroutine under saveMutex;
+		// hold it while mutating and rasterizing the canvas so a queued
+		// PNG/SVG save never observes a half-rebuilt frame.
+		s.saveMutex.Lock()
 		s.SketchCanvas.Reset()
 		s.ctx = canvas.NewContext(s.SketchCanvas)
 
@@ -707,6 +711,7 @@ func (s *Sketch) Draw(screen *ebiten.Image) {
 		}
 
 		img := s.rasterize(canvas.DPI(dpi))
+		s.saveMutex.Unlock()
 
 		rw, rh := img.Bounds().Dx(), img.Bounds().Dy()
 		if s.offscreen == nil || s.offscreen.Bounds().Dx() != rw || s.offscreen.Bounds().Dy() != rh {
