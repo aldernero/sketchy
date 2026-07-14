@@ -3,7 +3,7 @@ module github.com/aldernero/sketchy
 go 1.26.1
 
 require (
-	github.com/aldernero/debugui v0.0.0-20260617154400-cd84edcbb7c2
+	github.com/aldernero/debugui v0.0.0-20260714161712-cb701923b33b
 	github.com/aldernero/gaul v0.0.0-20260712142430-f2050242ce3d
 	github.com/aldernero/palettedb v0.1.4
 	github.com/hajimehoshi/ebiten/v2 v2.10.0-alpha.12
