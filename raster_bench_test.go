@@ -29,7 +29,7 @@ func BenchmarkRasterize(b *testing.B) {
 	s := benchSketch(1080, 1080)
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
-		s.rasterize(canvas.DPI(DefaultDPI))
+		s.rasterize(canvas.DPI(DefaultDPI), true)
 	}
 }
 
@@ -47,6 +47,6 @@ func BenchmarkRasterizeFullFrameImage(b *testing.B) {
 	ctx.DrawImage(0, 0, img, canvas.Resolution(s.SketchWidth/s.Width()))
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
-		s.rasterize(canvas.DPI(DefaultDPI))
+		s.rasterize(canvas.DPI(DefaultDPI), true)
 	}
 }

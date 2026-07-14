@@ -13,16 +13,23 @@ type Config struct {
 	ControlBackgroundColor string
 	ControlOutlineColor    string
 	// SketchBackgroundColor is currently unused at runtime (letterbox uses Builtins dark/light theme).
-	SketchBackgroundColor     string
-	SketchOutlineColor        string
+	SketchBackgroundColor string
+	SketchOutlineColor    string
+	// DisableClearBetweenFrames keeps previous frames' raster under each new
+	// frame so strokes accumulate on screen (display-only; saves render just
+	// the current frame). Sketch.Clear() wipes to DefaultBackground.
 	DisableClearBetweenFrames bool
 	// DisableFastStroke leaves canvas path settling enabled (slower, more precise strokes).
 	// When false (default), Init sets canvas.FastStroke for generative-art performance.
 	DisableFastStroke bool
 	ShowFPS           bool
-	RasterDPI         float64
-	PreviewMode       bool
-	RandomSeed        int64
+	// RasterDPI sets raster resolution (default 96 = one canvas pixel per
+	// logical sketch pixel); display size is unaffected, saves gain detail.
+	RasterDPI float64
+	// PreviewMode rasterizes at half detail and scales up on screen for
+	// ~4x faster frames while iterating.
+	PreviewMode bool
+	RandomSeed  int64
 	// DefaultBackground is the canvas clear color before Drawer runs; nil means black at Init.
 	DefaultBackground color.Color
 	// DefaultForeground is the initial stroke (and default pen) color for the canvas context; nil means white at Init.

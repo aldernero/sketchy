@@ -78,21 +78,30 @@ type Sketch struct {
 	DiscretePalette gaul.Gradient
 	// SinePalette holds the sine palette selected in the Builtins panel
 	// (default rainbow cosine palette until a palette is loaded).
-	SinePalette               gaul.SinePalette
+	SinePalette gaul.SinePalette
+	// DisableClearBetweenFrames keeps the previous frame's raster under each
+	// new frame so strokes accumulate on screen; Clear() wipes to
+	// DefaultBackground. Accumulation is display-only: image saves render the
+	// canvas, which holds just the current frame.
 	DisableClearBetweenFrames bool
 	DisableFastStroke         bool
 	ShowFPS                   bool
-	RasterDPI                 float64
-	PreviewMode               bool
-	RandomSeed                int64
-	imageAssets               []ImageAsset
-	images                    map[string]image.Image
-	FloatSliders              []FloatSlider
-	IntSliders                []IntSlider
-	Toggles                   []Toggle
-	ColorPickers              []ColorPicker
-	Dropdowns                 []Dropdown
-	uiPlan                    []controlEntry
+	// RasterDPI sets raster resolution (default 96, where one canvas pixel
+	// matches one logical sketch pixel). The sketch is always displayed at
+	// SketchWidth x SketchHeight; higher DPI affects raster/save detail only.
+	RasterDPI float64
+	// PreviewMode rasterizes at DefaultPreviewDPI and scales up to the sketch
+	// size on screen: same layout, lower detail, ~4x faster raster.
+	PreviewMode  bool
+	RandomSeed   int64
+	imageAssets  []ImageAsset
+	images       map[string]image.Image
+	FloatSliders []FloatSlider
+	IntSliders   []IntSlider
+	Toggles      []Toggle
+	ColorPickers []ColorPicker
+	Dropdowns    []Dropdown
+	uiPlan       []controlEntry
 
 	// BuildUI registers controls; set before Init().
 	BuildUI func(s *Sketch, ui *UI)
@@ -302,9 +311,8 @@ func (s *Sketch) Init() {
 
 	go s.saveWorker()
 
-	if s.DisableClearBetweenFrames {
-		ebiten.SetScreenClearedEveryFrame(false)
-	}
+	// Accumulation for DisableClearBetweenFrames happens in the raster buffer
+	// (see Draw), so the ebiten screen clear stays enabled either way.
 	if err := os.Setenv("EBITEN_SCREENSHOT_KEY", "escape"); err != nil {
 		log.Fatal("error while setting ebiten screenshot key: ", err)
 	}
@@ -502,8 +510,7 @@ func (s *Sketch) UpdateControls() {
 	if s.showDebugUI && s.uiCaptureState == 0 {
 		_, dy := ebiten.Wheel()
 		if dy != 0 {
-			sw := float64(s.offscreen.Bounds().Dx())
-			sh := float64(s.offscreen.Bounds().Dy())
+			sw, sh := s.displaySizeF()
 			vw := float64(s.viewportW)
 			vh := float64(s.viewportH)
 			if sw > vw || sh > vh {
@@ -557,16 +564,17 @@ func (s *Sketch) UpdateControls() {
 
 // viewPad is half the empty margin when the sketch is smaller than the viewport (may be negative).
 func (s *Sketch) viewPadX() float64 {
-	return (float64(s.viewportW) - float64(s.offscreen.Bounds().Dx())) / 2
+	dx, _ := s.displaySizeF()
+	return (float64(s.viewportW) - dx) / 2
 }
 
 func (s *Sketch) viewPadY() float64 {
-	return (float64(s.viewportH) - float64(s.offscreen.Bounds().Dy())) / 2
+	_, dy := s.displaySizeF()
+	return (float64(s.viewportH) - dy) / 2
 }
 
 func (s *Sketch) clampScroll() {
-	sw := float64(s.offscreen.Bounds().Dx())
-	sh := float64(s.offscreen.Bounds().Dy())
+	sw, sh := s.displaySizeF()
 	vw := float64(s.viewportW)
 	vh := float64(s.viewportH)
 	padX := s.viewPadX()
@@ -694,7 +702,11 @@ func (s *Sketch) Draw(screen *ebiten.Image) {
 		s.SketchCanvas.Reset()
 		s.ctx = canvas.NewContext(s.SketchCanvas)
 
-		if !s.DisableClearBetweenFrames || s.needToClear {
+		// With DisableClearBetweenFrames, the raster buffer keeps its previous
+		// contents (until Clear() requests a wipe) so strokes accumulate
+		// across frames; the canvas itself only ever holds the current frame.
+		clearFrame := !s.DisableClearBetweenFrames || s.needToClear
+		if clearFrame {
 			s.ctx.SetFillColor(s.DefaultBackground)
 			s.ctx.SetStrokeColor(color.Transparent)
 			s.ctx.DrawPath(0, 0, canvas.Rectangle(s.ctx.Width(), s.ctx.Height()))
@@ -710,7 +722,7 @@ func (s *Sketch) Draw(screen *ebiten.Image) {
 			dpi = DefaultPreviewDPI
 		}
 
-		img := s.rasterize(canvas.DPI(dpi))
+		img := s.rasterize(canvas.DPI(dpi), clearFrame)
 		s.saveMutex.Unlock()
 
 		rw, rh := img.Bounds().Dx(), img.Bounds().Dy()
@@ -723,6 +735,16 @@ func (s *Sketch) Draw(screen *ebiten.Image) {
 
 	screen.Fill(s.letterboxMarginRGBA())
 	op := &ebiten.DrawImageOptions{}
+	// The raster may be smaller (PreviewMode) or larger (RasterDPI > 96) than
+	// the logical sketch size; always present at displaySizeF.
+	dw, dh := s.displaySizeF()
+	rb := s.offscreen.Bounds()
+	sx := dw / float64(rb.Dx())
+	sy := dh / float64(rb.Dy())
+	if sx != 1 || sy != 1 {
+		op.Filter = ebiten.FilterLinear
+		op.GeoM.Scale(sx, sy)
+	}
 	op.GeoM.Translate(s.viewPadX()-s.scrollX, s.viewPadY()-s.scrollY)
 	screen.DrawImage(s.offscreen, op)
 
@@ -744,16 +766,17 @@ func (s *Sketch) Draw(screen *ebiten.Image) {
 // rasterize renders SketchCanvas into a reused RGBA buffer at the given
 // resolution and returns it. The buffer's premultiplied Pix layout (origin
 // (0,0), packed stride) is what ebiten's WritePixels expects, so the result
-// feeds the offscreen image without a per-pixel copy. The buffer is cleared
-// to transparent before rendering, matching the fresh image rasterizer.Draw
-// would return.
-func (s *Sketch) rasterize(res canvas.Resolution) *image.RGBA {
+// feeds the offscreen image without a per-pixel copy. When clearBuf is true
+// the buffer is wiped to transparent first, matching the fresh image
+// rasterizer.Draw would return; when false (DisableClearBetweenFrames) the
+// new frame renders over the previous raster so content accumulates.
+func (s *Sketch) rasterize(res canvas.Resolution, clearBuf bool) *image.RGBA {
 	// Same size rule as rasterizer.Draw.
 	w := int(s.SketchCanvas.W*res.DPMM() + 0.5)
 	h := int(s.SketchCanvas.H*res.DPMM() + 0.5)
 	if s.rasterBuf == nil || s.rasterBuf.Bounds().Dx() != w || s.rasterBuf.Bounds().Dy() != h {
 		s.rasterBuf = image.NewRGBA(image.Rect(0, 0, w, h))
-	} else {
+	} else if clearBuf {
 		clear(s.rasterBuf.Pix)
 	}
 	ras := rasterizer.FromImage(s.rasterBuf, res, canvas.DefaultColorSpace)
@@ -768,20 +791,21 @@ func (s *Sketch) rasterize(res canvas.Resolution) *image.RGBA {
 
 func (s *Sketch) CanvasCoords(x, y float64) gaul.Point {
 	sx, sy := s.WindowToSketchPixels(x, y)
-	dx, dy := s.sketchBitmapSizeF()
+	dx, dy := s.displaySizeF()
 	if dx <= 0 || dy <= 0 {
 		return gaul.Point{}
 	}
-	// Proportional map from raster pixels to canvas mm (matches rasterizer output vs canvas size).
+	// Proportional map from logical sketch pixels to canvas mm.
 	return gaul.Point{
 		X: (sx / dx) * s.Width(),
 		Y: ((dy - sy) / dy) * s.Height(),
 	}
 }
 
-// SketchCoords maps sketch bitmap pixel coordinates (origin top-left of the raster) to canvas mm.
+// SketchCoords maps logical sketch pixel coordinates (origin top-left,
+// SketchWidth x SketchHeight regardless of raster DPI) to canvas mm.
 func (s *Sketch) SketchCoords(sx, sy float64) gaul.Point {
-	dx, dy := s.sketchBitmapSizeF()
+	dx, dy := s.displaySizeF()
 	if dx <= 0 || dy <= 0 {
 		return gaul.Point{}
 	}
@@ -792,7 +816,7 @@ func (s *Sketch) SketchCoords(sx, sy float64) gaul.Point {
 }
 
 func (s *Sketch) PointInSketchArea(x, y float64) bool {
-	dx, dy := s.sketchBitmapSizeF()
+	dx, dy := s.displaySizeF()
 	if dx <= 0 || dy <= 0 {
 		return false
 	}
@@ -801,20 +825,21 @@ func (s *Sketch) PointInSketchArea(x, y float64) bool {
 	return xs >= 0 && xs < dx && ys >= 0 && ys < dy
 }
 
-// WindowToSketchPixels maps game-surface coordinates into the sketch bitmap drawn at
-// Translate(viewPad - scroll), i.e. the inverse of the Draw path for s.offscreen.
+// WindowToSketchPixels maps game-surface coordinates into logical sketch
+// pixels (the sketch is drawn at Translate(viewPad - scroll) after scaling to
+// displaySizeF), i.e. the inverse of the Draw path for s.offscreen.
 func (s *Sketch) WindowToSketchPixels(wx, wy float64) (sx, sy float64) {
 	sx = wx - s.viewPadX() + s.scrollX
 	sy = wy - s.viewPadY() + s.scrollY
 	return sx, sy
 }
 
-func (s *Sketch) sketchBitmapSizeF() (dx, dy float64) {
-	if s.offscreen == nil {
-		return float64(s.SketchWidth), float64(s.SketchHeight)
-	}
-	b := s.offscreen.Bounds()
-	return float64(b.Dx()), float64(b.Dy())
+// displaySizeF is the on-screen size of the sketch in logical pixels. The
+// sketch is always presented at SketchWidth x SketchHeight; RasterDPI and
+// PreviewMode change only the resolution of the underlying raster, which
+// Draw scales to this size.
+func (s *Sketch) displaySizeF() (dx, dy float64) {
+	return s.SketchWidth, s.SketchHeight
 }
 
 func (s *Sketch) refreshPrimaryMouseEdge() {
