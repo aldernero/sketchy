@@ -117,8 +117,9 @@ type Sketch struct {
 	showDebugUI           bool
 	uiCaptureState        debugui.InputCapturingState
 
-	offscreen    *ebiten.Image
-	cachedRGBA   *image.RGBA
+	offscreen *ebiten.Image
+	// rasterBuf is the reused CPU-side raster target for [Sketch.rasterize].
+	rasterBuf    *image.RGBA
 	ctx          *canvas.Context
 	dirty        bool
 	saveRequests chan SaveRequest
@@ -705,24 +706,13 @@ func (s *Sketch) Draw(screen *ebiten.Image) {
 			dpi = DefaultPreviewDPI
 		}
 
-		rasterizedImg := rasterizer.Draw(s.SketchCanvas, canvas.DPI(dpi), canvas.DefaultColorSpace)
+		img := s.rasterize(canvas.DPI(dpi))
 
-		bounds := rasterizedImg.Bounds()
-		if s.cachedRGBA == nil || s.cachedRGBA.Bounds() != bounds {
-			s.cachedRGBA = image.NewRGBA(bounds)
-		}
-
-		for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
-			for x := bounds.Min.X; x < bounds.Max.X; x++ {
-				s.cachedRGBA.Set(x, y, rasterizedImg.At(x, y))
-			}
-		}
-
-		rw, rh := bounds.Dx(), bounds.Dy()
+		rw, rh := img.Bounds().Dx(), img.Bounds().Dy()
 		if s.offscreen == nil || s.offscreen.Bounds().Dx() != rw || s.offscreen.Bounds().Dy() != rh {
 			s.offscreen = ebiten.NewImage(rw, rh)
 		}
-		s.offscreen.WritePixels(s.cachedRGBA.Pix)
+		s.offscreen.WritePixels(img.Pix)
 		s.dirty = false
 	}
 
@@ -744,6 +734,27 @@ func (s *Sketch) Draw(screen *ebiten.Image) {
 	s.DidTogglesChange = false
 	s.DidColorPickersChange = false
 	s.DidDropdownsChange = false
+}
+
+// rasterize renders SketchCanvas into a reused RGBA buffer at the given
+// resolution and returns it. The buffer's premultiplied Pix layout (origin
+// (0,0), packed stride) is what ebiten's WritePixels expects, so the result
+// feeds the offscreen image without a per-pixel copy. The buffer is cleared
+// to transparent before rendering, matching the fresh image rasterizer.Draw
+// would return.
+func (s *Sketch) rasterize(res canvas.Resolution) *image.RGBA {
+	// Same size rule as rasterizer.Draw.
+	w := int(s.SketchCanvas.W*res.DPMM() + 0.5)
+	h := int(s.SketchCanvas.H*res.DPMM() + 0.5)
+	if s.rasterBuf == nil || s.rasterBuf.Bounds().Dx() != w || s.rasterBuf.Bounds().Dy() != h {
+		s.rasterBuf = image.NewRGBA(image.Rect(0, 0, w, h))
+	} else {
+		clear(s.rasterBuf.Pix)
+	}
+	ras := rasterizer.FromImage(s.rasterBuf, res, canvas.DefaultColorSpace)
+	s.SketchCanvas.RenderTo(ras)
+	ras.Close()
+	return s.rasterBuf
 }
 
 func (s *Sketch) CanvasCoords(x, y float64) gaul.Point {
