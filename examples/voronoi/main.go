@@ -14,8 +14,6 @@ import (
 
 func buildUI(_ *sketchy.Sketch, ui *sketchy.UI) {
 	ui.Folder("Voronoi", func() {
-		ui.ColorPicker("start", "#3d5a80")
-		ui.ColorPicker("end", "#ee6c4d")
 		ui.IntSlider("stops", 1, 50, 5, 1)
 		ui.IntSlider("seed points", 20, 200, 20, 1)
 	})
@@ -37,18 +35,8 @@ func resetSimulation(s *sketchy.Sketch) {
 	w, h := s.Width(), s.Height()
 	bounds := gaul.Rect{X: 0, Y: 0, W: w, H: h}
 
-	sg := gaul.SimpleGradient{
-		StartColor: s.GetColor("Voronoi", "start"),
-		EndColor:   s.GetColor("Voronoi", "end"),
-	}
-	palette := make([]color.Color, stops)
-	for i := 0; i < stops; i++ {
-		t := 0.0
-		if stops > 1 {
-			t = float64(i) / float64(stops-1)
-		}
-		palette[i] = sg.Color(t)
-	}
+	// Cell colors come from the Builtins "Discrete palette" dropdown (palettedb).
+	palette := s.DiscretePalette.LinearPalette(stops)
 
 	sites = make([]gaul.Point, n)
 	vels = make([]gaul.Point, n)
@@ -139,8 +127,10 @@ func draw(s *sketchy.Sketch, c *canvas.Context) {
 func main() {
 	var prefix string
 	var randomSeed int64
+	var paletteDBPath string
 	flag.StringVar(&prefix, "p", "", "Output file prefix")
 	flag.Int64Var(&randomSeed, "s", 0, "Random number generator seed")
+	flag.StringVar(&paletteDBPath, "palettedb", "", "Path to palettedb database (default ~/.config/palettedb/palettedb.db)")
 	flag.Parse()
 
 	s := sketchy.New(sketchy.Config{
@@ -156,6 +146,7 @@ func main() {
 		s.Prefix = prefix
 	}
 	s.RandomSeed = randomSeed
+	s.PaletteDBPath = paletteDBPath
 	s.Updater = update
 	s.Drawer = draw
 	s.Init()

@@ -13,6 +13,7 @@ import (
 
 	"github.com/aldernero/debugui"
 	"github.com/aldernero/gaul"
+	"github.com/aldernero/palettedb"
 	"github.com/aldernero/sketchy/internal/sketchdb"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
@@ -67,7 +68,17 @@ type Sketch struct {
 	// DefaultForeground is the initial stroke color for the canvas context before Drawer (default white).
 	DefaultForeground color.Color
 	// DefaultStrokeWidth is the initial stroke width in millimeters (default 0.5).
-	DefaultStrokeWidth        float64
+	DefaultStrokeWidth float64
+	// PaletteDBPath locates the palettedb SQLite database for the Builtins
+	// palette dropdowns; empty means the palettedb default
+	// (~/.config/palettedb/palettedb.db). Set before Init().
+	PaletteDBPath string
+	// DiscretePalette holds the discrete palette selected in the Builtins
+	// panel (default black→white until a palette is loaded).
+	DiscretePalette gaul.Gradient
+	// SinePalette holds the sine palette selected in the Builtins panel
+	// (default rainbow cosine palette until a palette is loaded).
+	SinePalette               gaul.SinePalette
 	DisableClearBetweenFrames bool
 	DisableFastStroke         bool
 	ShowFPS                   bool
@@ -139,6 +150,13 @@ type Sketch struct {
 	// Indices of Builtins-only ColorPickers (Folder "_builtins"), not in uiPlan.
 	builtinColorBGIdx int
 	builtinColorFGIdx int
+
+	// Builtins palette dropdowns (palettedb); paletteDB is nil when no palette db was found.
+	paletteDB                 *palettedb.DB
+	discretePaletteNames      []string
+	sinePaletteNames          []string
+	builtinDiscretePaletteIdx int
+	builtinSinePaletteIdx     int
 
 	colorModalIdx int // >= 0 => editing ColorPickers[idx]
 
@@ -253,6 +271,8 @@ func (s *Sketch) Init() {
 	s.ColorPickers = append(s.ColorPickers, NewColorPicker("Default foreground", colorToRGBHex(s.DefaultForeground)))
 	s.ColorPickers[s.builtinColorFGIdx].Folder = "_builtins"
 	s.buildMaps()
+
+	s.initPaletteDB()
 
 	dbPath := filepath.Join(s.workDir, "sketch.db")
 	if db, derr := sketchdb.Open(dbPath); derr != nil {

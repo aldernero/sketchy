@@ -119,6 +119,8 @@ type builtinSnapshotPayload struct {
 	DefaultForeground    string  `json:"default_foreground"`
 	DefaultStrokeWidthMM float64 `json:"default_stroke_width_mm"`
 	RandomSeed           int64   `json:"random_seed"`
+	DiscretePalette      string  `json:"discrete_palette,omitempty"`
+	SinePalette          string  `json:"sine_palette,omitempty"`
 }
 
 func (s *Sketch) serializeBuiltinState() ([]byte, error) {
@@ -127,6 +129,8 @@ func (s *Sketch) serializeBuiltinState() ([]byte, error) {
 		DefaultForeground:    colorToRGBHex(s.DefaultForeground),
 		DefaultStrokeWidthMM: s.DefaultStrokeWidth,
 		RandomSeed:           s.RandomSeed,
+		DiscretePalette:      s.SelectedDiscretePalette(),
+		SinePalette:          s.SelectedSinePalette(),
 	}
 	return json.Marshal(p)
 }
@@ -159,6 +163,18 @@ func (s *Sketch) applyBuiltinStateJSON(data []byte) error {
 		s.replaceBuiltinColorPicker(s.builtinColorFGIdx, p.DefaultForeground)
 	}
 	s.DefaultStrokeWidth = clampFloat(p.DefaultStrokeWidthMM, minW, maxW)
+	if p.DiscretePalette != "" {
+		if !s.selectPaletteByName(s.discretePaletteNames, &s.builtinDiscretePaletteIdx,
+			p.DiscretePalette, s.applyDiscretePaletteSelection) {
+			fmt.Printf("snapshot discrete palette %q not in palette db\n", p.DiscretePalette)
+		}
+	}
+	if p.SinePalette != "" {
+		if !s.selectPaletteByName(s.sinePaletteNames, &s.builtinSinePaletteIdx,
+			p.SinePalette, s.applySinePaletteSelection) {
+			fmt.Printf("snapshot sine palette %q not in palette db\n", p.SinePalette)
+		}
+	}
 	s.setRandomSeed(p.RandomSeed)
 	s.syncControlLastState()
 	return nil

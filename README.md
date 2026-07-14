@@ -77,6 +77,7 @@ The **Builtins** header is fixed by Sketchy (not part of your `uiPlan`):
 - **Seed** — Integer seed and **Rand** button; mirrors [`RandomSeed`](sketch.go).
 - **Default background** / **Default foreground** — Color pickers; define the canvas clear color and the initial stroke color before your [`Drawer`](sketch.go) runs. The margin around the letterboxed sketch uses a **dark grey** (Dark theme) or **light grey** (Light theme) so the drawable area reads clearly against the window border.
 - **Default stroke width** — Millimeters, text field with clamped range.
+- **Discrete palette** / **Sine palette** — Dropdowns listing [palettedb](https://github.com/aldernero/palettedb) palettes: those stored in a palettedb database first, then palettedb's built-ins (viridis, plasma, turbo, …), which are always available even without a database. Selecting a name loads it into [`DiscretePalette`](sketch.go) (a `gaul.Gradient`) / [`SinePalette`](sketch.go) (a `gaul.SinePalette`) for use in your `Drawer`, so designs can switch color palettes on the fly. The database is looked up at [`PaletteDBPath`](sketch.go) (set it before `Init`, e.g. from a `-palettedb` CLI flag as in the project template), defaulting to `~/.config/palettedb/palettedb.db`.
 - **Save Image…** / **Take Snapshot…** / **Load Snapshot…** — Dialogs for PNG/SVG export and SQLite-backed snapshots (see below).
 
 The panel is hidden from rasterized sketch output. Close or reopen it with **Ctrl+Space** (plain **Space** is reserved for typing in text fields).
@@ -86,7 +87,7 @@ The panel is hidden from rasterized sketch output. Close or reopen it with **Ctr
 - **Save Image…** — Writes under `saves/png/` and/or `saves/svg/` relative to the process working directory (usually your sketch project). Saves can be recorded in **`sketch.db`**.
 - **Snapshots** — Stored in **`sketch.db`** with:
   - **`control_json`** — Sliders, int sliders, toggles, user color pickers, dropdowns.
-  - **`builtin_json`** — Default background/foreground (hex), default stroke width (mm), and random seed so builtins round-trip with the rest of the controls.
+  - **`builtin_json`** — Default background/foreground (hex), default stroke width (mm), random seed, and selected discrete/sine palette names so builtins round-trip with the rest of the controls.
 
 First run creates or migrates the database.
 

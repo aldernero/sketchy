@@ -4,7 +4,8 @@ go 1.26.1
 
 require (
 	github.com/aldernero/debugui v0.0.0-20260617154400-cd84edcbb7c2
-	github.com/aldernero/gaul v0.0.0-20260621231150-806e49bd2417
+	github.com/aldernero/gaul v0.0.0-20260712142430-f2050242ce3d
+	github.com/aldernero/palettedb v0.1.4
 	github.com/hajimehoshi/ebiten/v2 v2.10.0-alpha.12
 	github.com/lucasb-eyer/go-colorful v1.4.0
 	github.com/tdewolff/canvas v0.0.0-20260708151538-b3beae08c578
@@ -45,7 +46,6 @@ require (
 	github.com/go-fonts/latin-modern v0.3.3 // indirect
 	github.com/go-text/typesetting v0.3.5-0.20260505125104-04e4e76f9371 // indirect
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0 // indirect
-	github.com/jezek/xgb v1.3.1 // indirect
 	github.com/kolesa-team/go-webp v1.0.5 // indirect
 	github.com/peterhellberg/gfx v0.0.0-20260528221839-3f985a9df2a8 // indirect
 	github.com/pierrec/lz4/v4 v4.1.27 // indirect

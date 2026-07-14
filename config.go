@@ -29,6 +29,9 @@ type Config struct {
 	DefaultForeground color.Color
 	// DefaultStrokeWidth is the initial stroke width in millimeters; 0 means 0.5 at Init.
 	DefaultStrokeWidth float64
+	// PaletteDBPath locates the palettedb SQLite database for the Builtins palette
+	// dropdowns; empty means the palettedb default (~/.config/palettedb/palettedb.db).
+	PaletteDBPath string
 	// Images lists files to load at Init; use Image/DrawNamedImage in Drawer by Name.
 	Images []ImageAsset
 }
@@ -55,6 +58,7 @@ func New(cfg Config) *Sketch {
 		DefaultBackground:         cfg.DefaultBackground,
 		DefaultForeground:         cfg.DefaultForeground,
 		DefaultStrokeWidth:        cfg.DefaultStrokeWidth,
+		PaletteDBPath:             cfg.PaletteDBPath,
 		imageAssets:               append([]ImageAsset(nil), cfg.Images...),
 	}
 	if s.SketchWidth <= 0 {

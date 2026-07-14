@@ -40,9 +40,11 @@ func draw(s *sketchy.Sketch, c *canvas.Context) {
 func main() {
 	var prefix string
 	var randomSeed int64
+	var paletteDBPath string
 	var cpuprofile = flag.String("pprof", "", "Collect CPU profile")
 	flag.StringVar(&prefix, "p", "", "Output file prefix")
 	flag.Int64Var(&randomSeed, "s", 0, "Random number generator seed (0 = auto)")
+	flag.StringVar(&paletteDBPath, "palettedb", "", "Path to palettedb database (default ~/.config/palettedb/palettedb.db)")
 	flag.Parse()
 	if *cpuprofile != "" {
 		f, err := os.Create(*cpuprofile)
@@ -77,6 +79,7 @@ func main() {
 		s.Prefix = prefix
 	}
 	s.RandomSeed = randomSeed
+	s.PaletteDBPath = paletteDBPath
 	s.Updater = update
 	s.Drawer = draw
 	s.Init()

@@ -74,6 +74,7 @@ func (s *Sketch) builtinsPanel(ctx *debugui.Context) {
 		s.drawColorRow(ctx, s.builtinColorBGIdx)
 		s.drawColorRow(ctx, s.builtinColorFGIdx)
 		s.drawBuiltinDefaultStrokeWidthRow(ctx)
+		s.drawBuiltinPaletteRows(ctx)
 
 		ctx.SetGridLayout([]int{-1}, nil)
 		ctx.Button("Save Image…").On(func() {
@@ -137,6 +138,34 @@ func (s *Sketch) drawBuiltinDefaultStrokeWidthRow(ctx *debugui.Context) {
 		ctx.NumberFieldF(&s.DefaultStrokeWidth, stepW, 2).On(func() {
 			s.DefaultStrokeWidth = clampFloat(s.DefaultStrokeWidth, minW, maxW)
 			s.dirty = true
+		})
+	})
+}
+
+// drawBuiltinPaletteRows renders the palettedb dropdowns (Builtins). Selecting
+// a name loads it into [Sketch.DiscretePalette] / [Sketch.SinePalette]. The
+// lists always contain palettedb's compiled-in palettes, plus any stored in
+// the palette database when one exists.
+func (s *Sketch) drawBuiltinPaletteRows(ctx *debugui.Context) {
+	ctx.SetGridLayout([]int{ControlLabelColumnWidth, -1}, nil)
+	ctx.Text("Discrete palette")
+	ctx.IDScope("builtinDiscretePalette", func() {
+		if len(s.discretePaletteNames) == 0 {
+			ctx.Text("(none)")
+			return
+		}
+		ctx.Dropdown(&s.builtinDiscretePaletteIdx, s.discretePaletteNames).On(func() {
+			s.applyDiscretePaletteSelection()
+		})
+	})
+	ctx.Text("Sine palette")
+	ctx.IDScope("builtinSinePalette", func() {
+		if len(s.sinePaletteNames) == 0 {
+			ctx.Text("(none)")
+			return
+		}
+		ctx.Dropdown(&s.builtinSinePaletteIdx, s.sinePaletteNames).On(func() {
+			s.applySinePaletteSelection()
 		})
 	})
 }
