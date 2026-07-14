@@ -17,13 +17,6 @@ import (
 
 var tick int64
 
-type pixel struct {
-	x, y       int
-	r, g, b, a uint8
-}
-
-type result []pixel
-
 const noiseImageName = "noise"
 
 var img *image.RGBA
@@ -43,24 +36,26 @@ func buildUI(_ *sketchy.Sketch, ui *sketchy.UI) {
 	ui.Button("reset")
 }
 
-func calcNoise(s *sketchy.Sketch, mono bool, cs []pixel, results chan<- result, wg *sync.WaitGroup) {
+// calcNoiseRows fills rows [y0, y1) of img with noise, writing straight into
+// the pixel buffer in row-major order.
+func calcNoiseRows(s *sketchy.Sketch, mono bool, w, y0, y1 int, wg *sync.WaitGroup) {
 	defer wg.Done()
-	res := make(result, len(cs))
-	for i, cell := range cs {
-		noise := s.Rand.Noise3D(float64(cell.x), float64(cell.y), float64(tick))
-		if !mono {
-			hue := gaul.Map(-1, 1, 0, 360, noise)
-			c := colorful.Hsl(hue, 0.5, 0.5)
-			cell.r, cell.g, cell.b = c.RGB255()
-			cell.a = 255
-		} else {
-			gray := gaul.Map(-1, 1, 0, 255, noise)
-			grayVal := uint8(gray)
-			cell.r, cell.g, cell.b, cell.a = grayVal, grayVal, grayVal, 255
+	for y := y0; y < y1; y++ {
+		row := img.Pix[y*img.Stride : y*img.Stride+w*4]
+		for x := 0; x < w; x++ {
+			noise := s.Rand.Noise3D(float64(x), float64(y), float64(tick))
+			var r, g, b uint8
+			if !mono {
+				hue := gaul.Map(-1, 1, 0, 360, noise)
+				r, g, b = colorful.Hsl(hue, 0.5, 0.5).RGB255()
+			} else {
+				gray := uint8(gaul.Map(-1, 1, 0, 255, noise))
+				r, g, b = gray, gray, gray
+			}
+			i := x * 4
+			row[i], row[i+1], row[i+2], row[i+3] = r, g, b, 255
 		}
-		res[i] = cell
 	}
-	results <- res
 }
 
 func setup(s *sketchy.Sketch) {
@@ -80,36 +75,14 @@ func setup(s *sketchy.Sketch) {
 		img = image.NewRGBA(image.Rect(0, 0, W, H))
 	}
 
-	pixels := make([]pixel, W*H)
-	for i := 0; i < W; i++ {
-		for j := 0; j < H; j++ {
-			pixels[i*H+j] = pixel{x: i, y: j}
-		}
-	}
-
 	numWorkers := runtime.NumCPU()
-	results := make(chan result, numWorkers)
-	var wg sync.WaitGroup
-	wg.Add(numWorkers)
 	mono := s.Toggle("monochrome")
+	var wg sync.WaitGroup
 	for i := 0; i < numWorkers; i++ {
-		cs := pixels[i*len(pixels)/numWorkers : (i+1)*len(pixels)/numWorkers]
-		go calcNoise(s, mono, cs, results, &wg)
+		wg.Add(1)
+		go calcNoiseRows(s, mono, W, i*H/numWorkers, (i+1)*H/numWorkers, &wg)
 	}
 	wg.Wait()
-
-	stride := img.Stride
-	for i := 0; i < numWorkers; i++ {
-		r := <-results
-		for _, p := range r {
-			idx := p.y*stride + p.x*4
-			img.Pix[idx] = p.r
-			img.Pix[idx+1] = p.g
-			img.Pix[idx+2] = p.b
-			img.Pix[idx+3] = p.a
-		}
-	}
-	close(results)
 	s.RegisterImage(noiseImageName, img)
 }
 
