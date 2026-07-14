@@ -757,7 +757,11 @@ func (s *Sketch) rasterize(res canvas.Resolution) *image.RGBA {
 		clear(s.rasterBuf.Pix)
 	}
 	ras := rasterizer.FromImage(s.rasterBuf, res, canvas.DefaultColorSpace)
-	s.SketchCanvas.RenderTo(ras)
+	var r canvas.Renderer = ras
+	if _, linear := canvas.DefaultColorSpace.(canvas.LinearColorSpace); linear {
+		r = &fastImageRasterizer{Rasterizer: ras, dst: s.rasterBuf, res: res}
+	}
+	s.SketchCanvas.RenderTo(r)
 	ras.Close()
 	return s.rasterBuf
 }

@@ -1,6 +1,7 @@
 package sketchy
 
 import (
+	"image"
 	"testing"
 
 	"github.com/tdewolff/canvas"
@@ -26,6 +27,24 @@ func benchSketch(w, h float64) *Sketch {
 // ebiten WritePixels).
 func BenchmarkRasterize(b *testing.B) {
 	s := benchSketch(1080, 1080)
+	b.ReportAllocs()
+	for i := 0; i < b.N; i++ {
+		s.rasterize(canvas.DPI(DefaultDPI))
+	}
+}
+
+// BenchmarkRasterizeFullFrameImage measures the "every pixel updates" case:
+// the Drawer blits one sketch-sized image (as the noise example does), which
+// takes the fastImageRasterizer 1:1 path.
+func BenchmarkRasterizeFullFrameImage(b *testing.B) {
+	s := New(Config{SketchWidth: 1080, SketchHeight: 1080})
+	s.SketchCanvas = canvas.New(s.Width(), s.Height())
+	img := image.NewRGBA(image.Rect(0, 0, 1080, 1080))
+	for i := range img.Pix {
+		img.Pix[i] = uint8(i)
+	}
+	ctx := canvas.NewContext(s.SketchCanvas)
+	ctx.DrawImage(0, 0, img, canvas.Resolution(s.SketchWidth/s.Width()))
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
 		s.rasterize(canvas.DPI(DefaultDPI))
