@@ -285,6 +285,12 @@ func (s *Sketch) Init() {
 	s.initPaletteDB()
 
 	dbPath := filepath.Join(s.workDir, "sketch.db")
+	if s.db != nil { // Init() may run more than once
+		if cerr := s.db.Close(); cerr != nil {
+			log.Printf("sketchy: close %s: %v", dbPath, cerr)
+		}
+		s.db = nil
+	}
 	if db, derr := sketchdb.Open(dbPath); derr != nil {
 		log.Printf("sketchy: could not open %s: %v", dbPath, derr)
 	} else {
@@ -307,14 +313,15 @@ func (s *Sketch) Init() {
 
 	s.offscreen = ebiten.NewImage(int(s.SketchWidth), int(s.SketchHeight))
 	s.ctx = canvas.NewContext(s.SketchCanvas)
-	s.saveRequests = make(chan SaveRequest, SaveChannelBuffer)
+	if s.saveRequests == nil { // keep a single worker across repeated Init()
+		s.saveRequests = make(chan SaveRequest, SaveChannelBuffer)
+		go s.saveWorker()
+	}
 
-	go s.saveWorker()
-
-	// Accumulation for DisableClearBetweenFrames happens in the raster buffer
-	// (see Draw), so the ebiten screen clear stays enabled either way.
-	if err := os.Setenv("EBITEN_SCREENSHOT_KEY", "escape"); err != nil {
-		log.Fatal("error while setting ebiten screenshot key: ", err)
+	if os.Getenv("EBITEN_SCREENSHOT_KEY") == "" {
+		if err := os.Setenv("EBITEN_SCREENSHOT_KEY", "escape"); err != nil {
+			log.Fatal("error while setting ebiten screenshot key: ", err)
+		}
 	}
 
 	s.applyDebugUITheme()
