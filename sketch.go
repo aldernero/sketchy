@@ -102,6 +102,7 @@ type Sketch struct {
 	ColorPickers []ColorPicker
 	Dropdowns    []Dropdown
 	uiPlan       []controlEntry
+	uiFolders    uiFolderPlan
 
 	// BuildUI registers controls; set before Init().
 	BuildUI func(s *Sketch, ui *UI)
@@ -281,6 +282,7 @@ func (s *Sketch) Init() {
 	s.ColorPickers = append(s.ColorPickers, NewColorPicker("Default foreground", colorToRGBHex(s.DefaultForeground)))
 	s.ColorPickers[s.builtinColorFGIdx].Folder = "_builtins"
 	s.buildMaps()
+	s.uiFolders = buildFolderPlan(s.uiPlan)
 
 	s.initPaletteDB()
 

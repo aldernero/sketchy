@@ -30,3 +30,26 @@ func folderOrder(plan []controlEntry) []string {
 	}
 	return out
 }
+
+// uiFolderPlan is the control panel layout grouped by folder, precomputed at
+// Init so controlWindow doesn't rebuild it every frame.
+type uiFolderPlan struct {
+	rootEntries   []controlEntry
+	folderTitles  []string
+	folderEntries map[string][]controlEntry
+}
+
+func buildFolderPlan(plan []controlEntry) uiFolderPlan {
+	p := uiFolderPlan{
+		folderTitles:  folderOrder(plan),
+		folderEntries: make(map[string][]controlEntry),
+	}
+	for _, e := range plan {
+		if e.Folder == "" {
+			p.rootEntries = append(p.rootEntries, e)
+			continue
+		}
+		p.folderEntries[e.Folder] = append(p.folderEntries[e.Folder], e)
+	}
+	return p
+}

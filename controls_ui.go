@@ -27,30 +27,19 @@ func formatSnapshotCreatedLocal(createdAt string) string {
 	return createdAt
 }
 
-func (s *Sketch) entriesForFolder(folder string) []controlEntry {
-	var out []controlEntry
-	for _, e := range s.uiPlan {
-		if e.Folder == folder {
-			out = append(out, e)
-		}
-	}
-	return out
-}
-
 func (s *Sketch) controlWindow(ctx *debugui.Context) {
 	ctx.Window("Control Panel", s.ControlPanelScreenRect(), func(layout debugui.ContainerLayout) {
 		s.builtinsPanel(ctx)
-		root := s.entriesForFolder("")
-		if len(root) > 0 {
+		if len(s.uiFolders.rootEntries) > 0 {
 			ctx.SetGridLayout([]int{-1}, nil)
-			s.drawControlEntries(ctx, root)
+			s.drawControlEntries(ctx, s.uiFolders.rootEntries)
 		}
-		for _, title := range folderOrder(s.uiPlan) {
+		for _, title := range s.uiFolders.folderTitles {
 			// Header IDs are derived from the call site; the loop would reuse one ID for every folder.
 			ctx.IDScope("folder:"+title, func() {
 				ctx.Header(title, true, func() {
 					ctx.SetGridLayout([]int{-1}, nil)
-					s.drawControlEntries(ctx, s.entriesForFolder(title))
+					s.drawControlEntries(ctx, s.uiFolders.folderEntries[title])
 				})
 			})
 		}
