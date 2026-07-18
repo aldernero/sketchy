@@ -178,7 +178,7 @@ func main() {
 	flag.Parse()
 
 	s := sketchy.New(sketchy.Config{
-		Title:        "Photo Strips",
+		Title:        "Photo Shift",
 		SketchWidth:  533,
 		SketchHeight: 800,
 		Images: []sketchy.ImageAsset{

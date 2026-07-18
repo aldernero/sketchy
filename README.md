@@ -14,14 +14,14 @@ Below are a couple of screenshots/videos from the example sketches:
 ![fractal_example](assets/images/fractal_example_screenshot.png)
 ### Noise
 
-![noise_example](assets/videos/noise_example_webm)
+![noise_example](assets/videos/noise_example_screencast.mp4)
 
 ### 10PRINT
 ![10print_example](assets/images/10print_example_screenshot.png)
 
 ### Voronoi
 
-![Voronoi](assets/videos/voronoi_example.webm)
+![Voronoi](assets/videos/voronoi_example_screencast.mp4)
 
 ### Photo Shift
 ![photo_shift](assets/images/photo_shift_example_screenshot.png)
