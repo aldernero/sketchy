@@ -1,106 +1,89 @@
-This guide covers how to configure your sketch using the JSON configuration file, Go code, and command line parameters.
+This guide covers how to configure a sketch. Configuration is **code-first**:
+everything is set on the [`sketchy.Config`](../config.go) struct (or on the
+[`Sketch`](../sketch.go) before `Init()`), and controls are registered in Go
+with the [`UI`](../ui_builder.go) builder. There is no JSON configuration
+file.
 
-# The JSON Configuration File
+# The Config struct
 
-Each sketch is accompanied by a JSON configuration file. Although everything could be configured in code, having a JSON format speeds up development, making it especially easy to configure the controls that will appear in your sketch. Below is the minimal configuration file that's created when running `sketchy init project_name`:
-```json
-{
-  "SketchWidth": 800,
-  "SketchHeight": 800,
-  "ControlWidth": 240,
-  "Sliders": [
-    {
-      "Name": "control1",
-      "MinVal": 1,
-      "MaxVal": 100,
-      "Val": 10,
-      "Incr": 1
-    },
-    {
-      "Name": "control2",
-      "MinVal": 0,
-      "MaxVal": 2,
-      "Val": 0.9,
-      "Incr": 0.01
-    }
-  ],
-  "Toggles": [
-    {
-      "Name": "checkbox",
-      "Checked": false
-    },
-    {
-      "Name": "button",
-      "IsButton": true
-    }
-  ],
-  "SketchBackgroundColor": "#1e1e1e",
-  "SketchOutlineColor": "#ffdb00",
-  "ControlBackgroundColor": "#1e1e1e",
-  "ControlOutlineColor": "#ffdb00"
-}
+A minimal sketch configures size and colors and hands off three functions:
+
+```go
+s := sketchy.New(sketchy.Config{
+	Title:        "My Sketch",
+	SketchWidth:  1080,
+	SketchHeight: 1080,
+})
+s.BuildUI = buildUI // register controls
+s.Updater = update  // per-tick logic
+s.Drawer = draw     // drawing, receives *render.Context
+s.Init()
 ```
-The first three parameters setup the window size, most importantly the size of the sketch area, and also the width of
-the control area, where the controls will appear. In the `Sliders` section you define the sliders for your sketch. In 
-the `Toggles` section you define the checkboxes and buttons for your sketch. In code you can reference controls and tie 
-them to a variable. For each slider you define the range of values it supports along with an initial value and the step
-size `Incr` between values. The result is always a `float64` in code. For each toggle you specify if it's a button
-or a checkbox (default), and whether the initial state is checked.
 
-There are other parameters not listed in the template. Here are the missing parameters for completeness:
+All canvas units are **pixels** (origin top-left, y down); the drawing surface
+is exactly `SketchWidth` × `SketchHeight`.
 
-## Sketch Parameters
-| Parameter                 | Type   | Default   | Description                            |
-|---------------------------|--------|-----------|----------------------------------------|
-| Title                     | String | "Sketch"  | Sketch title                           |
-| Prefix                    | string | "sketch"  | prefix for filenames                   |
-| SketchWidth               | float  | 800       | sketch area width in pixels            |
-| SketchHeight              | float  | 800       | sketch area height in pixels           |
-| ControlWidth              | float  | 240       | control area width in pixels           |
-| RandomSeed                | int    | 0         | seed to builtin PRNG                   |
-| SketchBackgroundColor     | string | (unused)  | reserved; window margins use Builtins UI theme (dark/light grey) |
-| SketchOutlineColor        | string | "#ffdb00" | sketch area outline color              |
-| ControlBackgroundColor    | string | "#1e1e1e" | control area background color          |
-| ControlOutlineColor       | string | "#ffdb00" | control area background color          |
-| DisableClearBetweenFrames | bool   | false     | don't clear sketch area between frames |
-| DisableFastStroke         | bool   | false     | no-op kept for compatibility (the old tdewolff/canvas FastStroke workaround is gone) |
-| Images                    | slice  | (none)    | [`ImageAsset`](../images.go) files loaded at Init; draw with `DrawNamedImage` |
+## Config fields
 
-Each `ImageAsset` has `Name` (reference in code) and `Path` (relative to the sketch directory or absolute).
+| Field                     | Type        | Default     | Description |
+|---------------------------|-------------|-------------|-------------|
+| Title                     | string      | "Sketch"    | window/sketch title |
+| Prefix                    | string      | "sketch"    | filename prefix for saves and snapshots |
+| SketchWidth               | float64     | 1080        | sketch area width in pixels |
+| SketchHeight              | float64     | 1080        | sketch area height in pixels |
+| ControlWidth              | int         | 330         | control panel width in pixels |
+| ControlHeight             | int         | 500         | control panel height in pixels |
+| ControlBackgroundColor    | string      | "#1e1e1e"   | control panel background color |
+| ControlOutlineColor       | string      | "#ffdb00"   | control panel outline color |
+| SketchBackgroundColor     | string      | (unused)    | reserved; window margins follow the Builtins UI theme (dark/light grey) |
+| SketchOutlineColor        | string      | —           | sketch area outline color |
+| DefaultBackground         | color.Color | black       | canvas clear color before each draw |
+| DefaultForeground         | color.Color | white       | initial stroke color before `Drawer` runs |
+| DefaultStrokeWidth        | float64     | 1           | initial stroke width in pixels |
+| DisableClearBetweenFrames | bool        | false       | keep previous frames' raster so strokes accumulate on screen (display-only; saves render just the current frame). `Sketch.Clear()` wipes to `DefaultBackground` |
+| ShowFPS                   | bool        | false       | overlay the frame rate |
+| RasterDPI                 | float64     | 96          | raster resolution; 96 = one raster pixel per sketch pixel, higher values supersample redraws and PNG saves (also settable from the Builtins **Export scale** dropdown, where 1×–8× maps to 96–768) |
+| PreviewMode               | bool        | false       | render the display at half resolution for ~4× faster redraws; saves are unaffected (also a Builtins checkbox) |
+| RandomSeed                | int64       | 0 (auto)    | seed for the builtin PRNG; 0 seeds from the clock at `Init` |
+| PaletteDBPath             | string      | ""          | [palettedb](https://github.com/aldernero/palettedb) database for the Builtins palette dropdowns; empty means `~/.config/palettedb/palettedb.db` |
+| Images                    | []ImageAsset| (none)      | image files loaded at `Init`; draw with `DrawNamedImage` |
+| DisableFastStroke         | bool        | false       | no-op kept for compatibility (the old tdewolff/canvas FastStroke workaround is gone) |
 
-## Slider Parameters
-| Parameter       | Type   | Default      | Description              |
-|-----------------|--------|--------------|--------------------------|
-| Width           | float  | ControlWidth | control width            |
-| Height          | float  | 15px         | control height           |
-| BackgroundColor | string | "#1e1e1e"    | control background color |
-| OutlineColor    | string | "#ffdb00"    | control outline color    |
-| FillColor       | string | "#ffdb00"    | control fill color       |
-| TextColor       | string | "#ffffff"    | control text color       |
-| MinVal          | float  | 0            | minimum control value    |
-| MaxVal          | float  | 0            | maximum control value    |
-| Val             | float  | 0            | initial control value    | 
-| Incr            | float  | 0            | increment value          |
+Each [`ImageAsset`](../images.go) has `Name` (the key used with
+`Image`/`DrawNamedImage`) and `Path` (relative to the sketch directory or
+absolute).
 
-## Toggle Parameters
-| Parameter       | Type   | Default      | Description              |
-|-----------------|--------|--------------|--------------------------|
-| Width           | float  | ControlWidth | control width            |
-| Height          | float  | 15px         | control height           |
-| BackgroundColor | string | "#1e1e1e"    | control background color |
-| OutlineColor    | string | "#ffdb00"    | control outline color    |
-| FillColor       | string | "#ffdb00"    | control fill color       |
-| TextColor       | string | "#ffffff"    | control text color       |
- | Checked         | bool   | false        | initial control state    |
-| IsButton        | bool   | false        | is the control a button  |
-# Referencing Sketch Parameters in Code
+## Fields set on the Sketch after New
 
-The Sketch parameters can be referenced like `s.<ParameterName>` in the `update` and `draw` functions. The value of each control can be referenced via `s.Slider("<control name>")`, where `<control name>` is the name you used in the JSON configuration file.
+Between `sketchy.New` and `s.Init()` you assign the sketch's behavior and can
+override anything from `Config`:
 
+- **`BuildUI func(*Sketch, *UI)`** — registers controls (sliders, checkboxes,
+  buttons, color pickers, dropdowns, folders). See the
+  [Getting Started](getting-started.md) guide.
+- **`Updater func(*Sketch)`** — runs every tick; use it for animation and to
+  react to `DidControlsChange` and friends.
+- **`Drawer func(*Sketch, *render.Context)`** — draws the frame with a
+  [gaul render context](https://pkg.go.dev/github.com/aldernero/gaul/render).
+  Only re-run when the sketch is dirty (control changes, pointer presses in
+  the sketch, or an explicit `MarkDirty()`).
 
-# Command Line Parameters
+# Referencing configuration in code
 
-There are 3 command line arguments that may be useful for setting things at runtime. They are
-- `-c <config file>` : The configuration file to use (default: "sketch.json")
-- `-p <prefix>` : The filename prefix to use when saving sketch images and configuration files
-- `-s <seed>` : The seed for the builtin random number generator
+Sketch fields are available as `s.<FieldName>` inside `update` and `draw`
+(e.g. `s.Width()`, `s.Height()`, `s.CanvasRect()`). Control values are read
+with `s.GetFloat(folder, name)` / `s.GetInt` / `s.GetBool` / `s.GetColor` /
+`s.GetDropdownIndex`, or the root-folder shorthands `s.Slider(name)`,
+`s.Int(name)`, `s.Toggle(name)`, `s.ColorPicker(name)`.
+
+# Command line parameters
+
+The project template (`sketchy init`) wires up these flags:
+
+- `-p <prefix>` — filename prefix for saves (overrides `Prefix`)
+- `-s <seed>` — seed for the builtin random number generator (0 = auto)
+- `-palettedb <path>` — palettedb database for the Builtins palette dropdowns
+- `-pprof <file>` — collect a CPU profile
+
+They are ordinary `flag` definitions in your `main.go`, so add or remove
+flags as you see fit.

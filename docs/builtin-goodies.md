@@ -1,68 +1,103 @@
 # Builtin Goodies
 
-Some of Sketchy's best features are builtin and designed to make iterating on your designs quick and easy. This
-document covers those builtin features.
+Some of Sketchy's best features are builtin and designed to make iterating on
+your designs quick and easy. This document covers the **Builtins** header in
+the control panel and the other conveniences every sketch gets for free.
 
-# Saving designs as images and screenshots
+# The Builtins panel
 
-There are 3 different kinds of screenshots, each with a builtin keybinding:
+The Builtins header is fixed by Sketchy (it is not part of your `BuildUI`
+controls):
 
-- "s" key: saves the current frame as SVG
-- "p" key: saves the current frame as PNG
-- "q" key: saves the sketch area as PNG
-- "Esc" key: saves the entire Sketchy window as a PNG.
+- **Seed** — integer field plus a **Rand** button; mirrors `RandomSeed`.
+- **Default background / Default foreground** — color pickers for the canvas
+  clear color and the initial stroke color before your `Drawer` runs.
+- **Default stroke width** — pixels, clamped text field.
+- **Export scale** — preset multiplier (1×–8×) over the raster resolution.
+  The display always presents at `SketchWidth` × `SketchHeight`; higher
+  scales supersample redraws and PNG saves (a 2048px sketch at 4× saves an
+  8192px PNG). Persisted in snapshots.
+- **Preview mode** — renders the display at half resolution for ~4× faster
+  redraws while iterating; saves are unaffected. Not persisted in snapshots.
+- **Discrete palette / Sine palette** — dropdowns listing
+  [palettedb](https://github.com/aldernero/palettedb) palettes for use in
+  your `Drawer` via `s.DiscretePalette` / `s.SinePalette`.
+- **Save Image… / Take Snapshot… / Load Snapshot…** — dialogs described
+  below.
+- **UI theme** — Dark or Light control-panel style; the letterbox margin
+  around the sketch follows it.
 
-The first two options create a file with the format `"<prefix>_<timestamp>.png"`. The last one use a builtin Ebiten 
-screenshot feature and creates a file with the format `"screenshot_<timestamp>.png"`
+The panel is hidden from rasterized output and toggles with **Ctrl+Space**
+(plain **Space** is reserved for typing in the panel's text fields).
 
-Most of the time you would use the first two options, the "s" or "p" keys. This saves the current `canvas` context as a png image.
+# Saving designs as images
 
-The second option, the "q" key, is useful when you want to capture the all the drawing done so far, i.e. if you
-are using the `DisableClearBetweenFrames` feature. In this case you should also set `SketchOutlineColor` to `""` or
-to the same values as your canvas background ([`DefaultBackground`](../config.go)), as this screenshot captures all pixels in the sketch area.
+**Save Image…** writes the current frame under `saves/png/` and/or
+`saves/svg/` in the sketch working directory, named
+`<prefix>_<timestamp>.{png,svg}`. Because every frame is recorded as it is
+drawn, saves replay that recording — the file matches the display exactly,
+even for sketches that use randomness:
 
-The last option would be useful if you want to capture the entire Sketchy window for some reason, for example to
-use in a blog post or something.
+- **PNG** renders at the Builtins **Export scale** (via `RasterDPI`), so one
+  click exports print-resolution rasters.
+- **SVG** is true vector output with real stroked bezier paths in pixel
+  coordinates — ready for pen-plotter toolchains (vpype, axidraw, …).
+
+With `DisableClearBetweenFrames`, accumulation is display-only: saves render
+just the current frame's recording.
+
+Ebitengine's screenshot key is also wired up: **Esc** saves the entire window
+(panel included) as `screenshot_<timestamp>.png` — useful for blog posts and
+bug reports. Sketchy sets `EBITEN_SCREENSHOT_KEY=escape` at `Init` unless you
+have set it yourself.
+
+# Snapshots
+
+**Take Snapshot…** stores the complete state of the sketch in a SQLite
+database (`sketch.db`, created on first run in the sketch directory):
+
+- every user control (sliders, toggles, color pickers, dropdowns), and
+- the Builtins state (default colors, stroke width, seed, export scale,
+  selected palettes),
+
+optionally along with a PNG and/or SVG render of the frame (checkboxes in the
+dialog; the files go under `saves/` and are linked from the snapshot row).
+
+**Load Snapshot…** lists saved snapshots and restores one, including the
+random seed — so a snapshot reproduces the exact design, not just the
+settings. Controls that no longer exist in the sketch are reported and
+skipped.
 
 # Random number generator (with noise)
 
-The sketch struct has a builtin random number generator `s.Rand` in the `update` and `draw` functions. It's seeded
-with either `RandomSeed` in the configuration file or `-s <seed>` from the command line. The CLI takes precedent, 
-and if neither is specified it's seeded with 0.
-
-The PRNG is built on top of [opensimplex-go](https://github.com/ojrac/opensimplex-go) and extends the functionality
-to include fractal noise and comes with a lot of helper functions that are useful in generative art. See
-[random.go](../random.go) for the full specification. However, here's a listing of some of the functions:
+The sketch struct has a builtin random number generator `s.Rand`
+(a [gaul.Rng](https://pkg.go.dev/github.com/aldernero/gaul#Rng)), seeded from
+`RandomSeed` / the `-s` flag, or from the clock when unset. Beyond uniform
+and Gaussian values it wraps a simplex-noise source
+([peterhellberg/gfx](https://github.com/peterhellberg/gfx)) with fractal
+octaves and offsets — invaluable for organic-looking generative work:
 
 ```
-SetSeed(i int64)
-SetNoiseScaleX(scale float64)
-SetNoiseScaleY(scale float64)
-SetNoiseScaleZ(scale float64)
-SetNoiseOffsetX(offset float64)
-SetNoiseOffsetY(offset float64)
-SetNoiseOffsetZ(offset float64)
-SetNoiseOctaves(i int)
-SetNoisePersistence(p float64)
-SignedNoise2D(x float64, y float64) float64
-SignedNoise3D(x float64, y float64, z float64) float64
-Noise2D(x float64, y float64) float64
-Noise3D(x float64, y float64, z float64) float64
+SetSeed(seed int64)
+Gaussian(mean, stdev float64) float64
+Noise1D(x) / Noise2D(x, y) / Noise3D(x, y, z) / Noise4D(x, y, z, w)
+SetNoiseOctaves(n) / SetNoisePersistence(p) / SetNoiseLacunarity(l)
+SetNoiseScaleX/Y/Z(scale) and SetNoiseOffsetX/Y/Z(offset)
+UniformRandomPoints(num, rect) / NoisyRandomPoints(num, threshold, rect)
 ```
 
-There are 3 builtin keybindings to control the seed:
-- "Up Arrow": increments the seed
-- "Down Arrow": decrements the seed
-- "/": sets a random seed
+See [gaul's random.go](https://github.com/aldernero/gaul/blob/main/random.go)
+for the full API.
 
-This builtin capability was inspired by [vsketch](https://github.com/abey79/vsketch), which has a GUI control with
-similar functionality that I found invaluable when experimenting with designs.
+# Keyboard shortcuts
 
-# Miscellaneous Key Bindings
+| Key | Action |
+|-----|--------|
+| **↑** / **↓** | Increment / decrement the random seed |
+| **/** | Randomize the seed |
+| **Ctrl+Space** | Show / hide the control panel |
+| **Esc** | Ebitengine window screenshot |
 
-There are two other builtin key bindings:
-
-- "d": dumps the current state to the terminal. The output
-includes the current value for all GUI controls, as well as the current value of the PRNG seed.
-- "c": saves the current sketch configuration as a JSON file, with the format `"<prefix>_config_<timestamp>.json`. This can then be used to get back to the same state at started using the `-c <config file>` CLI flag.
-- **Ctrl+Space**: toggles the control panel (plain Space is for text fields inside the panel).
+The seed keys re-render immediately, which makes stepping through seed
+variations of a design fast — a workflow inspired by
+[vsketch](https://github.com/abey79/vsketch).
