@@ -86,12 +86,12 @@ Replace the template’s `buildUI` with two sliders (names must match what you p
 
 ```go
 func buildUI(_ *sketchy.Sketch, ui *sketchy.UI) {
-	ui.FloatSlider("radius", 0, 80, 40, 0.5)
+	ui.FloatSlider("radius", 0, 300, 150, 1)
 	ui.FloatSlider("thickness", 0, 10, 2, 0.1)
 }
 ```
 
-`FloatSlider` takes `name`, `min`, `max`, `initial`, `step` (all in canvas/mm units as elsewhere in Sketchy). The value column is a **text field** (you can type numbers, including forms like `1e-3`); the track shows position only.
+`FloatSlider` takes `name`, `min`, `max`, `initial`, `step` (in pixels, like all canvas units in Sketchy). The value column is a **text field** (you can type numbers, including forms like `1e-3`); the track shows position only.
 
 To group controls under a header, wrap them in `ui.Folder("Shape", func() { … })` and then use `s.GetFloat("Shape", "radius")` instead of `s.Slider("radius")`.
 
@@ -114,17 +114,17 @@ You can also set `ControlOutlineColor`, [`DefaultBackground`](../config.go), and
 Import `image/color` for explicit stroke color if you like (the framework also sets default stroke from Builtins before `Drawer` runs):
 
 ```go
-func draw(s *sketchy.Sketch, c *canvas.Context) {
+func draw(s *sketchy.Sketch, c *render.Context) {
 	radius := s.Slider("radius")
 	thickness := s.Slider("thickness")
 	c.SetStrokeColor(color.White)
 	c.SetStrokeWidth(thickness)
-	circle := canvas.Circle(radius)
-	c.DrawPath(c.Width()/2, c.Height()/2, circle)
+	c.DrawCircle(c.Width()/2, c.Height()/2, radius)
+	c.FillStroke()
 }
 ```
 
-[`Slider`](../sketch.go) is equivalent to [`GetFloat("", "radius")`](../sketch.go). The second argument to `draw` is a [tdewolff/canvas](https://github.com/tdewolff/canvas) context; see that project for paths, transforms, and text.
+[`Slider`](../sketch.go) is equivalent to [`GetFloat("", "radius")`](../sketch.go). The second argument to `draw` is a [gaul `render.Context`](https://pkg.go.dev/github.com/aldernero/gaul/render); coordinates are pixels with the origin at the top-left (y down). See the render package docs for paths, transforms, and text.
 
 Leave `update` empty for this example, or use it when you need animation or to react to [`DidControlsChange`](../sketch.go).
 

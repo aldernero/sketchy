@@ -63,7 +63,7 @@ There are other parameters not listed in the template. Here are the missing para
 | ControlBackgroundColor    | string | "#1e1e1e" | control area background color          |
 | ControlOutlineColor       | string | "#ffdb00" | control area background color          |
 | DisableClearBetweenFrames | bool   | false     | don't clear sketch area between frames |
-| DisableFastStroke         | bool   | false     | use precise canvas stroke settling (slower); default enables `canvas.FastStroke` |
+| DisableFastStroke         | bool   | false     | no-op kept for compatibility (the old tdewolff/canvas FastStroke workaround is gone) |
 | Images                    | slice  | (none)    | [`ImageAsset`](../images.go) files loaded at Init; draw with `DrawNamedImage` |
 
 Each `ImageAsset` has `Name` (reference in code) and `Path` (relative to the sketch directory or absolute).

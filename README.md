@@ -1,21 +1,30 @@
 ![sketchy_logo](assets/images/logo.png)
 
-Sketchy is a framework for making generative art in Go. It is inspired by [vsketch](https://github.com/abey79/vsketch) and [openFrameworks](https://github.com/openframeworks/openFrameworks). It uses [canvas](https://github.com/tdewolff/canvas) for drawing and the [ebiten](https://github.com/hajimehoshi/ebiten) game engine for the GUI.
+Sketchy is a framework for making generative art in Go. It is inspired by [vsketch](https://github.com/abey79/vsketch) and [openFrameworks](https://github.com/openframeworks/openFrameworks). It uses [gaul](https://github.com/aldernero/gaul) for drawing and the [ebiten](https://github.com/hajimehoshi/ebiten) game engine for the GUI.
 
 Sketches are **code-first**: you construct a [`sketchy.Config`](config.go), call [`sketchy.New`](sketch.go), assign [`BuildUI`](sketch.go) to register controls with [`UI`](ui_builder.go) helpers (`FloatSlider`, `IntSlider`, `Checkbox`, `ColorPicker`, `Dropdown`, `Folder`, etc.), then implement [`Updater`](sketch.go) and [`Drawer`](sketch.go). Control values are read with [`GetFloat`](sketch.go) / [`GetInt`](sketch.go) / [`Toggle`](sketch.go) using folder and name (use `""` for the root folder). There is **no** `sketch.json` for controls or layout.
 
+Your `Drawer` receives a [`*render.Context`](https://pkg.go.dev/github.com/aldernero/gaul/render) from gaul's render package. **Coordinates are pixels** — origin at the top-left, x right, y down — and the canvas is exactly `SketchWidth` × `SketchHeight`. The context supports both Processing-style immediate drawing (`Push`/`Pop`, `Translate`/`Rotate`/`Scale`, `MoveTo`/`LineTo`, `Fill`/`Stroke`) and gaul's primitive-first style (`gaul.Circle{...}.Draw(ctx)`). Every frame is also recorded, so PNG saves (at any export scale) and plotter-friendly SVG saves reproduce exactly the frame on screen.
+
 The [Getting Started](docs/getting-started.md) guide walks through install, `sketchy init`, and a small “Hello Circle” sketch using the code-first API; the [`examples/`](examples/) directory has full programs you can copy from.
 
-Below are a couple of screenshots from the example sketches:
+Below are a couple of screenshots/videos from the example sketches:
 
 ### Fractal
 ![fractal_example](assets/images/fractal_example_screenshot.png)
 ### Noise
 
-![noise_example](assets/images/noise_example_screenshot.png)
+![noise_example](assets/videos/noise_example_webm)
 
 ### 10PRINT
 ![10print_example](assets/images/10print_example_screenshot.png)
+
+### Voronoi
+
+![Voronoi](assets/videos/voronoi_example.webm)
+
+### Photo Shift
+![photo_shift](assets/images/photo_shift_example_screenshot.png)
 
 # Installation
 
@@ -76,7 +85,9 @@ The **Builtins** header is fixed by Sketchy (not part of your `uiPlan`):
 
 - **Seed** — Integer seed and **Rand** button; mirrors [`RandomSeed`](sketch.go).
 - **Default background** / **Default foreground** — Color pickers; define the canvas clear color and the initial stroke color before your [`Drawer`](sketch.go) runs. The margin around the letterboxed sketch uses a **dark grey** (Dark theme) or **light grey** (Light theme) so the drawable area reads clearly against the window border.
-- **Default stroke width** — Millimeters, text field with clamped range.
+- **Default stroke width** — Pixels, text field with clamped range.
+- **Export scale** — Preset multiplier (1×–8×) for raster resolution. The sketch always displays at `SketchWidth` × `SketchHeight`, but redraws rasterize at the scaled size and PNG saves gain the full detail (e.g. a 2048px sketch at 4× saves an 8192px PNG). Persisted in snapshots. At high scales, redraws get slow — that's what the next control is for.
+- **Preview mode** — Renders the display at half resolution (~4× faster redraws) while iterating; saves are unaffected and still use the export scale. Not persisted in snapshots.
 - **Discrete palette** / **Sine palette** — Dropdowns listing [palettedb](https://github.com/aldernero/palettedb) palettes: those stored in a palettedb database first, then palettedb's built-ins (viridis, plasma, turbo, …), which are always available even without a database. Selecting a name loads it into [`DiscretePalette`](sketch.go) (a `gaul.Gradient`) / [`SinePalette`](sketch.go) (a `gaul.SinePalette`) for use in your `Drawer`, so designs can switch color palettes on the fly. The database is looked up at [`PaletteDBPath`](sketch.go) (set it before `Init`, e.g. from a `-palettedb` CLI flag as in the project template), defaulting to `~/.config/palettedb/palettedb.db`.
 - **Save Image…** / **Take Snapshot…** / **Load Snapshot…** — Dialogs for PNG/SVG export and SQLite-backed snapshots (see below).
 
@@ -84,10 +95,10 @@ The panel is hidden from rasterized sketch output. Close or reopen it with **Ctr
 
 # Saving images and snapshots
 
-- **Save Image…** — Writes under `saves/png/` and/or `saves/svg/` relative to the process working directory (usually your sketch project). Saves can be recorded in **`sketch.db`**.
+- **Save Image…** — Writes under `saves/png/` and/or `saves/svg/` relative to the process working directory (usually your sketch project). Saves replay the recorded frame, so the file matches the display exactly: PNG renders at the Builtins **Export scale**, and SVG is true vector output (real stroked bezier paths, ready for pen plotting). Saves can be recorded in **`sketch.db`**.
 - **Snapshots** — Stored in **`sketch.db`** with:
   - **`control_json`** — Sliders, int sliders, toggles, user color pickers, dropdowns.
-  - **`builtin_json`** — Default background/foreground (hex), default stroke width (mm), random seed, and selected discrete/sine palette names so builtins round-trip with the rest of the controls.
+  - **`builtin_json`** — Default background/foreground (hex), default stroke width (px), random seed, export scale, and selected discrete/sine palette names so builtins round-trip with the rest of the controls.
 
 First run creates or migrates the database.
 
