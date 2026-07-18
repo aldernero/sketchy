@@ -196,6 +196,10 @@ type Sketch struct {
 	// builtinSeedInt mirrors RandomSeed for the Builtins NumberField (debugui uses *int).
 	builtinSeedInt int
 
+	// builtinExportScaleIdx mirrors RasterDPI for the Builtins "Export scale"
+	// dropdown (index into exportScaleFactors).
+	builtinExportScaleIdx int
+
 	// debugUIThemeIndex selects the control-panel style (Builtins dropdown); 0 = themes/dark.json, 1 = themes/light.json.
 	debugUIThemeIndex int
 
@@ -313,6 +317,7 @@ func (s *Sketch) Init() {
 
 	s.Rand = gaul.NewRng(s.RandomSeed)
 	s.builtinSeedInt = int(s.RandomSeed)
+	s.syncExportScaleIdxFromDPI()
 	s.recorder = render.NewRecorder(s.SketchWidth, s.SketchHeight)
 	s.needToClear = true
 	s.showDebugUI = true

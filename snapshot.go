@@ -114,6 +114,9 @@ func (s *Sketch) applyControlStateJSON(data []byte) ([]string, error) {
 }
 
 // builtinSnapshotPayload is stored in sqlite snapshots.builtin_json.
+// The default_stroke_width_mm key predates the pixel-based renderer; the
+// value has been in pixels since the gaul render migration, but the key is
+// kept for compatibility with existing snapshot rows.
 type builtinSnapshotPayload struct {
 	DefaultBackground    string  `json:"default_background"`
 	DefaultForeground    string  `json:"default_foreground"`
@@ -121,6 +124,9 @@ type builtinSnapshotPayload struct {
 	RandomSeed           int64   `json:"random_seed"`
 	DiscretePalette      string  `json:"discrete_palette,omitempty"`
 	SinePalette          string  `json:"sine_palette,omitempty"`
+	// ExportScale is RasterDPI/DefaultDPI. Zero (absent in older
+	// snapshots) leaves the sketch's current scale untouched.
+	ExportScale float64 `json:"export_scale,omitempty"`
 }
 
 func (s *Sketch) serializeBuiltinState() ([]byte, error) {
@@ -131,6 +137,7 @@ func (s *Sketch) serializeBuiltinState() ([]byte, error) {
 		RandomSeed:           s.RandomSeed,
 		DiscretePalette:      s.SelectedDiscretePalette(),
 		SinePalette:          s.SelectedSinePalette(),
+		ExportScale:          s.RasterDPI / DefaultDPI,
 	}
 	return json.Marshal(p)
 }
@@ -153,7 +160,6 @@ func (s *Sketch) applyBuiltinStateJSON(data []byte) error {
 	if err := json.Unmarshal(data, &p); err != nil {
 		return err
 	}
-	const minW, maxW = 0.05, 3.0
 	if p.DefaultBackground != "" {
 		s.DefaultBackground = stringToColor(p.DefaultBackground)
 		s.replaceBuiltinColorPicker(s.builtinColorBGIdx, p.DefaultBackground)
@@ -162,7 +168,11 @@ func (s *Sketch) applyBuiltinStateJSON(data []byte) error {
 		s.DefaultForeground = stringToColor(p.DefaultForeground)
 		s.replaceBuiltinColorPicker(s.builtinColorFGIdx, p.DefaultForeground)
 	}
-	s.DefaultStrokeWidth = clampFloat(p.DefaultStrokeWidthMM, minW, maxW)
+	s.DefaultStrokeWidth = clampFloat(p.DefaultStrokeWidthMM, defaultStrokeWidthMin, defaultStrokeWidthMax)
+	if p.ExportScale > 0 {
+		s.RasterDPI = DefaultDPI * p.ExportScale
+		s.syncExportScaleIdxFromDPI()
+	}
 	if p.DiscretePalette != "" {
 		if !s.selectPaletteByName(s.discretePaletteNames, &s.builtinDiscretePaletteIdx,
 			p.DiscretePalette, s.applyDiscretePaletteSelection) {

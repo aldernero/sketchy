@@ -5,6 +5,7 @@ import (
 	"image"
 	"image/color"
 	"log"
+	"math"
 	"path/filepath"
 	"strings"
 	"time"
@@ -63,6 +64,7 @@ func (s *Sketch) builtinsPanel(ctx *debugui.Context) {
 		s.drawColorRow(ctx, s.builtinColorBGIdx)
 		s.drawColorRow(ctx, s.builtinColorFGIdx)
 		s.drawBuiltinDefaultStrokeWidthRow(ctx)
+		s.drawBuiltinRenderRows(ctx)
 		s.drawBuiltinPaletteRows(ctx)
 
 		ctx.SetGridLayout([]int{-1}, nil)
@@ -120,12 +122,59 @@ func (s *Sketch) drawControlEntries(ctx *debugui.Context, entries []controlEntry
 }
 
 func (s *Sketch) drawBuiltinDefaultStrokeWidthRow(ctx *debugui.Context) {
-	const minW, maxW, stepW = 0.05, 3.0, 0.05
 	ctx.SetGridLayout([]int{ControlLabelColumnWidth, -1}, nil)
 	ctx.Text("Default stroke width")
 	ctx.IDScope("builtinStrokeW", func() {
-		ctx.NumberFieldF(&s.DefaultStrokeWidth, stepW, 2).On(func() {
-			s.DefaultStrokeWidth = clampFloat(s.DefaultStrokeWidth, minW, maxW)
+		ctx.NumberFieldF(&s.DefaultStrokeWidth, defaultStrokeWidthStep, 2).On(func() {
+			s.DefaultStrokeWidth = clampFloat(s.DefaultStrokeWidth, defaultStrokeWidthMin, defaultStrokeWidthMax)
+			s.dirty = true
+		})
+	})
+}
+
+// Default stroke width bounds for the Builtins control, in pixels.
+const (
+	defaultStrokeWidthMin  = 0.05
+	defaultStrokeWidthMax  = 12.0
+	defaultStrokeWidthStep = 0.05
+)
+
+// Export scale presets for the Builtins dropdown. The scale multiplies the
+// raster resolution (RasterDPI = scale * DefaultDPI): the display still
+// presents at SketchWidth x SketchHeight, but every dirty redraw rasterizes
+// at the scaled size, and PNG saves gain the full detail. At high scales,
+// enable Preview mode to keep redraws fast while iterating.
+var (
+	exportScaleLabels  = []string{"1x", "2x", "3x", "4x", "8x"}
+	exportScaleFactors = []float64{1, 2, 3, 4, 8}
+)
+
+// syncExportScaleIdxFromDPI points the Builtins dropdown at the preset
+// nearest to RasterDPI. A non-preset RasterDPI set in code is preserved
+// until the user picks a preset.
+func (s *Sketch) syncExportScaleIdxFromDPI() {
+	scale := s.RasterDPI / DefaultDPI
+	best := 0
+	for i, f := range exportScaleFactors {
+		if math.Abs(f-scale) < math.Abs(exportScaleFactors[best]-scale) {
+			best = i
+		}
+	}
+	s.builtinExportScaleIdx = best
+}
+
+func (s *Sketch) drawBuiltinRenderRows(ctx *debugui.Context) {
+	ctx.SetGridLayout([]int{ControlLabelColumnWidth, -1}, nil)
+	ctx.Text("Export scale")
+	ctx.IDScope("builtinExportScale", func() {
+		ctx.Dropdown(&s.builtinExportScaleIdx, exportScaleLabels).On(func() {
+			s.RasterDPI = DefaultDPI * exportScaleFactors[s.builtinExportScaleIdx]
+			s.dirty = true
+		})
+	})
+	ctx.SetGridLayout([]int{-1}, nil)
+	ctx.IDScope("builtinPreview", func() {
+		ctx.Checkbox(&s.PreviewMode, "Preview mode").On(func() {
 			s.dirty = true
 		})
 	})
