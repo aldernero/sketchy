@@ -26,8 +26,8 @@ github.com/ajstarks/svgo v0.0.0-20211024235047-1546f124cd8b h1:slYM766cy2nI3BwyR
 github.com/ajstarks/svgo v0.0.0-20211024235047-1546f124cd8b/go.mod h1:1KcenG0jGWcpt8ov532z81sp/kMMUG485J2InIOyADM=
 github.com/aldernero/debugui v0.0.0-20260714161712-cb701923b33b h1:KHQRRQqKTs+eVkXO68qwkYrA4MfrCccTk8TPhJi2nIA=
 github.com/aldernero/debugui v0.0.0-20260714161712-cb701923b33b/go.mod h1:KM2JsOEN00NAiFiPfDFtNNjdhTzKQ2Kph+0nG6OnkqQ=
-github.com/aldernero/gaul v0.0.0-20260712142430-f2050242ce3d h1:EydvLiKDWusGPGBMUlMsi2CPVL3CtBAKk9VBb/V1GD0=
-github.com/aldernero/gaul v0.0.0-20260712142430-f2050242ce3d/go.mod h1:6p22b4Ac4h0eb+4e4gNUrk/W+nTUeHMoKAt4SiePUZQ=
+github.com/aldernero/gaul v0.1.0 h1:USGD2S9LiFIBr7bW+FWkBjwsoKi2P/0FUOBbfwrV+Gc=
+github.com/aldernero/gaul v0.1.0/go.mod h1:6p22b4Ac4h0eb+4e4gNUrk/W+nTUeHMoKAt4SiePUZQ=
 github.com/aldernero/interp v0.0.0-20231114035812-9ab0a3e37bf6 h1:HU0GRLVJYfu2JFcfBvHnsn1UGC+T0XxVHgvE2JErStA=
 github.com/aldernero/interp v0.0.0-20231114035812-9ab0a3e37bf6/go.mod h1:m2qXCvyUGDX7/wj1uq7Lmcub35OehMt/uM0WSG5qy3w=
 github.com/aldernero/palettedb v0.1.4 h1:rCEOdCg5lzi6Gs1vSaf8FxH6IBpW+1e+V5YcHBLk8GI=
