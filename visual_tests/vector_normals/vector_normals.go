@@ -4,7 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/aldernero/gaul"
-	"github.com/tdewolff/canvas"
+	"github.com/aldernero/gaul/render"
 	"log"
 	"math"
 
@@ -14,20 +14,20 @@ import (
 
 func buildUI(_ *sketchy.Sketch, ui *sketchy.UI) {
 	ui.IntSlider("num_points", 4, 1000, 200, 1)
-	ui.FloatSlider("scale", 0, 15, 5, 0.1)
+	ui.FloatSlider("scale", 0, 57, 19, 0.5)
 }
 
 func update(s *sketchy.Sketch) {
 	// Update logic goes here
 }
 
-func draw(s *sketchy.Sketch, c *canvas.Context) {
+func draw(s *sketchy.Sketch, c *render.Context) {
 	// Drawing code goes here
 	var points []gaul.Point
 	ls := gaul.Linspace(0, gaul.Tau, s.GetInt("", "num_points")+1, true)
 	for _, i := range ls {
-		x := 0.5*c.Width() + 50*math.Cos(i)
-		y := 0.5*c.Height() + 50*math.Sin(i)
+		x := 0.5*c.Width() + 189*math.Cos(i)
+		y := 0.5*c.Height() + 189*math.Sin(i)
 		points = append(points, gaul.Point{X: x, Y: y})
 	}
 	curve := gaul.Curve{Points: points, Closed: true}

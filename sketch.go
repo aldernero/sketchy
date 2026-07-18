@@ -13,21 +13,21 @@ import (
 
 	"github.com/aldernero/debugui"
 	"github.com/aldernero/gaul"
+	"github.com/aldernero/gaul/render"
 	"github.com/aldernero/palettedb"
 	"github.com/aldernero/sketchy/internal/sketchdb"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
-	"github.com/tdewolff/canvas"
-	"github.com/tdewolff/canvas/renderers"
-	"github.com/tdewolff/canvas/renderers/rasterizer"
 )
 
 const (
 	DefaultTitle  = "Sketch"
 	DefaultPrefix = "sketch"
-	MmPerPx       = 0.26458333
-	DefaultDPI    = 96.0
+	// DefaultDPI is the raster resolution at which one raster pixel matches
+	// one logical sketch pixel. RasterDPI/DefaultDPI is the supersampling
+	// factor.
+	DefaultDPI = 96.0
 	// Performance tuning constants
 	DefaultPreviewDPI = 48.0 // Lower DPI for preview mode
 	SaveChannelBuffer = 10   // Buffer size for async save requests
@@ -39,7 +39,7 @@ const (
 
 type (
 	SketchUpdater func(s *Sketch)
-	SketchDrawer  func(s *Sketch, ctx *canvas.Context)
+	SketchDrawer  func(s *Sketch, ctx *render.Context)
 )
 
 // SaveRequest is an async save operation (relative path under workDir).
@@ -67,7 +67,7 @@ type Sketch struct {
 	DefaultBackground color.Color
 	// DefaultForeground is the initial stroke color for the canvas context before Drawer (default white).
 	DefaultForeground color.Color
-	// DefaultStrokeWidth is the initial stroke width in millimeters (default 0.5).
+	// DefaultStrokeWidth is the initial stroke width in pixels (default 1).
 	DefaultStrokeWidth float64
 	// PaletteDBPath locates the palettedb SQLite database for the Builtins
 	// palette dropdowns; empty means the palettedb default
@@ -81,11 +81,13 @@ type Sketch struct {
 	SinePalette gaul.SinePalette
 	// DisableClearBetweenFrames keeps the previous frame's raster under each
 	// new frame so strokes accumulate on screen; Clear() wipes to
-	// DefaultBackground. Accumulation is display-only: image saves render the
-	// canvas, which holds just the current frame.
+	// DefaultBackground. Accumulation is display-only: image saves render
+	// just the current frame.
 	DisableClearBetweenFrames bool
-	DisableFastStroke         bool
-	ShowFPS                   bool
+	// DisableFastStroke is a no-op kept for API compatibility; the old
+	// tdewolff/canvas FastStroke workaround is gone with the gaul renderer.
+	DisableFastStroke bool
+	ShowFPS           bool
 	// RasterDPI sets raster resolution (default 96, where one canvas pixel
 	// matches one logical sketch pixel). The sketch is always displayed at
 	// SketchWidth x SketchHeight; higher DPI affects raster/save detail only.
@@ -122,15 +124,19 @@ type Sketch struct {
 	dropdownControlMap    map[string]int
 	needToClear           bool
 	Tick                  int64
-	SketchCanvas          *canvas.Canvas
 	ui                    debugui.DebugUI
 	showDebugUI           bool
 	uiCaptureState        debugui.InputCapturingState
 
 	offscreen *ebiten.Image
-	// rasterBuf is the reused CPU-side raster target for [Sketch.rasterize].
-	rasterBuf    *image.RGBA
-	ctx          *canvas.Context
+	// rasterBuf is the reused CPU-side raster target for the per-frame
+	// display render in [Sketch.Draw].
+	rasterBuf *image.RGBA
+	// recorder keeps the current frame's draw operations so saves can
+	// replay the exact displayed frame into a PNG raster (at any DPI) or an
+	// SVG without re-running Drawer.
+	recorder     *render.Recorder
+	ctx          *render.Context
 	dirty        bool
 	saveRequests chan SaveRequest
 	saveMutex    sync.Mutex
@@ -198,12 +204,15 @@ type Sketch struct {
 	sketchPrimaryMouseJustDown bool
 }
 
+// Width is the drawing surface width in pixels (same as SketchWidth).
+// Canvas coordinates are pixels: origin top-left, x right, y down.
 func (s *Sketch) Width() float64 {
-	return s.SketchWidth * MmPerPx
+	return s.SketchWidth
 }
 
+// Height is the drawing surface height in pixels (same as SketchHeight).
 func (s *Sketch) Height() float64 {
-	return s.SketchHeight * MmPerPx
+	return s.SketchHeight
 }
 
 // WindowSize returns outer window dimensions for ebiten: the sketch size in pixels,
@@ -262,7 +271,7 @@ func (s *Sketch) Init() {
 		s.DefaultForeground = color.RGBA{R: 255, G: 255, B: 255, A: 255}
 	}
 	if s.DefaultStrokeWidth <= 0 {
-		s.DefaultStrokeWidth = 0.5
+		s.DefaultStrokeWidth = 1
 	}
 
 	s.FloatSliders = nil
@@ -304,17 +313,14 @@ func (s *Sketch) Init() {
 
 	s.Rand = gaul.NewRng(s.RandomSeed)
 	s.builtinSeedInt = int(s.RandomSeed)
-	if !s.DisableFastStroke {
-		canvas.FastStroke = true
-	}
-	s.SketchCanvas = canvas.New(s.Width(), s.Height())
+	s.recorder = render.NewRecorder(s.SketchWidth, s.SketchHeight)
 	s.needToClear = true
 	s.showDebugUI = true
 	s.dirty = true
 	s.colorModalIdx = -1
 
 	s.offscreen = ebiten.NewImage(int(s.SketchWidth), int(s.SketchHeight))
-	s.ctx = canvas.NewContext(s.SketchCanvas)
+	s.ctx = render.NewContext(s.recorder)
 	if s.saveRequests == nil { // keep a single worker across repeated Init()
 		s.saveRequests = make(chan SaveRequest, SaveChannelBuffer)
 		go s.saveWorker()
@@ -704,35 +710,7 @@ func colorToRGBHex(c color.Color) string {
 
 func (s *Sketch) Draw(screen *ebiten.Image) {
 	if s.dirty {
-		// saveWorker renders SketchCanvas on its own goroutine under saveMutex;
-		// hold it while mutating and rasterizing the canvas so a queued
-		// PNG/SVG save never observes a half-rebuilt frame.
-		s.saveMutex.Lock()
-		s.SketchCanvas.Reset()
-		s.ctx = canvas.NewContext(s.SketchCanvas)
-
-		// With DisableClearBetweenFrames, the raster buffer keeps its previous
-		// contents (until Clear() requests a wipe) so strokes accumulate
-		// across frames; the canvas itself only ever holds the current frame.
-		clearFrame := !s.DisableClearBetweenFrames || s.needToClear
-		if clearFrame {
-			s.ctx.SetFillColor(s.DefaultBackground)
-			s.ctx.SetStrokeColor(color.Transparent)
-			s.ctx.DrawPath(0, 0, canvas.Rectangle(s.ctx.Width(), s.ctx.Height()))
-			s.needToClear = false
-		}
-
-		s.ctx.SetStrokeColor(s.DefaultForeground)
-		s.ctx.SetStrokeWidth(s.DefaultStrokeWidth)
-		s.Drawer(s, s.ctx)
-
-		dpi := s.RasterDPI
-		if s.PreviewMode {
-			dpi = DefaultPreviewDPI
-		}
-
-		img := s.rasterize(canvas.DPI(dpi), clearFrame)
-		s.saveMutex.Unlock()
+		img := s.renderFrame()
 
 		rw, rh := img.Bounds().Dx(), img.Bounds().Dy()
 		if s.offscreen == nil || s.offscreen.Bounds().Dx() != rw || s.offscreen.Bounds().Dy() != rh {
@@ -772,56 +750,65 @@ func (s *Sketch) Draw(screen *ebiten.Image) {
 	s.DidDropdownsChange = false
 }
 
-// rasterize renders SketchCanvas into a reused RGBA buffer at the given
-// resolution and returns it. The buffer's premultiplied Pix layout (origin
-// (0,0), packed stride) is what ebiten's WritePixels expects, so the result
-// feeds the offscreen image without a per-pixel copy. When clearBuf is true
-// the buffer is wiped to transparent first, matching the fresh image
-// rasterizer.Draw would return; when false (DisableClearBetweenFrames) the
-// new frame renders over the previous raster so content accumulates.
-func (s *Sketch) rasterize(res canvas.Resolution, clearBuf bool) *image.RGBA {
-	// Same size rule as rasterizer.Draw.
-	w := int(s.SketchCanvas.W*res.DPMM() + 0.5)
-	h := int(s.SketchCanvas.H*res.DPMM() + 0.5)
+// renderFrame rebuilds the current frame: it re-records the drawing (for
+// saves) and rasterizes it into the reused display buffer, whose
+// premultiplied Pix layout feeds ebiten's WritePixels without a per-pixel
+// copy. saveWorker replays the recorder on its own goroutine under
+// saveMutex; renderFrame holds it while rebuilding so a queued PNG/SVG save
+// never observes a half-rebuilt recording.
+func (s *Sketch) renderFrame() *image.RGBA {
+	s.saveMutex.Lock()
+	defer s.saveMutex.Unlock()
+	s.recorder.Reset()
+
+	dpi := s.RasterDPI
+	if s.PreviewMode {
+		dpi = DefaultPreviewDPI
+	}
+	// The raster may be smaller (PreviewMode) or larger (RasterDPI > 96)
+	// than the logical sketch size; the pixel scale keeps drawing
+	// coordinates logical either way.
+	scale := dpi / DefaultDPI
+	w := int(s.SketchWidth*scale + 0.5)
+	h := int(s.SketchHeight*scale + 0.5)
+
+	// With DisableClearBetweenFrames, the raster buffer keeps its previous
+	// contents (until Clear() requests a wipe) so strokes accumulate
+	// across frames; the recording itself only ever holds the current frame.
+	clearFrame := !s.DisableClearBetweenFrames || s.needToClear
 	if s.rasterBuf == nil || s.rasterBuf.Bounds().Dx() != w || s.rasterBuf.Bounds().Dy() != h {
 		s.rasterBuf = image.NewRGBA(image.Rect(0, 0, w, h))
-	} else if clearBuf {
+	} else if clearFrame {
 		clear(s.rasterBuf.Pix)
 	}
-	ras := rasterizer.FromImage(s.rasterBuf, res, canvas.DefaultColorSpace)
-	var r canvas.Renderer = ras
-	if _, linear := canvas.DefaultColorSpace.(canvas.LinearColorSpace); linear {
-		r = &fastImageRasterizer{Rasterizer: ras, dst: s.rasterBuf, res: res}
+	ras := render.NewRasterFromImage(s.rasterBuf)
+	ras.SetScale(scale)
+	s.ctx = render.NewContext(s.recorder, ras)
+
+	if clearFrame {
+		s.ctx.Clear(s.DefaultBackground)
+		s.needToClear = false
 	}
-	s.SketchCanvas.RenderTo(r)
-	ras.Close()
+
+	s.ctx.SetStrokeColor(s.DefaultForeground)
+	s.ctx.SetStrokeWidth(s.DefaultStrokeWidth)
+	s.Drawer(s, s.ctx)
 	return s.rasterBuf
 }
 
+// CanvasCoords maps window coordinates to canvas coordinates. Canvas
+// coordinates are logical sketch pixels (origin top-left, y down), so this
+// only undoes the viewport padding and scroll offset.
 func (s *Sketch) CanvasCoords(x, y float64) gaul.Point {
 	sx, sy := s.WindowToSketchPixels(x, y)
-	dx, dy := s.displaySizeF()
-	if dx <= 0 || dy <= 0 {
-		return gaul.Point{}
-	}
-	// Proportional map from logical sketch pixels to canvas mm.
-	return gaul.Point{
-		X: (sx / dx) * s.Width(),
-		Y: ((dy - sy) / dy) * s.Height(),
-	}
+	return gaul.Point{X: sx, Y: sy}
 }
 
-// SketchCoords maps logical sketch pixel coordinates (origin top-left,
-// SketchWidth x SketchHeight regardless of raster DPI) to canvas mm.
+// SketchCoords maps logical sketch pixel coordinates to canvas coordinates.
+// Since the canvas is addressed in logical sketch pixels, this is the
+// identity; it remains for compatibility with pre-gaul-render sketches.
 func (s *Sketch) SketchCoords(sx, sy float64) gaul.Point {
-	dx, dy := s.displaySizeF()
-	if dx <= 0 || dy <= 0 {
-		return gaul.Point{}
-	}
-	return gaul.Point{
-		X: (sx / dx) * s.Width(),
-		Y: ((dy - sy) / dy) * s.Height(),
-	}
+	return gaul.Point{X: sx, Y: sy}
 }
 
 func (s *Sketch) PointInSketchArea(x, y float64) bool {
@@ -982,17 +969,15 @@ func (s *Sketch) saveWorker() {
 			fmt.Printf("Error mkdir %s: %v\n", filepath.Dir(full), err)
 			continue
 		}
-		s.saveMutex.Lock()
 		var err error
 		switch req.Format {
 		case "png":
-			err = renderers.Write(full, s.SketchCanvas, canvas.DPI(req.DPI))
+			err = s.renderPNGToFile(full, req.DPI)
 		case "svg":
-			err = renderers.Write(full, s.SketchCanvas)
+			err = s.renderSVGToFile(full)
 		default:
 			err = fmt.Errorf("unknown format %q", req.Format)
 		}
-		s.saveMutex.Unlock()
 
 		if err != nil {
 			fmt.Printf("Error saving %s: %v\n", full, err)

@@ -6,10 +6,10 @@ import (
 	"math"
 
 	"github.com/aldernero/gaul"
+	"github.com/aldernero/gaul/render"
 	"github.com/aldernero/sketchy"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
-	"github.com/tdewolff/canvas"
 )
 
 // Define a grid of tiles and a random number generator
@@ -111,7 +111,7 @@ func update(s *sketchy.Sketch) {
 	}
 }
 
-func draw(s *sketchy.Sketch, c *canvas.Context) {
+func draw(s *sketchy.Sketch, c *render.Context) {
 	// draw board rectangle
 	c.MoveTo(board.originX, board.originY)
 	c.LineTo(board.originX+float64(board.cols)*board.cellSize, board.originY)
@@ -139,7 +139,7 @@ var board Truchet
 
 func buildUI(_ *sketchy.Sketch, ui *sketchy.UI) {
 	ui.Folder("Grid", func() {
-		ui.FloatSlider("cellSize", 1, 60, 20, 0.5)
+		ui.FloatSlider("cellSize", 4, 220, 75, 1)
 		ui.IntSlider("octaves", 1, 10, 2, 1)
 		ui.FloatSlider("persistence", 0, 2, 0.95, 0.01)
 		ui.FloatSlider("lacunarity", 0, 10, 2.7, 0.1)

@@ -8,9 +8,9 @@ import (
 	"os"
 	"runtime/pprof"
 
+	"github.com/aldernero/gaul/render"
 	"github.com/aldernero/sketchy"
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/tdewolff/canvas"
 )
 
 func buildUI(_ *sketchy.Sketch, ui *sketchy.UI) {
@@ -31,7 +31,7 @@ func update(s *sketchy.Sketch) {
 	// Update logic goes here
 }
 
-func draw(s *sketchy.Sketch, c *canvas.Context) {
+func draw(s *sketchy.Sketch, c *render.Context) {
 	// Drawing code goes here
 	// s.DrawNamedImage(c, "photo")
 	// s.DrawImage(c, myGeneratedRGBA)

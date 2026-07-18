@@ -3,7 +3,7 @@ package main
 import (
 	"flag"
 	"github.com/aldernero/gaul"
-	"github.com/tdewolff/canvas"
+	"github.com/aldernero/gaul/render"
 	"log"
 	"math"
 	"os"
@@ -165,9 +165,9 @@ func update(s *sketchy.Sketch) {
 	}
 }
 
-func draw(s *sketchy.Sketch, c *canvas.Context) {
+func draw(s *sketchy.Sketch, c *render.Context) {
 	// Drawing code goes here
-	c.SetFillColor(canvas.Transparent)
+	c.SetFillColor(nil)
 	if s.Toggle("show triangles") {
 		for _, triangle := range triangles {
 			triangle.Draw(c)

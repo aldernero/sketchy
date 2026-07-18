@@ -4,22 +4,22 @@ import (
 	"flag"
 	"log"
 
+	"github.com/aldernero/gaul/render"
 	"github.com/aldernero/sketchy"
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/tdewolff/canvas"
 )
 
 func buildUI(_ *sketchy.Sketch, ui *sketchy.UI) {
 	ui.Folder("Shape", func() {
-		ui.FloatSlider("radius", 0, 80, 40, 0.5)
+		ui.FloatSlider("radius", 0, 300, 150, 1)
 	})
 }
 
 func update(s *sketchy.Sketch) {}
 
-func draw(s *sketchy.Sketch, c *canvas.Context) {
-	circle := canvas.Circle(s.GetFloat("Shape", "radius"))
-	c.DrawPath(c.Width()/2, c.Height()/2, circle)
+func draw(s *sketchy.Sketch, c *render.Context) {
+	c.DrawCircle(c.Width()/2, c.Height()/2, s.GetFloat("Shape", "radius"))
+	c.FillStroke()
 }
 
 func main() {

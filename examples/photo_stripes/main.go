@@ -8,9 +8,9 @@ import (
 	"math"
 
 	"github.com/aldernero/gaul"
+	"github.com/aldernero/gaul/render"
 	"github.com/aldernero/sketchy"
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/tdewolff/canvas"
 )
 
 const (
@@ -46,7 +46,7 @@ func update(s *sketchy.Sketch) {
 	}
 }
 
-func draw(s *sketchy.Sketch, c *canvas.Context) {
+func draw(s *sketchy.Sketch, c *render.Context) {
 	s.DrawNamedImage(c, outputImageName)
 }
 

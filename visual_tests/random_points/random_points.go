@@ -4,7 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/aldernero/gaul"
-	"github.com/tdewolff/canvas"
+	"github.com/aldernero/gaul/render"
 	"image/color"
 	"log"
 
@@ -34,7 +34,7 @@ func update(s *sketchy.Sketch) {
 	s.Rand.SetNoiseScaleY(s.GetFloat("Points", "yscale"))
 }
 
-func draw(s *sketchy.Sketch, c *canvas.Context) {
+func draw(s *sketchy.Sketch, c *render.Context) {
 	c.SetFillColor(color.Transparent)
 	var points []gaul.Point
 	num := s.GetInt("Points", "points")
@@ -47,7 +47,8 @@ func draw(s *sketchy.Sketch, c *canvas.Context) {
 		fmt.Println("Points: ", len(points))
 	}
 	for _, p := range points {
-		c.DrawPath(p.X, p.Y, canvas.Circle(0.05))
+		c.DrawCircle(p.X, p.Y, 1)
+		c.FillStroke()
 	}
 }
 

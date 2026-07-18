@@ -5,12 +5,13 @@ import (
 	"log"
 	"math"
 
+	"github.com/aldernero/gaul"
+	"github.com/aldernero/gaul/render"
 	"github.com/aldernero/sketchy"
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/tdewolff/canvas"
 )
 
-const radius = 80.0
+const radius = 300.0
 
 func buildUI(_ *sketchy.Sketch, ui *sketchy.UI) {
 	ui.Folder("Pattern", func() {
@@ -23,7 +24,7 @@ func buildUI(_ *sketchy.Sketch, ui *sketchy.UI) {
 
 func update(s *sketchy.Sketch) {}
 
-func draw(s *sketchy.Sketch, c *canvas.Context) {
+func draw(s *sketchy.Sketch, c *render.Context) {
 	N := s.GetInt("Pattern", "N")
 	sides := s.GetInt("Pattern", "sides")
 	rotate := s.GetFloat("Pattern", "rotate")
@@ -35,8 +36,8 @@ func draw(s *sketchy.Sketch, c *canvas.Context) {
 		c.Push()
 		c.Translate(x, y)
 		c.Rotate(float64(i) * rotate)
-		path := canvas.RegularPolygon(sides, r, true)
-		c.DrawPath(0, 0, path)
+		poly := gaul.RegularPolygon{Sides: sides, Radius: r}
+		poly.Draw(c)
 		c.Pop()
 	}
 }

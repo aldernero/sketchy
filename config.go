@@ -19,8 +19,8 @@ type Config struct {
 	// frame so strokes accumulate on screen (display-only; saves render just
 	// the current frame). Sketch.Clear() wipes to DefaultBackground.
 	DisableClearBetweenFrames bool
-	// DisableFastStroke leaves canvas path settling enabled (slower, more precise strokes).
-	// When false (default), Init sets canvas.FastStroke for generative-art performance.
+	// DisableFastStroke is a no-op kept for compatibility; the old
+	// tdewolff/canvas FastStroke workaround is gone with the gaul renderer.
 	DisableFastStroke bool
 	ShowFPS           bool
 	// RasterDPI sets raster resolution (default 96 = one canvas pixel per
@@ -34,7 +34,7 @@ type Config struct {
 	DefaultBackground color.Color
 	// DefaultForeground is the initial stroke (and default pen) color for the canvas context; nil means white at Init.
 	DefaultForeground color.Color
-	// DefaultStrokeWidth is the initial stroke width in millimeters; 0 means 0.5 at Init.
+	// DefaultStrokeWidth is the initial stroke width in pixels; 0 means 1 at Init.
 	DefaultStrokeWidth float64
 	// PaletteDBPath locates the palettedb SQLite database for the Builtins palette
 	// dropdowns; empty means the palettedb default (~/.config/palettedb/palettedb.db).

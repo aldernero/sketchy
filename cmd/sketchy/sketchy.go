@@ -12,7 +12,7 @@ import (
 	"syscall"
 )
 
-const version = "v0.4.0"
+const version = "v0.5.0"
 
 //go:embed template
 var template embed.FS

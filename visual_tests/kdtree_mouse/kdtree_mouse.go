@@ -6,9 +6,10 @@ import (
 	"math"
 
 	"github.com/aldernero/gaul"
+	"github.com/aldernero/gaul/render"
 	"github.com/aldernero/sketchy"
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/tdewolff/canvas"
+	"golang.org/x/image/colornames"
 	"image/color"
 )
 
@@ -30,7 +31,7 @@ func neighborFingerprint(pts []gaul.IndexPoint) uint64 {
 
 func buildUI(_ *sketchy.Sketch, ui *sketchy.UI) {
 	ui.Folder("Display", func() {
-		ui.FloatSlider("Point Size", 0, 5, 0.5, 0.1)
+		ui.FloatSlider("Point Size", 0, 19, 2, 0.5)
 		ui.IntSlider("Closest Neighbors", 0, 10, 2, 1)
 	})
 	ui.Checkbox("Show Points", true)
@@ -61,10 +62,10 @@ func update(s *sketchy.Sketch) {
 	}
 }
 
-func draw(s *sketchy.Sketch, c *canvas.Context) {
+func draw(s *sketchy.Sketch, c *render.Context) {
 	// Drawing code goes here
 	c.SetFillColor(color.Transparent)
-	c.SetStrokeCapper(canvas.ButtCap)
+	c.SetLineCap(render.ButtCap)
 	pointSize := s.GetFloat("Display", "Point Size")
 	if s.Toggle("Show Points") {
 		kdtree.DrawWithPoints(pointSize, c)
@@ -78,12 +79,13 @@ func draw(s *sketchy.Sketch, c *canvas.Context) {
 		H: 0.2 * c.Height(),
 	}
 	foundPoints := kdtree.Query(queryRect)
-	c.SetStrokeColor(canvas.Blue)
-	c.DrawPath(queryRect.X, queryRect.Y, canvas.Rectangle(queryRect.W, queryRect.H))
+	c.SetStrokeColor(colornames.Blue)
+	c.DrawRectangle(queryRect.X, queryRect.Y, queryRect.W, queryRect.H)
+	c.FillStroke()
 	for _, p := range foundPoints {
 		p.Draw(pointSize, c)
 	}
-	c.SetStrokeColor(canvas.Magenta)
+	c.SetStrokeColor(colornames.Magenta)
 	if len(nearestPoints) > 0 {
 		for _, p := range nearestPoints {
 			p.Draw(pointSize, c)

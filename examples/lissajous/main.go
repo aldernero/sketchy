@@ -5,9 +5,9 @@ import (
 	"log"
 
 	"github.com/aldernero/gaul"
+	"github.com/aldernero/gaul/render"
 	"github.com/aldernero/sketchy"
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/tdewolff/canvas"
 )
 
 var lissa = gaul.Lissajous{Nx: 3, Ny: 2}
@@ -16,7 +16,7 @@ func buildUI(_ *sketchy.Sketch, ui *sketchy.UI) {
 	ui.Folder("Curve", func() {
 		ui.IntSlider("nx", 1, 100, 3, 1)
 		ui.IntSlider("ny", 1, 100, 2, 1)
-		ui.FloatSlider("radius", 0, 100, 50, 0.5)
+		ui.FloatSlider("radius", 0, 380, 190, 1)
 		ui.IntSlider("yphase", 0, 360, 180, 1)
 		ui.FloatSlider("phaseChange", -1, 1, 0.01, 0.01)
 	})
@@ -36,7 +36,7 @@ func update(s *sketchy.Sketch) {
 	}
 }
 
-func draw(s *sketchy.Sketch, c *canvas.Context) {
+func draw(s *sketchy.Sketch, c *render.Context) {
 	radius := s.GetFloat("Curve", "radius")
 	origin := gaul.Point{X: c.Width() / 2, Y: c.Height() / 2}
 	curve := gaul.GenLissajous(lissa, 1000, origin, radius)

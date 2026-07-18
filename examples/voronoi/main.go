@@ -7,9 +7,9 @@ import (
 	"math"
 
 	"github.com/aldernero/gaul"
+	"github.com/aldernero/gaul/render"
 	"github.com/aldernero/sketchy"
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/tdewolff/canvas"
 )
 
 func buildUI(_ *sketchy.Sketch, ui *sketchy.UI) {
@@ -47,7 +47,7 @@ func resetSimulation(s *sketchy.Sketch) {
 			Y: s.Rand.Prng.Float64() * h,
 		}
 		ang := gaul.Tau * s.Rand.Prng.Float64()
-		spd := 10 * s.Rand.Prng.Float64()
+		spd := 40 * s.Rand.Prng.Float64()
 		vels[i] = gaul.Point{X: math.Cos(ang) * spd, Y: math.Sin(ang) * spd}
 		idx := int(s.Rand.Prng.Uint64n(uint64(stops)))
 		fills[i] = palette[idx]
@@ -106,7 +106,7 @@ func update(s *sketchy.Sketch) {
 	s.MarkDirty()
 }
 
-func draw(s *sketchy.Sketch, c *canvas.Context) {
+func draw(s *sketchy.Sketch, c *render.Context) {
 	for i := range cells {
 		if len(cells[i].Points) == 0 {
 			continue
@@ -119,7 +119,7 @@ func draw(s *sketchy.Sketch, c *canvas.Context) {
 	c.SetStrokeColor(color.Transparent)
 	c.SetStrokeWidth(0)
 	for _, p := range sites {
-		c.DrawPath(p.X, p.Y, canvas.Circle(2))
+		c.DrawCircle(p.X, p.Y, 6)
 		c.Fill()
 	}
 }

@@ -5,7 +5,7 @@ import (
 	"log"
 
 	"github.com/aldernero/gaul"
-	"github.com/tdewolff/canvas"
+	"github.com/aldernero/gaul/render"
 
 	"github.com/aldernero/sketchy"
 	"github.com/hajimehoshi/ebiten/v2"
@@ -36,35 +36,40 @@ func update(s *sketchy.Sketch) {
 	}
 }
 
-func draw(s *sketchy.Sketch, c *canvas.Context) {
+func draw(s *sketchy.Sketch, c *render.Context) {
 	// Drawing code goes here
 	W := c.Width()
 	H := c.Height()
+	_ = H
 	left := 0.05 * W
 	right := 0.95 * W
 	N := 100
 	x := gaul.Linspace(left, right, N, true)
 	dx := 1.10 * (right - left) / float64(N)
-	dy := 5.0
-	c.SetStrokeCapper(canvas.ButtCap)
-	c.SetStrokeJoiner(canvas.MiterJoin)
+	dy := 19.0
+	c.SetLineCap(render.ButtCap)
+	c.SetLineJoin(render.MiterJoin)
 	for _, i := range x {
 		p := gaul.Map(0.05*W, 0.95*W, 0, 1, i)
 		c.SetFillColor(cg1.Color(p))
 		c.SetStrokeColor(cg1.Color(p))
-		c.DrawPath(i, H-7, canvas.Rectangle(dx, dy))
+		c.DrawRectangle(i, 8, dx, dy)
+		c.FillStroke()
 		c.SetFillColor(cg2.Color(p))
 		c.SetStrokeColor(cg2.Color(p))
-		c.DrawPath(i, H-30, canvas.Rectangle(dx, dy))
+		c.DrawRectangle(i, 95, dx, dy)
+		c.FillStroke()
 	}
 	p := s.GetFloat("Gradient", "percentage")
 	xPos := gaul.Map(0, 1, 0.05*W, 0.95*W, p)
 	c.SetFillColor(cg1.Color(p))
 	c.SetStrokeColor(cg1.Color(p))
-	c.DrawPath(xPos-2.5, H-17, canvas.Rectangle(5, 5))
+	c.DrawRectangle(xPos-9.5, 46, 19, 19)
+	c.FillStroke()
 	c.SetFillColor(cg2.Color(p))
 	c.SetStrokeColor(cg2.Color(p))
-	c.DrawPath(xPos-2.5, H-40, canvas.Rectangle(5, 5))
+	c.DrawRectangle(xPos-9.5, 132, 19, 19)
+	c.FillStroke()
 }
 
 func main() {

@@ -4,7 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/aldernero/gaul"
-	"github.com/tdewolff/canvas"
+	"github.com/aldernero/gaul/render"
 	"image/color"
 	"log"
 	"math"
@@ -67,12 +67,12 @@ func update(s *sketchy.Sketch) {
 	}
 }
 
-func draw(s *sketchy.Sketch, c *canvas.Context) {
+func draw(s *sketchy.Sketch, c *render.Context) {
 	// Drawing code goes here
 	if s.Toggle("Show Points") {
 		c.SetFillColor(color.Transparent)
 		for _, p := range points {
-			p.Draw(1, c)
+			p.Draw(4, c)
 		}
 	}
 	curve := gaul.Curve{

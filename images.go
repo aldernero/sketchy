@@ -10,7 +10,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/tdewolff/canvas"
+	"github.com/aldernero/gaul/render"
 )
 
 // ImageAsset names an image file to load at Init. Path is relative to the sketch working
@@ -32,27 +32,27 @@ func (s *Sketch) Image(name string) image.Image {
 	return img
 }
 
-// DrawImage draws img at (x, y) in canvas coordinates (millimeters), mapping one image pixel
-// to one sketch pixel using the sketch's pixel-to-mm scale.
-func (s *Sketch) DrawImage(c *canvas.Context, img image.Image) {
+// DrawImage draws img with its top-left corner at the canvas origin, mapping
+// one image pixel to one sketch pixel.
+func (s *Sketch) DrawImage(c *render.Context, img image.Image) {
 	s.DrawImageAt(c, 0, 0, img)
 }
 
 // DrawImageAt is like DrawImage but offsets the top-left of img to (x, y).
-func (s *Sketch) DrawImageAt(c *canvas.Context, x, y float64, img image.Image) {
+func (s *Sketch) DrawImageAt(c *render.Context, x, y float64, img image.Image) {
 	if img == nil {
 		return
 	}
-	c.DrawImage(x, y, img, s.imageResolution())
+	c.DrawImage(img, x, y)
 }
 
 // DrawNamedImage draws a Config ImageAsset (or RegisterImage entry) at the origin.
-func (s *Sketch) DrawNamedImage(c *canvas.Context, name string) {
+func (s *Sketch) DrawNamedImage(c *render.Context, name string) {
 	s.DrawNamedImageAt(c, 0, 0, name)
 }
 
 // DrawNamedImageAt draws a named asset at (x, y).
-func (s *Sketch) DrawNamedImageAt(c *canvas.Context, x, y float64, name string) {
+func (s *Sketch) DrawNamedImageAt(c *render.Context, x, y float64, name string) {
 	s.DrawImageAt(c, x, y, s.Image(name))
 }
 
@@ -68,10 +68,6 @@ func (s *Sketch) RegisterImage(name string, img image.Image) {
 		s.images = make(map[string]image.Image)
 	}
 	s.images[name] = img
-}
-
-func (s *Sketch) imageResolution() canvas.Resolution {
-	return canvas.Resolution(s.SketchWidth / s.Width())
 }
 
 func (s *Sketch) loadImages() {

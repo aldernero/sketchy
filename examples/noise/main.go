@@ -8,7 +8,7 @@ import (
 	"sync"
 
 	"github.com/aldernero/gaul"
-	"github.com/tdewolff/canvas"
+	"github.com/aldernero/gaul/render"
 
 	"github.com/aldernero/sketchy"
 	"github.com/hajimehoshi/ebiten/v2"
@@ -103,7 +103,7 @@ func update(s *sketchy.Sketch) {
 	}
 }
 
-func draw(s *sketchy.Sketch, c *canvas.Context) {
+func draw(s *sketchy.Sketch, c *render.Context) {
 	s.DrawNamedImage(c, noiseImageName)
 }
 

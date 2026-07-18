@@ -3,7 +3,7 @@ package main
 import (
 	"flag"
 	"github.com/aldernero/gaul"
-	"github.com/tdewolff/canvas"
+	"github.com/aldernero/gaul/render"
 	"log"
 
 	"github.com/aldernero/sketchy"
@@ -19,7 +19,7 @@ func buildUI(_ *sketchy.Sketch, ui *sketchy.UI) {
 	})
 }
 
-func drawLines(l gaul.Line, n int, p float64, ctx *canvas.Context) {
+func drawLines(l gaul.Line, n int, p float64, ctx *render.Context) {
 	if n == 0 {
 		return
 	}
@@ -28,7 +28,7 @@ func drawLines(l gaul.Line, n int, p float64, ctx *canvas.Context) {
 	right := l.Q
 	L := l.Length()
 	pb := l.PerpendicularBisector(p * L)
-	colorPercent := gaul.Clamp(0, 1, gaul.Map(0.5, 25, 0, 1, L))
+	colorPercent := gaul.Clamp(0, 1, gaul.Map(2, 95, 0, 1, L))
 	if n%2 == 0 {
 		colorPercent = 1 - colorPercent
 	}
@@ -45,7 +45,7 @@ func update(s *sketchy.Sketch) {
 	// Update logic goes here
 }
 
-func draw(s *sketchy.Sketch, c *canvas.Context) {
+func draw(s *sketchy.Sketch, c *render.Context) {
 	line := gaul.Line{
 		P: gaul.Point{X: 10, Y: c.Height() / 2},
 		Q: gaul.Point{X: c.Width() - 10, Y: c.Height() / 2},
