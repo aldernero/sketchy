@@ -5,7 +5,7 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.6.0] - 2026-07-19
 
 ### Changed
 
@@ -84,5 +84,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Initial published release (tag `v0.1.0`). Use `git log v0.1.0` for commit-level history before this changelog existed.
 
+[0.6.0]: https://github.com/aldernero/sketchy/compare/v0.5.0...v0.6.0
 [0.3.0]: https://github.com/aldernero/sketchy/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/aldernero/sketchy/compare/v0.1.0...v0.2.0
