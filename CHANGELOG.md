@@ -5,6 +5,12 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- **Video recording**: record animations straight to WebM (VP9), MP4 (H.264), animated WebP, or lossless FFV1 by piping raw frames to a user-installed ffmpeg (`video.go`, `video_ui.go`). Builtins panel rows (format, FPS, record scale, mode) plus a **Ctrl+R** hotkey; manual, fixed-frame-count, and armed perfect-loop modes (capture starts at `Tick % N == 0` and stops after exactly N frames). Scriptable via `StartRecording` / `StopRecording` / `ArmLoopRecording`. Encoding backpressure slows the live preview instead of dropping frames, so output is always frame-perfect; recording renders independently of Preview mode. New guide: `docs/recording.md`.
+
 ## [0.3.0] - 2026-05-25
 
 ### Added

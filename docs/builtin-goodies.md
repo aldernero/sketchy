@@ -22,6 +22,10 @@ controls):
 - **Discrete palette / Sine palette** — dropdowns listing
   [palettedb](https://github.com/aldernero/palettedb) palettes for use in
   your `Drawer` via `s.DiscretePalette` / `s.SinePalette`.
+- **Recording** (Rec format / FPS / scale / mode) — records animations to
+  WebM, MP4, animated WebP, or lossless FFV1 via ffmpeg, with manual,
+  fixed-length, and perfect-loop modes. **Ctrl+R** starts/stops. See
+  [Recording video](recording.md).
 - **Save Image… / Take Snapshot… / Load Snapshot…** — dialogs described
   below.
 - **UI theme** — Dark or Light control-panel style; the letterbox margin
@@ -96,6 +100,7 @@ for the full API.
 | **↑** / **↓** | Increment / decrement the random seed |
 | **/** | Randomize the seed |
 | **Ctrl+Space** | Show / hide the control panel |
+| **Ctrl+R** | Start/arm or stop/disarm a [video recording](recording.md) |
 | **Esc** | Ebitengine window screenshot |
 
 The seed keys re-render immediately, which makes stepping through seed

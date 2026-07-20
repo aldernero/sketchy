@@ -203,6 +203,21 @@ type Sketch struct {
 	// debugUIThemeIndex selects the control-panel style (Builtins dropdown); 0 = themes/dark.json, 1 = themes/light.json.
 	debugUIThemeIndex int
 
+	// vrec is the live video recording; nil when idle (see video.go).
+	vrec *videoRecorder
+	// rasterUploadPending: updateRecording already ran renderFrame this
+	// tick; Draw must upload rasterBuf without re-rendering (a second
+	// render would double-consume Rand and change the animation).
+	rasterUploadPending bool
+	// Builtins Recording rows state (video_ui.go).
+	recFormatIdx int
+	recModeIdx   int
+	recFPS       int
+	recFrames    int
+	recModulus   int
+	recScaleIdx  int
+	recStatus    string
+
 	// Primary mouse edge (see refreshPrimaryMouseEdge): avoids relying on inpututil JustPressed tick matching.
 	sketchPrimaryMouseDown     bool
 	sketchPrimaryMouseJustDown bool
@@ -318,6 +333,12 @@ func (s *Sketch) Init() {
 	s.Rand = gaul.NewRng(s.RandomSeed)
 	s.builtinSeedInt = int(s.RandomSeed)
 	s.syncExportScaleIdxFromDPI()
+	s.StopRecording() // Init() may run more than once; never record across a re-init
+	if s.recFPS == 0 {
+		s.recFPS = recordDefaultFPS
+		s.recFrames = 300
+		s.recModulus = 600
+	}
 	s.recorder = render.NewRecorder(s.SketchWidth, s.SketchHeight)
 	s.needToClear = true
 	s.showDebugUI = true
@@ -526,6 +547,11 @@ func (s *Sketch) UpdateControls() {
 	if ctrlDown && inpututil.IsKeyJustPressed(ebiten.KeySpace) {
 		s.showDebugUI = !s.showDebugUI
 	}
+	// Ctrl+R starts/arms a recording with the Builtins panel settings, or
+	// stops/disarms the one in progress.
+	if ctrlDown && inpututil.IsKeyJustPressed(ebiten.KeyR) {
+		s.toggleRecordingHotkey()
+	}
 
 	if s.showDebugUI && s.uiCaptureState == 0 {
 		_, dy := ebiten.Wheel()
@@ -684,6 +710,7 @@ func (s *Sketch) Update() error {
 	if ok, _, _ := s.PrimaryPointerPressInSketch(); ok {
 		s.MarkDirty()
 	}
+	s.updateRecording()
 	s.Tick++
 	return nil
 }
@@ -714,8 +741,11 @@ func colorToRGBHex(c color.Color) string {
 }
 
 func (s *Sketch) Draw(screen *ebiten.Image) {
-	if s.dirty {
-		img := s.renderFrame()
+	if s.dirty || s.rasterUploadPending {
+		img := s.rasterBuf
+		if s.dirty {
+			img = s.renderFrame()
+		}
 
 		rw, rh := img.Bounds().Dx(), img.Bounds().Dy()
 		if s.offscreen == nil || s.offscreen.Bounds().Dx() != rw || s.offscreen.Bounds().Dy() != rh {
@@ -723,6 +753,7 @@ func (s *Sketch) Draw(screen *ebiten.Image) {
 		}
 		s.offscreen.WritePixels(img.Pix)
 		s.dirty = false
+		s.rasterUploadPending = false
 	}
 
 	screen.Fill(s.letterboxMarginRGBA())

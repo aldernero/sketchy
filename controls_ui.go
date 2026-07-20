@@ -66,6 +66,7 @@ func (s *Sketch) builtinsPanel(ctx *debugui.Context) {
 		s.drawBuiltinDefaultStrokeWidthRow(ctx)
 		s.drawBuiltinRenderRows(ctx)
 		s.drawBuiltinPaletteRows(ctx)
+		s.drawBuiltinRecordingRows(ctx)
 
 		ctx.SetGridLayout([]int{-1}, nil)
 		ctx.Button("Save Image…").On(func() {
