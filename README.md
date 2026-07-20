@@ -6,6 +6,8 @@ Sketches are **code-first**: you construct a [`sketchy.Config`](config.go), call
 
 Your `Drawer` receives a [`*render.Context`](https://pkg.go.dev/github.com/aldernero/gaul/render) from gaul's render package. **Coordinates are pixels** — origin at the top-left, x right, y down — and the canvas is exactly `SketchWidth` × `SketchHeight`. The context supports both Processing-style immediate drawing (`Push`/`Pop`, `Translate`/`Rotate`/`Scale`, `MoveTo`/`LineTo`, `Fill`/`Stroke`) and gaul's primitive-first style (`gaul.Circle{...}.Draw(ctx)`). Every frame is also recorded, so PNG saves (at any export scale) and plotter-friendly SVG saves reproduce exactly the frame on screen. Animations can be [recorded to video](docs/recording.md) (WebM/VP9, MP4, animated WebP, or lossless FFV1) via ffmpeg — including armed perfect-loop captures that start and stop on tick moduli.
 
+Sketchy also supports GPU [**shader sketches**](docs/shaders.md) (`sketchy init shader <name>`): the sketch is a [Kage](https://ebitengine.org/en/documents/shader.html) fragment shader whose `//sketchy:` directive comments auto-generate the control panel — each uniform's slider/color/checkbox/dropdown is declared next to the uniform itself, the file live-reloads while the sketch runs, and PNG export and video recording work via GPU readback.
+
 The [Getting Started](docs/getting-started.md) guide walks through install, `sketchy init`, and a small “Hello Circle” sketch using the code-first API; the [`examples/`](examples/) directory has full programs you can copy from.
 
 Below are a couple of screenshots/videos from the example sketches:
@@ -48,10 +50,10 @@ Swap `lissajous` for another folder name under [`examples/`](examples/).
 
 # Creating a new sketch
 
-The CLI syntax is `sketchy init project_name`. That creates a new directory, copies the embedded template (`main.go`, `.gitignore`), runs `go mod init` and `go mod tidy`:
+The CLI syntax is `sketchy init <sketch|shader> project_name` — `sketch` for a CPU-canvas sketch, `shader` for a [Kage shader sketch](docs/shaders.md). It creates a new directory, copies the embedded template, and runs `go mod init` and `go mod tidy`:
 
 ```shell
-❯ sketchy init mysketch
+❯ sketchy init sketch mysketch
 ❯ tree mysketch
 mysketch
 ├── go.mod
@@ -59,6 +61,8 @@ mysketch
 ├── main.go
 └── .gitignore
 ```
+
+(A shader project additionally contains `fragment.kage`.)
 
 Edit `main.go`: set fields on [`sketchy.Config`](config.go) (title, size, colors, [`DefaultBackground`](config.go) / [`DefaultForeground`](config.go) / [`DefaultStrokeWidth`](config.go), …), register controls in `BuildUI`, then call [`Init`](sketch.go). The template loads `icon.png` if present for the window icon.
 

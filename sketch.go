@@ -48,6 +48,10 @@ type SaveRequest struct {
 	Format   string // "png" or "svg"
 	DPI      float64
 	RecordDB bool
+	// Pixels is a pre-captured frame (shader sketches: GPU output must be
+	// read back on the ebiten thread, so the capture happens at enqueue
+	// time and the worker only encodes). When set, Format must be "png".
+	Pixels *image.RGBA
 }
 
 type Sketch struct {
@@ -203,6 +207,26 @@ type Sketch struct {
 	// debugUIThemeIndex selects the control-panel style (Builtins dropdown); 0 = themes/dark.json, 1 = themes/light.json.
 	debugUIThemeIndex int
 
+	// Shader mode (see shader.go): the sketch renders a Kage fragment
+	// shader instead of a CPU Drawer.
+	ShaderPath string
+	ShaderSrc  []byte
+	// ExtraUniforms supplies computed uniform values merged last into every
+	// shader draw (wins over control-mapped and builtin uniforms). The
+	// escape hatch for vec2/matrix uniforms and values derived in Go.
+	ExtraUniforms func(s *Sketch) map[string]any
+
+	shader          *ebiten.Shader
+	shaderUniforms  []shaderUniform
+	shaderMtime     time.Time
+	shaderErr       string        // last reload error, shown in the Builtins panel
+	shaderStatus    string        // last successful reload message
+	shaderTarget    *ebiten.Image // reused export/record render target
+	shaderAnimates  bool          // Time or Tick declared: dirty every tick
+	shaderUsesMouse bool          // Mouse declared: dirty on cursor move
+	lastCursorX     int
+	lastCursorY     int
+
 	// vrec is the live video recording; nil when idle (see video.go).
 	vrec *videoRecorder
 	// rasterUploadPending: updateRecording already ran renderFrame this
@@ -293,24 +317,8 @@ func (s *Sketch) Init() {
 		s.DefaultStrokeWidth = 1
 	}
 
-	s.FloatSliders = nil
-	s.IntSliders = nil
-	s.Toggles = nil
-	s.ColorPickers = nil
-	s.Dropdowns = nil
-	s.uiPlan = nil
-	if s.BuildUI != nil {
-		ui := &UI{s: s}
-		s.BuildUI(s, ui)
-	}
-	s.builtinColorBGIdx = len(s.ColorPickers)
-	s.ColorPickers = append(s.ColorPickers, NewColorPicker("Default background", colorToRGBHex(s.DefaultBackground)))
-	s.ColorPickers[s.builtinColorBGIdx].Folder = "_builtins"
-	s.builtinColorFGIdx = len(s.ColorPickers)
-	s.ColorPickers = append(s.ColorPickers, NewColorPicker("Default foreground", colorToRGBHex(s.DefaultForeground)))
-	s.ColorPickers[s.builtinColorFGIdx].Folder = "_builtins"
-	s.buildMaps()
-	s.uiFolders = buildFolderPlan(s.uiPlan)
+	s.initShader()
+	s.rebuildControls()
 
 	s.initPaletteDB()
 
@@ -359,6 +367,34 @@ func (s *Sketch) Init() {
 	}
 
 	s.applyDebugUITheme()
+}
+
+// rebuildControls re-registers every control from scratch: the user's
+// BuildUI, then shader-directive controls, then the builtin BG/FG pickers.
+// Called at Init and on shader live reload (via
+// rebuildControlsPreservingValues).
+func (s *Sketch) rebuildControls() {
+	s.FloatSliders = nil
+	s.IntSliders = nil
+	s.Toggles = nil
+	s.ColorPickers = nil
+	s.Dropdowns = nil
+	s.uiPlan = nil
+	ui := &UI{s: s}
+	if s.BuildUI != nil {
+		s.BuildUI(s, ui)
+	}
+	if s.IsShaderSketch() {
+		s.registerShaderControls(ui)
+	}
+	s.builtinColorBGIdx = len(s.ColorPickers)
+	s.ColorPickers = append(s.ColorPickers, NewColorPicker("Default background", colorToRGBHex(s.DefaultBackground)))
+	s.ColorPickers[s.builtinColorBGIdx].Folder = "_builtins"
+	s.builtinColorFGIdx = len(s.ColorPickers)
+	s.ColorPickers = append(s.ColorPickers, NewColorPicker("Default foreground", colorToRGBHex(s.DefaultForeground)))
+	s.ColorPickers[s.builtinColorFGIdx].Folder = "_builtins"
+	s.buildMaps()
+	s.uiFolders = buildFolderPlan(s.uiPlan)
 }
 
 // GetFloat returns a float slider value in folder (use "" for root).
@@ -706,10 +742,13 @@ func (s *Sketch) Update() error {
 		s.uiCaptureState = 0
 	}
 	s.UpdateControls()
-	s.Updater(s)
+	if s.Updater != nil {
+		s.Updater(s)
+	}
 	if ok, _, _ := s.PrimaryPointerPressInSketch(); ok {
 		s.MarkDirty()
 	}
+	s.updateShader()
 	s.updateRecording()
 	s.Tick++
 	return nil
@@ -741,7 +780,12 @@ func colorToRGBHex(c color.Color) string {
 }
 
 func (s *Sketch) Draw(screen *ebiten.Image) {
-	if s.dirty || s.rasterUploadPending {
+	if s.IsShaderSketch() {
+		if s.dirty {
+			s.renderShaderFrame(s.offscreen)
+			s.dirty = false
+		}
+	} else if s.dirty || s.rasterUploadPending {
 		img := s.rasterBuf
 		if s.dirty {
 			img = s.renderFrame()
@@ -998,6 +1042,18 @@ func (s *Sketch) EnqueueSave(relPath, format string, dpi float64, recordDB bool)
 	}
 }
 
+// EnqueueSavePixels queues an async PNG encode of an already-captured
+// frame. Used by shader sketches, whose pixels are read back from the GPU
+// on the ebiten thread before enqueueing.
+func (s *Sketch) EnqueueSavePixels(relPath string, img *image.RGBA, recordDB bool) {
+	select {
+	case s.saveRequests <- SaveRequest{RelPath: relPath, Format: "png", RecordDB: recordDB, Pixels: img}:
+		fmt.Println("Queued save:", relPath)
+	default:
+		fmt.Println("Save queue full, skipping save")
+	}
+}
+
 func (s *Sketch) saveWorker() {
 	for req := range s.saveRequests {
 		full := filepath.Join(s.workDir, filepath.FromSlash(req.RelPath))
@@ -1006,11 +1062,17 @@ func (s *Sketch) saveWorker() {
 			continue
 		}
 		var err error
-		switch req.Format {
-		case "png":
+		switch {
+		case req.Pixels != nil:
+			err = writePixelsPNG(full, req.Pixels)
+		case req.Format == "png":
 			err = s.renderPNGToFile(full, req.DPI)
-		case "svg":
-			err = s.renderSVGToFile(full)
+		case req.Format == "svg":
+			if s.IsShaderSketch() {
+				err = fmt.Errorf("SVG export is not available for shader sketches")
+			} else {
+				err = s.renderSVGToFile(full)
+			}
 		default:
 			err = fmt.Errorf("unknown format %q", req.Format)
 		}

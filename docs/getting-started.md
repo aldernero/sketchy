@@ -48,7 +48,7 @@ Control values are read by **folder** and **name**. Use `""` for the root folder
 # Creating a new sketch with the CLI
 
 ```shell
-sketchy init hello_circle
+sketchy init sketch hello_circle
 cd hello_circle
 ```
 
@@ -63,6 +63,8 @@ hello_circle/
 ```
 
 `sketchy init` copies the embedded template, runs `go mod init` and `go mod tidy`. The template includes a sample `buildUI`, empty `update`/`draw`, and optional `icon.png` loading if you add that file next to `main.go`.
+
+The project type is required: `sketchy init sketch <name>` draws on the CPU canvas with a `Drawer`, while `sketchy init shader <name>` renders a GPU [Kage fragment shader](shaders.md) whose `//sketchy:` directives auto-generate the control panel — the generated project includes a live-reloading `fragment.kage`.
 
 Run the project from its directory:
 

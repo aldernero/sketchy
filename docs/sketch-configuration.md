@@ -47,6 +47,8 @@ is exactly `SketchWidth` × `SketchHeight`.
 | RandomSeed                | int64       | 0 (auto)    | seed for the builtin PRNG; 0 seeds from the clock at `Init` |
 | PaletteDBPath             | string      | ""          | [palettedb](https://github.com/aldernero/palettedb) database for the Builtins palette dropdowns; empty means `~/.config/palettedb/palettedb.db` |
 | Images                    | []ImageAsset| (none)      | image files loaded at `Init`; draw with `DrawNamedImage` |
+| ShaderPath                | string      | ""          | enables [shader mode](shaders.md): the file is compiled as a Kage fragment shader whose `//sketchy:` directives auto-create controls; live-reloaded on change. `Drawer` is unused |
+| ShaderSrc                 | []byte      | (none)      | embedded Kage source instead of a file (no live reload); `ShaderPath` wins when both are set |
 | DisableFastStroke         | bool        | false       | no-op kept for compatibility (the old tdewolff/canvas FastStroke workaround is gone) |
 
 Each [`ImageAsset`](../images.go) has `Name` (the key used with

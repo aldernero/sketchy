@@ -7,8 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Breaking (CLI)**: `sketchy init` now requires the project type: `sketchy init <sketch|shader> <name>`. The former `sketchy init <name>` form is rejected with a usage hint (`cmd/sketchy/sketchy.go`).
+
 ### Added
 
+- **Shader sketches**: render a sketch with an Ebitengine Kage fragment shader (`Config.ShaderPath`/`ShaderSrc`; `shader.go`, `shader_parse.go`). `//sketchy:` directive comments on the shader's uniforms auto-generate control-panel controls (slider, checkbox, color, dropdown) that are passed back as uniforms each frame; builtin uniforms `Time`/`Tick`/`Resolution`/`Mouse`/`Seed` are supplied when declared. The shader file live-reloads on save (errors keep the last good shader and show in the Builtins panel; control values survive reloads by name). PNG saves and video recording work via GPU readback at any export scale (SVG is unavailable in shader mode). New CLI form `sketchy init [sketch|shader] <name>` with a `template_shader` project (`fragment.kage` demo); bare `sketchy init <name>` unchanged. `ExtraUniforms` hook for computed/vec2/matrix uniforms. New guide: `docs/shaders.md`; demo: `visual_tests/shader_demo`.
+- **`Sketch.FinishRecording(timeout)`**: blocks until the current video recording is fully written — for scripted sketches that exit right after recording (`video.go`).
 - **Video recording**: record animations straight to WebM (VP9), MP4 (H.264), animated WebP, or lossless FFV1 by piping raw frames to a user-installed ffmpeg (`video.go`, `video_ui.go`). Builtins panel rows (format, FPS, record scale, mode) plus a **Ctrl+R** hotkey; manual, fixed-frame-count, and armed perfect-loop modes (capture starts at `Tick % N == 0` and stops after exactly N frames). Scriptable via `StartRecording` / `StopRecording` / `ArmLoopRecording`. Encoding backpressure slows the live preview instead of dropping frames, so output is always frame-perfect; recording renders independently of Preview mode. New guide: `docs/recording.md`.
 
 ## [0.3.0] - 2026-05-25

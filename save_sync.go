@@ -1,6 +1,8 @@
 package sketchy
 
 import (
+	"image"
+	"image/png"
 	"os"
 	"path/filepath"
 
@@ -47,4 +49,31 @@ func writeSVG(full string, s *Sketch) error {
 		return err
 	}
 	return s.renderSVGToFile(full)
+}
+
+// writePixelsPNG encodes an already-captured frame (e.g. a shader sketch's
+// GPU readback) as PNG.
+func writePixelsPNG(full string, img *image.RGBA) error {
+	if err := os.MkdirAll(filepath.Dir(full), 0755); err != nil {
+		return err
+	}
+	f, err := os.Create(full)
+	if err != nil {
+		return err
+	}
+	if err := png.Encode(f, img); err != nil {
+		_ = f.Close()
+		return err
+	}
+	return f.Close()
+}
+
+// writeSnapshotPNG writes the current frame for the snapshot dialog,
+// dispatching between the CPU recorder replay and the GPU shader capture.
+// Must run on the ebiten thread in shader mode.
+func (s *Sketch) writeSnapshotPNG(full string) error {
+	if s.IsShaderSketch() {
+		return writePixelsPNG(full, s.CaptureShaderImage(s.RasterDPI/DefaultDPI))
+	}
+	return writePNG(full, s)
 }

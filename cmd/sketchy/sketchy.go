@@ -14,7 +14,7 @@ import (
 
 const version = "v0.5.0"
 
-//go:embed template
+//go:embed all:template all:template_shader
 var template embed.FS
 
 func main() {
@@ -32,6 +32,22 @@ func main() {
 		os.Exit(1)
 	}
 	prefix := os.Args[2]
+	templateDir := "template"
+	if os.Args[1] == "init" {
+		// sketchy init <sketch|shader> <name> — the project type is required.
+		if os.Args[2] != "sketch" && os.Args[2] != "shader" {
+			fmt.Println("expected a project type: sketchy init <sketch|shader> <name>")
+			os.Exit(1)
+		}
+		if len(os.Args) < 4 {
+			fmt.Printf("expected a project name: sketchy init %s <name>\n", os.Args[2])
+			os.Exit(1)
+		}
+		if os.Args[2] == "shader" {
+			templateDir = "template_shader"
+		}
+		prefix = os.Args[3]
+	}
 	dirPath := path.Join(cwd, prefix)
 	switch os.Args[1] {
 	case "init":
@@ -46,7 +62,7 @@ func main() {
 		if err != nil {
 			log.Fatal("error while changing directory:", err)
 		}
-		copyFilesFromEmbedFS(&template, "template", dirPath)
+		copyFilesFromEmbedFS(&template, templateDir, dirPath)
 		modInitCmd := exec.Command("go", "mod", "init", prefix)
 		_, cmdErr := modInitCmd.Output()
 		if cmdErr != nil {
@@ -96,10 +112,12 @@ func main() {
 }
 
 func usage() {
-	fmt.Println("Usage: sketchy command prefix")
+	fmt.Println("Usage: sketchy command args")
 	fmt.Println("Commands:")
-	fmt.Println("\tinit - create new project with name 'prefix'")
-	fmt.Println("\trun - run project with name 'prefix'")
+	fmt.Println("\tinit <sketch|shader> <name> - create a new project")
+	fmt.Println("\t         'sketch' draws on a CPU canvas;")
+	fmt.Println("\t         'shader' renders a Kage fragment shader (fragment.kage)")
+	fmt.Println("\trun <name> - run the project in directory 'name'")
 	fmt.Println("\tversion  - print Sketchy version")
 }
 

@@ -67,6 +67,14 @@ Two consequences worth knowing:
   has flushed the file. Wait for the saved-path message before closing the
   sketch.
 
+# Shader sketches
+
+[Shader sketches](shaders.md) record exactly the same way — frames are read
+back from the GPU each tick instead of copied from the CPU raster. Perfect
+loops pair naturally with the `Time` builtin uniform: a shader periodic in
+`Time` with period `P` seconds loops perfectly with Loop mode and
+`N = 60 * P` frames.
+
 # Recording from code
 
 Everything the panel does is available on `Sketch`:
@@ -92,7 +100,10 @@ err = s.ArmLoopRecording(600)
 ```
 
 `IsRecording()` and `RecordingFrameCount()` report progress, e.g. for
-drawing a recording indicator inside the sketch itself.
+drawing a recording indicator inside the sketch itself. Scripted sketches
+that exit right after recording should call
+`s.FinishRecording(timeout)` — it blocks until ffmpeg has fully written the
+file, where the interactive path finalizes asynchronously.
 
 `RecordingOptions.ExtraArgs` is appended to the ffmpeg command line after
 the defaults, so ffmpeg's last-option-wins makes overrides clean:

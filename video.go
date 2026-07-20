@@ -11,9 +11,11 @@ import (
 	"strconv"
 	"strings"
 	"sync/atomic"
+	"time"
 
 	"github.com/aldernero/gaul"
 	"github.com/aldernero/gaul/render"
+	"github.com/hajimehoshi/ebiten/v2"
 )
 
 // RecordingFormat selects the container/codec for video recording. All
@@ -181,9 +183,10 @@ type videoRecorder struct {
 	frames     int64
 	frameCh    chan []byte
 	doneCh     chan error
-	encErr     atomic.Value // error: encoder failed; Update auto-stops next tick
-	free       chan []byte  // recycled frame buffers
-	raster     *image.RGBA  // reused replay target for the record-scale path
+	encErr     atomic.Value  // error: encoder failed; Update auto-stops next tick
+	free       chan []byte   // recycled frame buffers
+	raster     *image.RGBA   // reused replay target for the record-scale path
+	gpuTarget  *ebiten.Image // reused record-size shader render target
 	sink       frameSink
 	outPath    string // full path, for the status message
 	captureErr error  // capture-side abort reason, reported at finish
@@ -313,6 +316,28 @@ func (s *Sketch) StopRecording() {
 	close(r.frameCh)
 }
 
+// FinishRecording stops the current recording (if still running) and
+// blocks until the file is fully written, or the timeout elapses. The
+// non-blocking path — StopRecording plus the per-tick finalize poll — is
+// right for interactive use; this is for scripted sketches that must not
+// exit while ffmpeg is still flushing. Safe to call from Updater.
+func (s *Sketch) FinishRecording(timeout time.Duration) error {
+	r := s.vrec
+	if r == nil {
+		return nil
+	}
+	if r.state != recFinalizing {
+		s.StopRecording()
+	}
+	select {
+	case err := <-r.doneCh:
+		s.finishRecording(err)
+		return err
+	case <-time.After(timeout):
+		return fmt.Errorf("recording did not finalize within %v", timeout)
+	}
+}
+
 // IsRecording reports whether frames are being captured (not armed, not
 // finalizing).
 func (s *Sketch) IsRecording() bool {
@@ -367,11 +392,16 @@ func (s *Sketch) updateRecording() {
 
 	// Render at most once per tick: Drawer may consume s.Rand, so rendering
 	// here and again in Draw would change the animation vs. non-recording
-	// runs. rasterUploadPending tells Draw to upload without re-rendering.
+	// runs. rasterUploadPending tells Draw to upload without re-rendering
+	// (shader mode renders straight into the offscreen, nothing to upload).
 	if s.dirty {
-		s.renderFrame()
+		if s.IsShaderSketch() {
+			s.renderShaderFrame(s.offscreen)
+		} else {
+			s.renderFrame()
+			s.rasterUploadPending = true
+		}
 		s.dirty = false
-		s.rasterUploadPending = true
 	}
 	buf := s.captureVideoFrame()
 	if buf == nil {
@@ -389,6 +419,22 @@ func (s *Sketch) updateRecording() {
 // previous frame (duplicate, not skip) so ticks and frames stay 1:1.
 func (s *Sketch) captureVideoFrame() []byte {
 	r := s.vrec
+	if s.IsShaderSketch() {
+		// GPU readback (premultiplied RGBA — the layout the ffmpeg pipe
+		// expects). At scale 1 the display offscreen already holds the
+		// frame; other scales re-render into a reused record-size target.
+		buf := r.getBuf()
+		if s.offscreen != nil && s.offscreen.Bounds().Dx() == r.w && s.offscreen.Bounds().Dy() == r.h {
+			s.offscreen.ReadPixels(buf)
+			return buf
+		}
+		if r.gpuTarget == nil || r.gpuTarget.Bounds().Dx() != r.w || r.gpuTarget.Bounds().Dy() != r.h {
+			r.gpuTarget = ebiten.NewImage(r.w, r.h)
+		}
+		s.renderShaderFrame(r.gpuTarget)
+		r.gpuTarget.ReadPixels(buf)
+		return buf
+	}
 	if s.DisableClearBetweenFrames {
 		// Accumulated strokes only exist in the display raster; the
 		// recording holds just the current frame, so replay would lose

@@ -67,6 +67,7 @@ func (s *Sketch) builtinsPanel(ctx *debugui.Context) {
 		s.drawBuiltinRenderRows(ctx)
 		s.drawBuiltinPaletteRows(ctx)
 		s.drawBuiltinRecordingRows(ctx)
+		s.drawBuiltinShaderRows(ctx)
 
 		ctx.SetGridLayout([]int{-1}, nil)
 		ctx.Button("Save Image…").On(func() {
@@ -179,6 +180,23 @@ func (s *Sketch) drawBuiltinRenderRows(ctx *debugui.Context) {
 			s.dirty = true
 		})
 	})
+}
+
+// drawBuiltinShaderRows shows shader-mode status: the last live-reload
+// result (error lines in full, kept until the next successful reload).
+func (s *Sketch) drawBuiltinShaderRows(ctx *debugui.Context) {
+	if !s.IsShaderSketch() {
+		return
+	}
+	ctx.SetGridLayout([]int{-1}, nil)
+	switch {
+	case s.shaderErr != "":
+		for _, line := range strings.Split(s.shaderErr, "\n") {
+			ctx.Text(line)
+		}
+	case s.shaderStatus != "":
+		ctx.Text(s.shaderStatus)
+	}
 }
 
 // drawBuiltinPaletteRows renders the palettedb dropdowns (Builtins). Selecting
@@ -334,7 +352,9 @@ func (s *Sketch) dialogSaveImage(ctx *debugui.Context) {
 		prefix := &s.dlgSaveImagePrefix
 		ctx.TextField(prefix).On(func() {})
 		ctx.Checkbox(&s.dlgSavePNG, "PNG")
-		ctx.Checkbox(&s.dlgSaveSVG, "SVG")
+		if !s.IsShaderSketch() { // shader output has no vector representation
+			ctx.Checkbox(&s.dlgSaveSVG, "SVG")
+		}
 		modalActionRow(ctx, "OK", func() { s.dlgSaveImageOpen = false }, func() {
 			base := strings.TrimSpace(*prefix)
 			if base == "" {
@@ -342,9 +362,15 @@ func (s *Sketch) dialogSaveImage(ctx *debugui.Context) {
 			}
 			if s.dlgSavePNG {
 				rel := filepath.ToSlash(filepath.Join("saves", "png", base+".png"))
-				s.EnqueueSave(rel, "png", s.RasterDPI, true)
+				if s.IsShaderSketch() {
+					// GPU readback must happen here on the ebiten thread;
+					// the worker only encodes.
+					s.EnqueueSavePixels(rel, s.CaptureShaderImage(s.RasterDPI/DefaultDPI), true)
+				} else {
+					s.EnqueueSave(rel, "png", s.RasterDPI, true)
+				}
 			}
-			if s.dlgSaveSVG {
+			if s.dlgSaveSVG && !s.IsShaderSketch() {
 				rel := filepath.ToSlash(filepath.Join("saves", "svg", base+".svg"))
 				s.EnqueueSave(rel, "svg", 0, true)
 			}
@@ -374,7 +400,9 @@ func (s *Sketch) dialogSnapshot(ctx *debugui.Context) {
 		ctx.SetGridLayout([]int{-1}, nil)
 		ctx.Text("Save images")
 		ctx.Checkbox(&s.dlgSnapshotPNG, "PNG")
-		ctx.Checkbox(&s.dlgSnapshotSVG, "SVG")
+		if !s.IsShaderSketch() {
+			ctx.Checkbox(&s.dlgSnapshotSVG, "SVG")
+		}
 		modalActionRow(ctx, "OK", func() { s.dlgSnapshotOpen = false }, func() {
 			n := strings.TrimSpace(*name)
 			if n == "" {
@@ -398,7 +426,7 @@ func (s *Sketch) dialogSnapshot(ctx *debugui.Context) {
 			if s.dlgSnapshotPNG {
 				rel := filepath.ToSlash(filepath.Join("saves", "png", base+".png"))
 				full := filepath.Join(s.workDir, filepath.FromSlash(rel))
-				if err := writePNG(full, s); err != nil {
+				if err := s.writeSnapshotPNG(full); err != nil {
 					fmt.Println("snapshot png:", err)
 				} else if s.db != nil {
 					id, ierr := s.db.InsertSave(rel, "png")
@@ -410,7 +438,7 @@ func (s *Sketch) dialogSnapshot(ctx *debugui.Context) {
 					}
 				}
 			}
-			if s.dlgSnapshotSVG {
+			if s.dlgSnapshotSVG && !s.IsShaderSketch() {
 				rel := filepath.ToSlash(filepath.Join("saves", "svg", base+".svg"))
 				full := filepath.Join(s.workDir, filepath.FromSlash(rel))
 				if err := writeSVG(full, s); err != nil {

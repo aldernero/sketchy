@@ -41,6 +41,14 @@ type Config struct {
 	PaletteDBPath string
 	// Images lists files to load at Init; use Image/DrawNamedImage in Drawer by Name.
 	Images []ImageAsset
+	// ShaderPath enables shader mode: the file is compiled as a Kage fragment
+	// shader whose //sketchy: directives auto-create panel controls that are
+	// passed back as uniforms. The file is live-reloaded when it changes.
+	// Drawer is unused in shader mode. See docs/shaders.md.
+	ShaderPath string
+	// ShaderSrc supplies embedded Kage source directly (no live reload).
+	// ShaderPath wins when both are set.
+	ShaderSrc []byte
 }
 
 // New returns an uninitialized sketch. Set BuildUI, Updater, and Drawer, then call Init().
@@ -67,6 +75,8 @@ func New(cfg Config) *Sketch {
 		DefaultStrokeWidth:        cfg.DefaultStrokeWidth,
 		PaletteDBPath:             cfg.PaletteDBPath,
 		imageAssets:               append([]ImageAsset(nil), cfg.Images...),
+		ShaderPath:                cfg.ShaderPath,
+		ShaderSrc:                 append([]byte(nil), cfg.ShaderSrc...),
 	}
 	if s.SketchWidth <= 0 {
 		s.SketchWidth = 1080
