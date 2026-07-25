@@ -36,6 +36,25 @@ s := sketchy.New(sketchy.Config{
 live reload in that case. `Drawer` is unused in shader mode; `Updater` is
 optional.
 
+# The live display is always 1:1
+
+The on-screen shader sketch always renders at exactly
+`SketchWidth x SketchHeight` — the Builtins **Preview Mode** checkbox (a
+raster-resolution knob for CPU sketches) doesn't apply and is hidden from
+the panel in shader mode; a fragment shader is never expected to benefit
+from a cheaper preview raster the way a CPU sketch's vector recording does.
+Keeping the live display at 1:1 is also what makes source images (below)
+and the ping-pong state buffer (below) simple to reason about while
+running — every image sketchy binds to the shader on the live path is
+guaranteed to be the same size as the render target.
+
+**Export Scale** *does* apply in shader mode: it controls the resolution of
+PNG saves (Save Image / Snapshot dialogs) only, independent of what's on
+screen. At a scale above 1x, any bound `//sketchy:image` source or the
+ping-pong state buffer is upscaled (GPU, linear filter) to match the export
+size for that one capture — the originals, and a running simulation, are
+untouched.
+
 # Directives: uniforms become controls
 
 Declare uniforms in the shader's top-level `var` block (one per line) with
@@ -61,9 +80,10 @@ var (
 | `none` | any | — | not passed; supply via `ExtraUniforms` |
 
 `folder=` groups the control under a collapsible header; `label=` changes
-the panel text without changing the uniform name. A uniform with no
-directive (and no builtin match, below) is passed as zero and noted once on
-stdout — mark it `//sketchy:none` to silence the note.
+the panel text without changing the uniform name (quote values that contain
+spaces: `label="Use sine palette"`). A uniform with no directive (and no
+builtin match, below) is passed as zero and noted once on stdout — mark it
+`//sketchy:none` to silence the note.
 
 # Builtin uniforms
 
@@ -77,6 +97,7 @@ the value automatically — no directive needed:
 | `Resolution vec2` | render-target size in pixels (`imageDstSize()` works too) |
 | `Mouse vec2` | cursor position in canvas coordinates |
 | `Seed float` | the sketch's random seed (changes with ↑/↓//) |
+| `Substep int` | when the state shader has a `Steps` int slider, index `0..Steps-1` of the current tick's simulation passes (for dither / multi-step feedback) |
 
 Declaring `Time` or `Tick` makes the sketch redraw every tick (animated);
 declaring `Mouse` makes it redraw when the cursor moves. Without any of
@@ -116,28 +137,165 @@ s.ExtraUniforms = func(s *sketchy.Sketch) map[string]any {
 
 Floats pass as `float64`, ints as `int`, vectors as `[]float32`.
 
+**Momentary buttons**: there's no `//sketchy:` directive for a one-shot
+button (only `slider`/`checkbox`/`color`/`dropdown`/`none`). For a
+"trigger this once" control — a reset, a re-randomize — register a real
+button in `BuildUI` and forward a one-tick pulse through `ExtraUniforms`,
+edge-detected against the toggle's previous state so holding it "checked"
+doesn't fire every tick:
+
+```go
+var pulse, wasChecked bool
+
+s.BuildUI = func(_ *sketchy.Sketch, ui *sketchy.UI) {
+    ui.Button("Reset")
+}
+s.Updater = func(s *sketchy.Sketch) {
+    checked := s.Toggle("Reset")
+    pulse = checked && !wasChecked
+    wasChecked = checked
+    if checked {
+        s.SetBool("", "Reset", false) // consume the click
+    }
+}
+s.ExtraUniforms = func(_ *sketchy.Sketch) map[string]any {
+    v := 0.0
+    if pulse {
+        v = 1.0
+    }
+    return map[string]any{"Reset": v}
+}
+```
+
+Declare the shader side as `Reset float //sketchy:none` and branch on
+`Reset > 0.5`. See `examples/reaction_diffusion` for a complete example
+(paired with `StatePath` to reset a running simulation).
+
+# Source images: //sketchy:image
+
+A shader can read a photo or texture via a source-image slot
+(`imageSrc0At`.. `imageSrc3At`, Ebitengine's mechanism for binding up to 4
+images to a `Fragment` call). Kage has no sampler/image type to declare a
+uniform for, so instead of a `var` line, bind an image with a standalone
+directive comment anywhere in the file:
+
+```go
+//sketchy:image path=photo.jpg slot=0
+
+func Fragment(dstPos vec4, srcPos vec2) vec4 {
+    c := imageSrc0At(srcPos)
+    gray := dot(c.rgb, vec3(0.299, 0.587, 0.114))
+    return vec4(vec3(gray), c.a)
+}
+```
+
+- `path=` resolves relative to the sketch's working directory (same as
+  `Config.Images`), or use an absolute path.
+- `slot=` is optional; omitted slots are assigned in appearance order
+  starting from 0. Explicit `slot=` lets you control which one a shader
+  uses without relying on directive order.
+- The image is decoded once and resized (high-quality CPU resize) to
+  exactly `SketchWidth x SketchHeight` before upload — Ebitengine requires
+  every bound source image to match the render target's size exactly, and
+  the live display is always 1:1 (above), so this happens once, not per
+  frame. A PNG save at Export Scale above 1x upscales a copy on the GPU
+  just for that capture (above); the native-resolution original is
+  unaffected.
+- Using `imageSrcNAt` in `Fragment` requires the Kage function signature
+  `func Fragment(dstPos vec4, srcPos vec2) vec4` (Ebitengine's requirement,
+  not sketchy's — the plain `func Fragment(dstPos vec4) vec4` form doesn't
+  receive `srcPos`).
+- A shader with a `StatePath` (below) has slot 0 reserved for the ping-pong
+  buffer; a `//sketchy:image` directive may not claim slot 0 in that case
+  (use `slot=1`-`3`).
+- Editing `path=`/`slot=` and saving live-reloads the bound image like any
+  other directive change.
+
+# Ping-pong: a state (simulation) pass
+
+For feedback effects that need to remember the previous frame —
+reaction-diffusion, flame-fractal-style accumulation, trails — set
+`Config.StatePath` alongside `Config.ShaderPath`:
+
+```go
+s := sketchy.New(sketchy.Config{
+    ShaderPath: "fragment.kage", // display pass (unchanged role)
+    StatePath:  "state.kage",    // simulation pass (new)
+})
+```
+
+Each tick, sketchy runs `state.kage` first: it reads the current state
+buffer via `imageSrc0At` and returns the next state, which becomes the
+buffer `fragment.kage` (and the next tick's `state.kage`) reads at slot 0.
+Both files are ordinary Kage programs — `state.kage` needs the same
+`func Fragment(dstPos vec4, srcPos vec2) vec4` signature as any shader
+reading a source image, and can declare its own `//sketchy:` uniforms and
+directives, merged into the same control panel as `fragment.kage`'s (a
+uniform with the same folder+name in both files shares one control).
+
+**Seeding**: buffers start blank. Branch on the existing `Tick` builtin to
+initialize:
+
+```go
+func Fragment(dstPos vec4, srcPos vec2) vec4 {
+    if Tick == 0 {
+        return seedPattern(dstPos) // initial condition
+    }
+    prev := imageSrc0At(srcPos)
+    return update(prev)
+}
+```
+
+**Notes**:
+
+- A `StatePath` shader always animates (redraws every tick), regardless of
+  whether it declares `Time`/`Tick` — a ping-pong simulation is
+  definitionally continuous.
+- An int slider named **`Steps`** on the state shader makes sketchy run that
+  many simulation passes per tick (with builtin `Substep` counting them).
+  Useful when one pass per frame is too slow (e.g. Gray-Scott on an 8-bit
+  buffer). `Sketch.ClearState()` clears both ping-pong images — pair with a
+  one-tick `Reset` uniform to reseed.
+- The buffer pair is allocated once at exactly `SketchWidth x SketchHeight`
+  (the live display is always 1:1) and persists for the sketch's lifetime.
+- Live-reloading either file does **not** reset the buffers — tune
+  `state.kage`'s equation live and watch the existing pattern respond. The
+  display and state shaders are recompiled and committed together (both
+  must compile successfully) so a broken edit never leaves the pair, or
+  their shared image-slot assignment, out of sync.
+- Saving an image or snapshot never advances the simulation — capture only
+  re-runs the display pass against whatever the buffer currently holds.
+- Snapshots restore control values only, not buffer contents — reloading a
+  snapshot doesn't rewind or fast-forward a running simulation.
+- See `examples/reaction_diffusion` for a complete Gray-Scott example.
+
 # Saving and recording
 
-- **PNG** works from the Save Image / Snapshot dialogs at the Builtins
-  **Export scale** — the shader re-renders natively at the scaled
-  resolution, so supersampled exports are essentially free.
+- **PNG** works from the Save Image / Snapshot dialogs, at the Builtins
+  **Export Scale** dropdown's resolution (see above) — the live display
+  stays native 1:1 regardless of the selected scale.
 - **SVG is unavailable** (a fragment shader has no vector form); the
   checkbox disappears in shader mode.
 - **Video recording** ([recording.md](recording.md)) works exactly as for
   CPU sketches — including perfect loops: if your shader is periodic in
   `Time` with period `P` seconds, arm a Loop recording with `N = 60 * P`
   frames. Frames are read back from the GPU each tick; like the CPU path,
-  encoder backpressure slows the preview but never the file.
+  encoder backpressure slows the preview but never the file. A `StatePath`
+  simulation keeps evolving during recording exactly as it does live.
 - **Snapshots** store directive-generated controls like any other control
   and restore them by name.
 
 # Limitations
 
-- `PreviewMode` is ignored (shaders render at display resolution; they are
-  already fast).
+- Preview Mode doesn't apply in shader mode; the live display is always
+  1:1 (above). The Builtins **Export Scale** dropdown affects PNG saves
+  only, not the live display; video recording has its own independent
+  **Rec scale** ([recording.md](recording.md)).
 - `DisableClearBetweenFrames` is not supported in shader mode (fatal at
-  Init). Accumulation effects belong inside the shader.
+  Init). Use `StatePath` for accumulation/feedback effects instead.
 - `DefaultBackground`/`DefaultForeground`/stroke settings do not affect
   shader output — the fragment shader owns every pixel.
 - Controls renamed in the shader lose their snapshot/live values (matching
   is by name).
+- A `StatePath` simulation's buffer contents are not part of snapshots
+  (only control values are).

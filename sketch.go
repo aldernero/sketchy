@@ -211,6 +211,8 @@ type Sketch struct {
 	// shader instead of a CPU Drawer.
 	ShaderPath string
 	ShaderSrc  []byte
+	// StatePath enables the ping-pong "state" pass; see Config.StatePath.
+	StatePath string
 	// ExtraUniforms supplies computed uniform values merged last into every
 	// shader draw (wins over control-mapped and builtin uniforms). The
 	// escape hatch for vec2/matrix uniforms and values derived in Go.
@@ -222,10 +224,24 @@ type Sketch struct {
 	shaderErr       string        // last reload error, shown in the Builtins panel
 	shaderStatus    string        // last successful reload message
 	shaderTarget    *ebiten.Image // reused export/record render target
-	shaderAnimates  bool          // Time or Tick declared: dirty every tick
+	shaderAnimates  bool          // Time or Tick declared (or StatePath set): dirty every tick
 	shaderUsesMouse bool          // Mouse declared: dirty on cursor move
 	lastCursorX     int
 	lastCursorY     int
+
+	// State (ping-pong) pass: see shader.go.
+	stateShader   *ebiten.Shader
+	stateUniforms []shaderUniform
+	stateMtime    time.Time
+	pingFront     *ebiten.Image // current state; read by both passes
+	pingBack      *ebiten.Image // next state; written by the state pass, then swapped
+	stateSubstep  int           // 0..Steps-1 within this tick's state advances
+
+	// Static source images bound via //sketchy:image directives (either
+	// shader file), indexed by slot. Slot pingPongImageSlot is reserved for
+	// the ping-pong buffer when StatePath is set.
+	imageDirectives []shaderImageDirective
+	shaderImages    [4]*ebiten.Image
 
 	// vrec is the live video recording; nil when idle (see video.go).
 	vrec *videoRecorder

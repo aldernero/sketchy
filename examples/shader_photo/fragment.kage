@@ -1,0 +1,137 @@
+//kage:unit pixels
+
+// fragment.kage demonstrates the //sketchy:image directive: a source photo
+// (flower.png) is loaded, resized to the sketch's SketchWidth x SketchHeight
+// (Ebitengine requires an exact size match — see docs/shaders.md), and
+// bound to Fragment source-image slot 0, read here via imageSrc0At.
+//
+// Sobel edge detection (optional, applied first) replaces each pixel with
+// its edge magnitude; the Hue/Saturation/Lightness sliders then shift
+// every pixel's HSL value by a fixed delta, on top of whichever image
+// (original or Sobel) is currently selected.
+package main
+
+//sketchy:image path=flower.png slot=0
+
+var (
+	Hue        float //sketchy:slider min=-180 max=180 default=0 step=1 digits=0 folder=Filter label="Hue shift"
+	Saturation float //sketchy:slider min=-1 max=1 default=0 step=0.01 digits=2 folder=Filter label="Saturation shift"
+	Lightness  float //sketchy:slider min=-1 max=1 default=0 step=0.01 digits=2 folder=Filter label="Lightness shift"
+	Sobel      float //sketchy:checkbox default=false folder=Filter label="Sobel edge detection"
+)
+
+// clampSrc keeps a neighbor sample inside the bound image's own region,
+// safe even if Ebitengine packs it into a shared atlas texture.
+func clampSrc(p vec2) vec2 {
+	origin := imageSrc0Origin()
+	size := imageSrc0Size()
+	return clamp(p, origin, origin+size-vec2(1.0))
+}
+
+func luminance(c vec3) float {
+	return dot(c, vec3(0.299, 0.587, 0.114))
+}
+
+// sobel returns the 3x3 Sobel gradient magnitude of luminance around pos,
+// clamped to [0, 1].
+func sobel(pos vec2) float {
+	tl := luminance(imageSrc0At(clampSrc(pos + vec2(-1.0, -1.0))).rgb)
+	tm := luminance(imageSrc0At(clampSrc(pos + vec2(0.0, -1.0))).rgb)
+	tr := luminance(imageSrc0At(clampSrc(pos + vec2(1.0, -1.0))).rgb)
+	ml := luminance(imageSrc0At(clampSrc(pos + vec2(-1.0, 0.0))).rgb)
+	mr := luminance(imageSrc0At(clampSrc(pos + vec2(1.0, 0.0))).rgb)
+	bl := luminance(imageSrc0At(clampSrc(pos + vec2(-1.0, 1.0))).rgb)
+	bm := luminance(imageSrc0At(clampSrc(pos + vec2(0.0, 1.0))).rgb)
+	br := luminance(imageSrc0At(clampSrc(pos + vec2(1.0, 1.0))).rgb)
+
+	gx := -tl - 2.0*ml - bl + tr + 2.0*mr + br
+	gy := -tl - 2.0*tm - tr + bl + 2.0*bm + br
+	return clamp(sqrt(gx*gx+gy*gy), 0.0, 1.0)
+}
+
+// rgb2hsl converts sRGB (each channel 0-1) to hue (0-1 turns), saturation,
+// and lightness (both 0-1).
+func rgb2hsl(c vec3) vec3 {
+	maxc := max(max(c.r, c.g), c.b)
+	minc := min(min(c.r, c.g), c.b)
+	l := (maxc + minc) * 0.5
+	d := maxc - minc
+	h := 0.0
+	s := 0.0
+	if d > 0.00001 {
+		if l < 0.5 {
+			s = d / (maxc + minc)
+		} else {
+			s = d / (2.0 - maxc - minc)
+		}
+		if maxc == c.r {
+			h = (c.g - c.b) / d
+			if c.g < c.b {
+				h += 6.0
+			}
+		} else if maxc == c.g {
+			h = (c.b-c.r)/d + 2.0
+		} else {
+			h = (c.r-c.g)/d + 4.0
+		}
+		h /= 6.0
+	}
+	return vec3(h, s, l)
+}
+
+func hue2rgb(p, q, t float) float {
+	if t < 0.0 {
+		t += 1.0
+	}
+	if t > 1.0 {
+		t -= 1.0
+	}
+	if t < 1.0/6.0 {
+		return p + (q-p)*6.0*t
+	}
+	if t < 0.5 {
+		return q
+	}
+	if t < 2.0/3.0 {
+		return p + (q-p)*(2.0/3.0-t)*6.0
+	}
+	return p
+}
+
+// hsl2rgb converts an already-wrapped/clamped hue (0-1 turns), saturation,
+// and lightness (both 0-1) back to sRGB.
+func hsl2rgb(hsl vec3) vec3 {
+	h := hsl.x
+	s := hsl.y
+	l := hsl.z
+	if s < 0.00001 {
+		return vec3(l)
+	}
+	q := l * (1.0 + s)
+	if l >= 0.5 {
+		q = l + s - l*s
+	}
+	p := 2.0*l - q
+	r := hue2rgb(p, q, h+1.0/3.0)
+	g := hue2rgb(p, q, h)
+	b := hue2rgb(p, q, h-1.0/3.0)
+	return vec3(r, g, b)
+}
+
+func Fragment(dstPos vec4, srcPos vec2) vec4 {
+	c := imageSrc0At(srcPos)
+	col := c.rgb
+	if Sobel > 0.5 {
+		col = vec3(sobel(srcPos))
+	}
+
+	hsl := rgb2hsl(col)
+	// Hue is an angle around the color wheel, so its shift wraps instead
+	// of clamping; saturation and lightness clamp to their valid range.
+	h := fract(hsl.x + Hue/360.0)
+	s := clamp(hsl.y+Saturation, 0.0, 1.0)
+	l := clamp(hsl.z+Lightness, 0.0, 1.0)
+	col = hsl2rgb(vec3(h, s, l))
+
+	return vec4(col, c.a)
+}

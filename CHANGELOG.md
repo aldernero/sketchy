@@ -5,6 +5,21 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- **Source images in shader sketches**: bind a photo/texture to a `Fragment` source-image slot with a standalone `//sketchy:image path=... [slot=N]` directive comment — no Go plumbing (`shader_parse.go`, `shader.go`). The image is decoded once and resized to exactly `SketchWidth x SketchHeight` (Ebitengine requires an exact size match with the render target). Slots default to appearance order (0-3); editing `path=`/`slot=` live-reloads like any other directive.
+- **Ping-pong / state pass**: `Config.StatePath` adds a second Kage shader — the simulation pass — alongside `Config.ShaderPath` (now the display pass), for feedback effects that need to remember the previous frame (reaction-diffusion, flame-fractal-style accumulation, trails). Each tick, the state shader reads the current buffer via `imageSrc0At` (slot 0, reserved) and writes the next one; the display shader then reads the updated buffer. Both files' `//sketchy:` directives merge into one control panel. Seeding uses the existing `Tick` builtin (`if Tick == 0 { ... }`); live-reloading either file preserves buffer contents; the display and state shaders recompile and commit together so a broken edit never leaves the pair (or their shared slot assignment) out of sync. Capturing an image never advances the simulation. New example: `examples/reaction_diffusion` (Gray-Scott per Karl Sims: A=1/B=0 with a noisy central B seed, DA=1/DB=0.5/dt=1, periodic wrap, write-dither so 8-bit ping-pong buffers keep evolving; `Speed` timestep, `Steps` multi-pass-per-tick, `GridSize` virtual grid, `BuildUI`/`ClearState`/`ExtraUniforms` Reset button; see `docs/shaders.md`).
+- **State-pass helpers**: builtin uniform `Substep`; state-shader int slider `Steps` runs that many simulation passes per tick; `Sketch.ClearState()` clears the ping-pong buffers.
+- **Example**: `examples/shader_photo` — Sobel edge detection and Hue/Saturation/Lightness shift sliders demonstrating `//sketchy:image`.
+- **Export Scale in shader mode**: the Builtins **Export Scale** dropdown is shown for shader sketches and now controls the resolution of PNG saves (Save Image / Snapshot dialogs) — `Sketch.CaptureShaderImage` renders at `RasterDPI/DefaultDPI x SketchWidth x SketchHeight`. Any bound `//sketchy:image` source or ping-pong state buffer is upscaled (GPU, linear filter) into scratch images sized to match for that one capture; the live simulation and originals are untouched.
+
+### Changed
+
+- **Breaking**: shader sketches always render their live display at exactly `SketchWidth x SketchHeight` — the Builtins **Preview Mode** checkbox is hidden in shader mode (a raster-resolution knob that doesn't apply once source images and ping-pong buffers need a size guarantee on the live path). **Export Scale** remains available and now applies to PNG saves (above).
+- **Breaking**: `Sketch.CaptureShaderImage` no longer takes a `scale float64` parameter; it now reads scale from `Sketch.RasterDPI` (the Builtins Export Scale dropdown), consistent with the CPU-sketch export path.
+
 ## [0.6.0] - 2026-07-19
 
 ### Changed

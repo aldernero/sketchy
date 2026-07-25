@@ -23,7 +23,9 @@ func main() {
 	})
 	s.RandomSeed = seed
 	// Headless self-test hooks (vshot): SHADER_DEMO_RECORD=<path.webm>
-	// records a 60-frame clip; SHADER_DEMO_PNG=<rel.png> saves a 2x PNG.
+	// records a 60-frame clip; SHADER_DEMO_PNG=<rel.png> saves a PNG at
+	// native resolution (RasterDPI is left at its default; see
+	// docs/shaders.md).
 	recOut := os.Getenv("SHADER_DEMO_RECORD")
 	pngOut := os.Getenv("SHADER_DEMO_PNG")
 	if recOut != "" || pngOut != "" {
@@ -43,7 +45,7 @@ func main() {
 				}
 			case 10:
 				if pngOut != "" {
-					s.EnqueueSavePixels(pngOut, s.CaptureShaderImage(2), false)
+					s.EnqueueSavePixels(pngOut, s.CaptureShaderImage(), false)
 				}
 			case 70: // frames end at tick 64; block until ffmpeg flushes
 				if recOut != "" {

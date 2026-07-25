@@ -64,7 +64,10 @@ func (s *Sketch) builtinsPanel(ctx *debugui.Context) {
 		s.drawColorRow(ctx, s.builtinColorBGIdx)
 		s.drawColorRow(ctx, s.builtinColorFGIdx)
 		s.drawBuiltinDefaultStrokeWidthRow(ctx)
-		s.drawBuiltinRenderRows(ctx)
+		s.drawBuiltinExportScaleRow(ctx)
+		if !s.IsShaderSketch() { // shader mode's live display is always 1:1; Preview mode doesn't apply
+			s.drawBuiltinPreviewModeRow(ctx)
+		}
 		s.drawBuiltinPaletteRows(ctx)
 		s.drawBuiltinRecordingRows(ctx)
 		s.drawBuiltinShaderRows(ctx)
@@ -165,7 +168,11 @@ func (s *Sketch) syncExportScaleIdxFromDPI() {
 	s.builtinExportScaleIdx = best
 }
 
-func (s *Sketch) drawBuiltinRenderRows(ctx *debugui.Context) {
+// drawBuiltinExportScaleRow shows the Export scale dropdown. In CPU-drawer
+// mode it scales the live raster (and therefore PNG saves); in shader mode
+// the live display stays native 1:1 (see initShader) and this scale instead
+// applies only to CaptureShaderImage, i.e. PNG saves.
+func (s *Sketch) drawBuiltinExportScaleRow(ctx *debugui.Context) {
 	ctx.SetGridLayout([]int{ControlLabelColumnWidth, -1}, nil)
 	ctx.Text("Export scale")
 	ctx.IDScope("builtinExportScale", func() {
@@ -174,6 +181,11 @@ func (s *Sketch) drawBuiltinRenderRows(ctx *debugui.Context) {
 			s.dirty = true
 		})
 	})
+}
+
+// drawBuiltinPreviewModeRow shows the Preview mode checkbox. Not called in
+// shader mode, whose live display is always native 1:1.
+func (s *Sketch) drawBuiltinPreviewModeRow(ctx *debugui.Context) {
 	ctx.SetGridLayout([]int{-1}, nil)
 	ctx.IDScope("builtinPreview", func() {
 		ctx.Checkbox(&s.PreviewMode, "Preview mode").On(func() {
@@ -365,7 +377,7 @@ func (s *Sketch) dialogSaveImage(ctx *debugui.Context) {
 				if s.IsShaderSketch() {
 					// GPU readback must happen here on the ebiten thread;
 					// the worker only encodes.
-					s.EnqueueSavePixels(rel, s.CaptureShaderImage(s.RasterDPI/DefaultDPI), true)
+					s.EnqueueSavePixels(rel, s.CaptureShaderImage(), true)
 				} else {
 					s.EnqueueSave(rel, "png", s.RasterDPI, true)
 				}

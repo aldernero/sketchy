@@ -49,6 +49,12 @@ type Config struct {
 	// ShaderSrc supplies embedded Kage source directly (no live reload).
 	// ShaderPath wins when both are set.
 	ShaderSrc []byte
+	// StatePath enables a second Kage fragment shader (the "state" /
+	// simulation pass) alongside ShaderPath (the "display" pass), for
+	// feedback effects that need to remember the previous frame:
+	// reaction-diffusion, flame-fractal-style accumulation, trails, etc.
+	// Requires ShaderPath (or ShaderSrc). See docs/shaders.md.
+	StatePath string
 }
 
 // New returns an uninitialized sketch. Set BuildUI, Updater, and Drawer, then call Init().
@@ -77,6 +83,7 @@ func New(cfg Config) *Sketch {
 		imageAssets:               append([]ImageAsset(nil), cfg.Images...),
 		ShaderPath:                cfg.ShaderPath,
 		ShaderSrc:                 append([]byte(nil), cfg.ShaderSrc...),
+		StatePath:                 cfg.StatePath,
 	}
 	if s.SketchWidth <= 0 {
 		s.SketchWidth = 1080

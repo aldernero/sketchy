@@ -60,6 +60,16 @@ func Fragment(dstPos vec4) vec4 {
 }
 `
 
+func TestParseDirectiveQuotedLabel(t *testing.T) {
+	d, err := parseDirective(`checkbox label="Use sine palette" folder=Palette`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if d.Control != "checkbox" || d.Label != "Use sine palette" || d.Folder != "Palette" {
+		t.Fatalf("got %+v", d)
+	}
+}
+
 func TestParseShaderUniforms(t *testing.T) {
 	us, err := parseShaderUniforms([]byte(testKageSrc))
 	if err != nil {
@@ -352,5 +362,106 @@ func TestParseShaderUniformErrors(t *testing.T) {
 				t.Fatalf("error %q does not contain %q", err, tc.wantErr)
 			}
 		})
+	}
+}
+
+func TestParseShaderImageDirectives(t *testing.T) {
+	const src = `//kage:unit pixels
+//sketchy:image path=photo.jpg
+package main
+
+//sketchy:image path=mask.png slot=2
+
+func Fragment(dstPos vec4, srcPos vec2) vec4 {
+	return imageSrc0At(srcPos)
+}
+`
+	dirs, err := parseShaderImageDirectives([]byte(src))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(dirs) != 2 {
+		t.Fatalf("got %d directives, want 2", len(dirs))
+	}
+	byPath := map[string]shaderImageDirective{}
+	for _, d := range dirs {
+		byPath[d.Path] = d
+	}
+	if d := byPath["photo.jpg"]; d.Slot != 0 {
+		t.Fatalf("photo.jpg auto-slot = %d, want 0", d.Slot)
+	}
+	if d := byPath["mask.png"]; d.Slot != 2 {
+		t.Fatalf("mask.png slot = %d, want 2", d.Slot)
+	}
+}
+
+func TestParseShaderImageDirectiveErrors(t *testing.T) {
+	cases := []struct {
+		name, src, wantErr string
+	}{
+		{"missing path", "package main\n//sketchy:image slot=0\n", "requires path"},
+		{"bad slot", "package main\n//sketchy:image path=a.png slot=9\n", "slot must be 0-3"},
+		{"unknown key", "package main\n//sketchy:image path=a.png foo=bar\n", "unknown //sketchy:image key"},
+		{"malformed token", "package main\n//sketchy:image path\n", "key=value"},
+		{"duplicate slot", "package main\n//sketchy:image path=a.png slot=1\n//sketchy:image path=b.png slot=1\n", "bound more than once"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			_, err := parseShaderImageDirectives([]byte(tc.src))
+			if err == nil {
+				t.Fatalf("expected error containing %q, got nil", tc.wantErr)
+			}
+			if !strings.Contains(err.Error(), tc.wantErr) {
+				t.Fatalf("error %q does not contain %q", err, tc.wantErr)
+			}
+		})
+	}
+}
+
+const stateUniformsSrc = `package main
+
+var (
+	FeedRate float //sketchy:slider min=0 max=0.1 default=0.055 folder=ReactionDiffusion
+	Tick     int
+)
+`
+
+// TestPingPongTraitsAndControls exercises the two behaviors specific to
+// StatePath without requiring a GPU: a ping-pong shader always animates
+// (even with no Time/Tick declared in the display shader), and controls
+// merge from both the display and state uniform lists.
+func TestPingPongTraitsAndControls(t *testing.T) {
+	s := newTestShaderSketch(t, `package main
+var Hue float //sketchy:slider min=0 max=1 default=0.5
+`)
+	s.StatePath = "state.kage" // presence alone is what matters here, not the file
+
+	su, err := parseShaderUniforms([]byte(stateUniformsSrc))
+	if err != nil {
+		t.Fatal(err)
+	}
+	s.stateUniforms = su
+	s.recomputeShaderTraits()
+
+	if !s.shaderAnimates {
+		t.Fatal("a shader with StatePath set should always animate, even without Time/Tick")
+	}
+
+	s.rebuildControls()
+	if _, ok := s.floatSliderControlMap[controlMapKey("", "Hue")]; !ok {
+		t.Fatal("display shader's Hue control missing after merge")
+	}
+	if _, ok := s.floatSliderControlMap[controlMapKey("ReactionDiffusion", "FeedRate")]; !ok {
+		t.Fatal("state shader's FeedRate control missing after merge")
+	}
+}
+
+func TestLoadShaderImagePingPongSlotReserved(t *testing.T) {
+	s := newTestShaderSketch(t, "package main\n")
+	s.StatePath = "state.kage"
+	displaySrc := []byte("package main\n//sketchy:image path=x.png slot=0\n")
+	err := s.loadShaderImages(displaySrc, nil)
+	if err == nil || !strings.Contains(err.Error(), "reserved for the ping-pong state buffer") {
+		t.Fatalf("expected reserved-slot error, got %v", err)
 	}
 }

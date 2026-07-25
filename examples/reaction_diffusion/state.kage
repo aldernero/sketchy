@@ -1,0 +1,100 @@
+//kage:unit pixels
+
+// state.kage is the simulation pass for a Gray-Scott reaction-diffusion
+// system: chemical A in the red channel, chemical B in the green channel.
+// Bound via Config.StatePath; see docs/shaders.md.
+//
+// Karl Sims' discrete recipe (https://www.karlsims.com/rd.html): DA=1,
+// DB=0.5, dt≈1, 9-point Laplacian, A=1/B=0 with a central B seed.
+// Defaults F=0.055, k=0.062 are the classic coral/flower pair.
+//
+// Ebitengine stores the ping-pong buffer as 8-bit RGBA, which otherwise
+// freezes Gray-Scott within a few hundred steps (updates round to 0). A
+// 1-bit dither on write keeps the front moving so patterns can fill the
+// grid — same trick as ordered dither for quantised RD.
+//
+// Reset is a one-tick pulse from main.go via ExtraUniforms.
+package main
+
+var (
+	Tick    int
+	Substep int // index within this tick's Steps loop (builtin)
+	Reset   float //sketchy:none
+	FeedRate   float //sketchy:slider min=0.0 max=0.1 default=0.055 step=0.001 folder=ReactionDiffusion
+	KillRate   float //sketchy:slider min=0.0 max=0.1 default=0.062 step=0.001 folder=ReactionDiffusion
+	Speed      float //sketchy:slider min=0.1 max=2 default=1 step=0.1 folder=ReactionDiffusion
+	// Steps is how many simulation passes run per sketch tick (sketchy
+	// re-issues the state pass this many times). Higher = faster growth.
+	Steps int //sketchy:slider min=1 max=64 default=64 step=1 folder=ReactionDiffusion
+	// GridSize is simulation cells per axis (max = sketch resolution for
+	// one cell per pixel). Lower = coarser, more visible cells. Change
+	// GridSize then hit Reset to reseed at the new resolution.
+	GridSize float //sketchy:slider min=64 max=1080 default=1080 step=4 folder=ReactionDiffusion
+)
+
+func hash(p vec2) float {
+	h := dot(p, vec2(127.1, 311.7))
+	return fract(sin(h) * 43758.5453123)
+}
+
+func wrapSrc(p vec2) vec2 {
+	origin := imageSrc0Origin()
+	size := imageSrc0Size()
+	return mod(p-origin, size) + origin
+}
+
+func seedAB(cell vec2, gs float) vec2 {
+	center := vec2(gs) * 0.5
+	half := gs * 0.06
+	inSquare := step(abs(cell.x-center.x), half) * step(abs(cell.y-center.y), half)
+	// Karl Sims: A=1 everywhere; noisy B in the seed so four-fold
+	// symmetry breaks into the organic coral/mitosis shapes.
+	b := inSquare * (0.25 + 0.75*hash(cell*vec2(3.7, 4.3)+vec2(0.7, 0.3)))
+	return vec2(1.0, b)
+}
+
+func Fragment(dstPos vec4, srcPos vec2) vec4 {
+	size := imageDstSize()
+	// Local pixel in the destination image (atlas-correct).
+	local := dstPos.xy - imageDstOrigin()
+
+	gs := max(GridSize, 1.0)
+	cellSize := size / gs
+	cell := floor(local / cellSize)
+	// Corresponding sample point in the source (ping-pong) image.
+	toCenter := (cell+0.5)*cellSize - local
+	center := srcPos + toCenter
+
+	if Tick == 0 || Reset > 0.5 {
+		ab := seedAB(cell, gs)
+		return vec4(ab.x, ab.y, 0.0, 1.0)
+	}
+
+	c := imageSrc0At(wrapSrc(center))
+	a := c.r
+	b := c.g
+
+	orth := imageSrc0At(wrapSrc(center+vec2(0, -cellSize.y))).rg +
+		imageSrc0At(wrapSrc(center+vec2(-cellSize.x, 0))).rg +
+		imageSrc0At(wrapSrc(center+vec2(cellSize.x, 0))).rg +
+		imageSrc0At(wrapSrc(center+vec2(0, cellSize.y))).rg
+	diag := imageSrc0At(wrapSrc(center+vec2(-cellSize.x, -cellSize.y))).rg +
+		imageSrc0At(wrapSrc(center+vec2(cellSize.x, -cellSize.y))).rg +
+		imageSrc0At(wrapSrc(center+vec2(-cellSize.x, cellSize.y))).rg +
+		imageSrc0At(wrapSrc(center+vec2(cellSize.x, cellSize.y))).rg
+	lap := 0.2*orth + 0.05*diag - vec2(a, b)
+
+	reaction := a * b * b
+	dt := Speed
+	da := dt * (1.0*lap.x - reaction + FeedRate*(1.0-a))
+	db := dt * (0.5*lap.y + reaction - (FeedRate+KillRate)*b)
+
+	// 8-bit ping-pong dither: without this, Euler updates round to 0 and
+	// the pattern freezes after a few hundred steps.
+	n1 := (hash(cell+vec2(float(Tick)*0.17+float(Substep), float(Tick)*0.31)) - 0.5) / 255.0
+	n2 := (hash(cell+vec2(float(Tick)*0.41+float(Substep)*0.7, 9.2)) - 0.5) / 255.0
+
+	na := clamp(a+da+n1, 0.0, 1.0)
+	nb := clamp(b+db+n2, 0.0, 1.0)
+	return vec4(na, nb, 0.0, 1.0)
+}

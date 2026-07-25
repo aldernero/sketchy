@@ -1,0 +1,103 @@
+//kage:unit pixels
+
+// fragment.kage is the display pass: maps chemical B (green channel of the
+// state buffer) to a color. PaletteMode picks the source:
+//
+//	0 discrete — Builtins Discrete palette (ColorAt samples via ExtraUniforms)
+//	1 sine     — Builtins Sine palette (IQ coeffs via ExtraUniforms)
+//	2 custom   — ColorA→ColorB mix
+package main
+
+var (
+	ColorA      vec3  //sketchy:color default=#0a1a2f folder=Palette
+	ColorB      vec3  //sketchy:color default=#f4e04d folder=Palette
+	PaletteMode int   //sketchy:dropdown options=discrete|sine|custom default=0 folder=Palette
+	// MapLo/MapHi stretch the Gray-Scott B band through the palette
+	// (B typically sits around 0.2–0.4 in the active front).
+	MapLo   float //sketchy:slider min=0 max=1 default=0.02 step=0.01 folder=Palette
+	MapHi   float //sketchy:slider min=0 max=1 default=0.4 step=0.01 folder=Palette
+	SineA   vec3  //sketchy:none
+	SineB   vec3  //sketchy:none
+	SineC   vec3  //sketchy:none
+	SineD   vec3  //sketchy:none
+	SineHSV float //sketchy:none
+	// Disc holds DiscretePalette.ColorAt(i/31) for i in 0..31 (GPU can't
+	// call ColorAt per pixel, so main.go ships the samples each frame).
+	Disc [32]vec3 //sketchy:none
+)
+
+func hsv2rgb(c vec3) vec3 {
+	h := fract(c.x)
+	s := clamp(c.y, 0.0, 1.0)
+	v := clamp(c.z, 0.0, 1.0)
+	if s < 0.0001 {
+		return vec3(v)
+	}
+	h6 := h * 6.0
+	i := floor(h6)
+	f := h6 - i
+	p := v * (1.0 - s)
+	q := v * (1.0 - s*f)
+	u := v * (1.0 - s*(1.0-f))
+	if i < 1.0 {
+		return vec3(v, u, p)
+	} else if i < 2.0 {
+		return vec3(q, v, p)
+	} else if i < 3.0 {
+		return vec3(p, v, u)
+	} else if i < 4.0 {
+		return vec3(p, q, v)
+	} else if i < 5.0 {
+		return vec3(u, p, v)
+	}
+	return vec3(v, p, q)
+}
+
+func sinePalette(t float, a, b, c, d vec3) vec3 {
+	TAU := 6.283185307179586
+	return a + b*cos(TAU*(c*t+d))
+}
+
+func discAt(i int) vec3 {
+	if i <= 0 {
+		return Disc[0]
+	}
+	if i >= 31 {
+		return Disc[31]
+	}
+	for j := 0; j < 32; j++ {
+		if j == i {
+			return Disc[j]
+		}
+	}
+	return Disc[0]
+}
+
+func discretePalette(t float) vec3 {
+	x := clamp(t, 0.0, 1.0) * 31.0
+	i0 := int(floor(x))
+	f := fract(x)
+	if i0 >= 31 {
+		return Disc[31]
+	}
+	return mix(discAt(i0), discAt(i0+1), f)
+}
+
+func Fragment(dstPos vec4, srcPos vec2) vec4 {
+	state := imageSrc0At(srcPos)
+	lo := min(MapLo, MapHi)
+	hi := max(MapLo, MapHi)
+	t := smoothstep(lo, hi, state.g)
+
+	col := mix(ColorA, ColorB, t)
+	if PaletteMode == 0 {
+		col = discretePalette(t)
+	} else if PaletteMode == 1 {
+		col = sinePalette(t, SineA, SineB, SineC, SineD)
+		if SineHSV > 0.5 {
+			col = hsv2rgb(col)
+		}
+		col = clamp(col, 0.0, 1.0)
+	}
+	return vec4(col, 1.0)
+}

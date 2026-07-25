@@ -80,6 +80,7 @@ var builtinUniformKinds = map[string]uniformKind{
 	"Resolution": ukVec2,  // render-target pixel size
 	"Mouse":      ukVec2,  // cursor in canvas coordinates
 	"Seed":       ukFloat, // RandomSeed
+	"Substep":    ukInt,   // 0..Steps-1 within a tick's state-pass loop
 }
 
 func isBuiltinUniform(u shaderUniform) bool {
@@ -153,7 +154,10 @@ func directiveFromComment(cg *ast.CommentGroup) (*uniformDirective, error) {
 }
 
 func parseDirective(text string) (*uniformDirective, error) {
-	fields := strings.Fields(text)
+	fields, err := splitDirectiveFields(text)
+	if err != nil {
+		return nil, err
+	}
 	if len(fields) == 0 {
 		return nil, fmt.Errorf("empty //sketchy: directive")
 	}
@@ -169,6 +173,10 @@ func parseDirective(text string) (*uniformDirective, error) {
 		key, val, ok := strings.Cut(kv, "=")
 		if !ok || val == "" {
 			return nil, fmt.Errorf("malformed directive token %q (want key=value)", kv)
+		}
+		// Strip optional quotes around values (label="Use sine palette").
+		if len(val) >= 2 && val[0] == '"' && val[len(val)-1] == '"' {
+			val = val[1 : len(val)-1]
 		}
 		if seen[key] {
 			return nil, fmt.Errorf("duplicate directive key %q", key)
@@ -204,6 +212,42 @@ func parseDirective(text string) (*uniformDirective, error) {
 	return d, nil
 }
 
+// splitDirectiveFields splits a //sketchy: body on whitespace, keeping
+// double-quoted values intact so label="Use sine palette" is one token.
+func splitDirectiveFields(text string) ([]string, error) {
+	var fields []string
+	i := 0
+	for i < len(text) {
+		for i < len(text) && isDirectiveSpace(text[i]) {
+			i++
+		}
+		if i >= len(text) {
+			break
+		}
+		start := i
+		for i < len(text) && !isDirectiveSpace(text[i]) {
+			if text[i] == '=' && i+1 < len(text) && text[i+1] == '"' {
+				i += 2 // skip ="
+				for i < len(text) && text[i] != '"' {
+					i++
+				}
+				if i >= len(text) {
+					return nil, fmt.Errorf("unclosed quote in directive")
+				}
+				i++ // closing "
+				break
+			}
+			i++
+		}
+		fields = append(fields, text[start:i])
+	}
+	return fields, nil
+}
+
+func isDirectiveSpace(b byte) bool {
+	return b == ' ' || b == '\t' || b == '\n' || b == '\r'
+}
+
 // parseDirectiveDefault handles the polymorphic default= key: a number for
 // sliders, 0/1/true/false for checkboxes, #hex for colors, an index for
 // dropdowns. Stored in all candidate fields; validateDirective picks.
@@ -227,6 +271,81 @@ func parseDirectiveDefault(d *uniformDirective, val string) error {
 	d.Default = f
 	d.DefaultIdx = int(f)
 	return nil
+}
+
+// shaderImageDirective is a parsed, validated standalone //sketchy:image
+// comment: a source image bound to a Fragment source-image slot
+// (imageSrc0At.. imageSrc3At), independent of the uniform var block since
+// Kage has no sampler/image type to declare a uniform for.
+type shaderImageDirective struct {
+	Path string
+	Slot int // 0-3
+}
+
+// parseShaderImageDirectives scans every comment in the Kage source (not
+// just those attached to var decls) for standalone "//sketchy:image
+// path=... [slot=N]" directives. Slots default to the next unused slot in
+// appearance order when slot= is omitted; duplicate slots are an error.
+func parseShaderImageDirectives(src []byte) ([]shaderImageDirective, error) {
+	fset := token.NewFileSet()
+	f, err := parser.ParseFile(fset, "shader.kage", src, parser.ParseComments)
+	if err != nil {
+		return nil, fmt.Errorf("parsing shader: %w", err)
+	}
+	var out []shaderImageDirective
+	seen := map[int]bool{}
+	next := 0
+	for _, cg := range f.Comments {
+		for _, c := range cg.List {
+			text := strings.TrimSpace(strings.TrimPrefix(c.Text, "//"))
+			if !strings.HasPrefix(text, "sketchy:image") {
+				continue
+			}
+			d, err := parseImageDirective(strings.TrimSpace(strings.TrimPrefix(text, "sketchy:image")))
+			if err != nil {
+				return nil, err
+			}
+			if d.Slot < 0 {
+				for seen[next] {
+					next++
+				}
+				d.Slot = next
+			}
+			if seen[d.Slot] {
+				return nil, fmt.Errorf("//sketchy:image slot %d is bound more than once", d.Slot)
+			}
+			seen[d.Slot] = true
+			next = d.Slot + 1
+			out = append(out, *d)
+		}
+	}
+	return out, nil
+}
+
+func parseImageDirective(text string) (*shaderImageDirective, error) {
+	d := &shaderImageDirective{Slot: -1}
+	for _, kv := range strings.Fields(text) {
+		key, val, ok := strings.Cut(kv, "=")
+		if !ok || val == "" {
+			return nil, fmt.Errorf("malformed //sketchy:image token %q (want key=value)", kv)
+		}
+		switch key {
+		case "path":
+			d.Path = val
+		case "slot":
+			n, err := strconv.Atoi(val)
+			if err != nil || n < 0 || n > 3 {
+				return nil, fmt.Errorf("//sketchy:image slot must be 0-3, got %q", val)
+			}
+			d.Slot = n
+		default:
+			return nil, fmt.Errorf("unknown //sketchy:image key %q", key)
+		}
+	}
+	if d.Path == "" {
+		return nil, fmt.Errorf("//sketchy:image requires path=")
+	}
+	return d, nil
 }
 
 // validateDirective checks control/type compatibility and fills defaults.

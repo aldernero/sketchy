@@ -73,7 +73,7 @@ func writePixelsPNG(full string, img *image.RGBA) error {
 // Must run on the ebiten thread in shader mode.
 func (s *Sketch) writeSnapshotPNG(full string) error {
 	if s.IsShaderSketch() {
-		return writePixelsPNG(full, s.CaptureShaderImage(s.RasterDPI/DefaultDPI))
+		return writePixelsPNG(full, s.CaptureShaderImage())
 	}
 	return writePNG(full, s)
 }

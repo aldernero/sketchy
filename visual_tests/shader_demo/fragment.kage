@@ -30,8 +30,9 @@ func Fragment(dstPos vec4) vec4 {
 	t := Time * Speed
 
 	p := uv * Scale
-	p += Warp * vec2(sin(p.y+t), cos(p.x+t*0.7))
+	p += Warp * vec2(sin(p.y*p.x+t), cos(p.x+t*0.7))
 	p += Warp * 0.5 * vec2(sin(p.y*1.7-t*0.6), cos(p.x*1.3+t))
+	p = smoothstep(0.01, 0.1, p)
 
 	d := 0.0
 	if Mode == 0 {
