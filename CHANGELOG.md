@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-07-27
+
 ### Added
 
 - **Shader libraries via `import`**: a shader file can now `import "sdf"` and call `sdf.Circle(...)`, so SDFs, palettes and other helpers live in one place instead of being copy-pasted into every sketch (`shader_import.go`). Kage has no import mechanism — Ebitengine rejects any import declaration — so sketchy resolves them into a single flat source before compiling. Import paths resolve to `<path>.kage`, searched in `$SKETCHY_KAGE_PATH`, then the sketch directory, then its `lib/`, then `~/.config/sketchy/kage/`; a sketch-local copy shadows the shared one. Libraries may import other libraries, and two libraries may define the same name. Imported files are watched for live reload alongside the shader itself. The transform splices bytes rather than re-printing the AST and emits `/*line*/` directives, so a compile error reports the file, line and column you actually wrote, in the sketch or in a library — an improvement on the bare `34:12:` with no filename that Ebitengine reports today. Libraries may not declare package-level `var` (every one would become a uniform); that is rejected with a pointer to `const` or a zero-argument function. See `docs/shaders.md` and `visual_tests/shader_import`. Anticipates [ebiten#3439](https://github.com/hajimehoshi/ebiten/issues/3439).
@@ -100,6 +102,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Initial published release (tag `v0.1.0`). Use `git log v0.1.0` for commit-level history before this changelog existed.
 
+[0.7.0]: https://github.com/aldernero/sketchy/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/aldernero/sketchy/compare/v0.5.0...v0.6.0
 [0.3.0]: https://github.com/aldernero/sketchy/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/aldernero/sketchy/compare/v0.1.0...v0.2.0
