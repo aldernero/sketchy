@@ -120,6 +120,99 @@ recompiles on change:
 This makes the edit loop shadertoy-fast: leave the sketch running, edit
 `fragment.kage`, save, look.
 
+Imported libraries (below) are watched too, so editing a shared SDF or
+palette file reloads every sketch you have open against it.
+
+# Importing a shader library
+
+Kage itself has no imports — Ebitengine rejects any `import` declaration —
+so sketchy resolves them before handing the source to the compiler. Write a
+library as an ordinary `.kage` file with a package clause and no `Fragment`
+entry point:
+
+```go
+// lib/sdf.kage
+package sdf
+
+const Tau = 6.283185307179586
+
+func Circle(p vec2, r float) float {
+	return length(p) - r
+}
+```
+
+and import it by package name, qualifying references as you would in Go:
+
+```go
+//kage:unit pixels
+
+package main
+
+import "sdf"
+
+func Fragment(dstPos vec4) vec4 {
+	d := sdf.Circle(dstPos.xy, 40.0*sdf.Tau)
+	return vec4(vec3(step(0.0, -d)), 1.0)
+}
+```
+
+An import path resolves to `<path>.kage`, searched in this order — the
+first hit wins, so a sketch-local copy shadows the shared one and can be
+iterated on before being promoted:
+
+1. each entry of `$SKETCHY_KAGE_PATH` (colon-separated), if set
+2. the sketch directory
+3. the sketch's `lib/` subdirectory
+4. `~/.config/sketchy/kage/`
+
+Libraries may import other libraries. Import cycles, a package clause that
+disagrees with the import path, and references to names a library doesn't
+declare are all reported with the offending file and line.
+
+Rules worth knowing:
+
+- **A library cannot declare package-level `var`.** Every one of those
+  would become a uniform (see below), and only the sketch's own source
+  contributes controls, so sketchy rejects it outright rather than letting
+  it fail later as a confusing `undefined`.
+- **Import aliases and dot-imports are not supported.** One package per
+  name.
+- Two libraries may define the same function name; each package's
+  declarations are namespaced during resolution.
+- Only the sketch's own file gets `//kage:unit`; libraries must not repeat
+  it.
+- Unused library functions cost nothing — Ebitengine drops functions that
+  the entry point can't reach before generating GLSL/HLSL/MSL, so a large
+  library only costs a little compile time.
+
+Compile errors report the file you actually wrote, with the original line
+and column, whether the mistake is in the sketch or in a library:
+
+```
+/home/you/.config/sketchy/kage/sdf.kage:12:9: unexpected identifier: lenth
+```
+
+`visual_tests/shader_import/` is a worked example: two libraries, one of
+which imports the other.
+
+# Constants and globals
+
+Kage has no package-level `var` other than uniforms, but package-level
+**`const` does work**, which covers the usual reason for wanting a global:
+
+```go
+const Pi = 3.141592653589793
+const Tau = 6.283185307179586
+```
+
+Constants are scalar only (`float`, `int`, `bool`) — `const c = vec3(1,0,0)`
+is not valid. For composite constants use a zero-argument function, which
+costs nothing when unused:
+
+```go
+func Red() vec3 { return vec3(1.0, 0.0, 0.0) }
+```
+
 # Computed uniforms from Go
 
 For uniform types with no natural control (`vec2`, matrices) or values
@@ -297,5 +390,8 @@ func Fragment(dstPos vec4, srcPos vec2) vec4 {
   shader output — the fragment shader owns every pixel.
 - Controls renamed in the shader lose their snapshot/live values (matching
   is by name).
+- Imported libraries cannot declare uniforms or `//sketchy:image`
+  directives; only the sketch's own shader file contributes controls and
+  source images.
 - A `StatePath` simulation's buffer contents are not part of snapshots
   (only control values are).

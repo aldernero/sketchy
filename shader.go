@@ -105,21 +105,72 @@ func (s *Sketch) loadShaderSource(path string, embedded []byte) ([]byte, time.Ti
 	return embedded, time.Time{}, nil
 }
 
+// shaderSourceName is the name a shader source reports in compile errors.
+// Embedded sources have no path, so they get a stable placeholder.
+func shaderSourceName(path string) string {
+	if path == "" {
+		return "shader.kage"
+	}
+	return path
+}
+
+// shaderDep is an imported library file the shader was built from, watched
+// alongside the shader itself so editing a library live-reloads the sketch.
+type shaderDep struct {
+	path  string
+	mtime time.Time
+}
+
+func statShaderDeps(paths []string) []shaderDep {
+	deps := make([]shaderDep, 0, len(paths))
+	for _, p := range paths {
+		var mtime time.Time
+		if info, err := os.Stat(p); err == nil {
+			mtime = info.ModTime()
+		}
+		deps = append(deps, shaderDep{path: p, mtime: mtime})
+	}
+	return deps
+}
+
+// shaderDepsChanged reports whether any imported library has been touched. A
+// dep that has become unreadable counts as changed, so the reload runs and
+// surfaces the real error instead of silently rendering stale output.
+func shaderDepsChanged(deps []shaderDep) bool {
+	for _, d := range deps {
+		info, err := os.Stat(d.path)
+		if err != nil || info.ModTime().After(d.mtime) {
+			return true
+		}
+	}
+	return false
+}
+
 // applyShaderSource parses and compiles src as the display shader, replacing
 // the active shader and uniform list on success, and recomputes
 // shaderAnimates/shaderUsesMouse over both the display and (if present)
 // state uniform lists. It does not touch controls; callers decide whether a
 // control rebuild is needed.
+//
+// Uniform and image directives are read from the original source, not the
+// import-resolved one: libraries may not declare uniforms (resolveShaderImports
+// rejects package-level vars), so only the sketch's own source can contribute
+// controls.
 func (s *Sketch) applyShaderSource(src []byte) error {
 	uniforms, err := parseShaderUniforms(src)
 	if err != nil {
 		return err
 	}
-	shader, err := ebiten.NewShader(src)
+	merged, deps, err := resolveShaderImports(src, shaderSourceName(s.ShaderPath), s.workDir)
+	if err != nil {
+		return fmt.Errorf("resolving shader imports: %w", err)
+	}
+	shader, err := ebiten.NewShader(merged)
 	if err != nil {
 		return fmt.Errorf("compiling shader: %w", err)
 	}
 	s.shader = shader
+	s.shaderDeps = statShaderDeps(deps)
 	s.setShaderUniforms(uniforms)
 	warnUndirectedUniforms(uniforms)
 	return nil
@@ -132,11 +183,16 @@ func (s *Sketch) applyStateShaderSource(src []byte) error {
 	if err != nil {
 		return err
 	}
-	shader, err := ebiten.NewShader(src)
+	merged, deps, err := resolveShaderImports(src, shaderSourceName(s.StatePath), s.workDir)
+	if err != nil {
+		return fmt.Errorf("resolving state shader imports: %w", err)
+	}
+	shader, err := ebiten.NewShader(merged)
 	if err != nil {
 		return fmt.Errorf("compiling state shader: %w", err)
 	}
 	s.stateShader = shader
+	s.stateDeps = statShaderDeps(deps)
 	s.stateUniforms = uniforms
 	s.recomputeShaderTraits()
 	warnUndirectedUniforms(uniforms)
@@ -600,7 +656,10 @@ func (s *Sketch) checkShaderReload() {
 	}
 	displayChanged := displayInfo.ModTime().After(s.shaderMtime)
 	stateChanged := s.StatePath != "" && stateInfo.ModTime().After(s.stateMtime)
-	if !displayChanged && !stateChanged {
+	// Editing an imported library must reload too, even though neither shader
+	// file itself was touched.
+	depsChanged := shaderDepsChanged(s.shaderDeps) || shaderDepsChanged(s.stateDeps)
+	if !displayChanged && !stateChanged && !depsChanged {
 		return
 	}
 
@@ -623,20 +682,32 @@ func (s *Sketch) checkShaderReload() {
 		s.reportShaderReloadErr(fmt.Sprintf("Shader reload failed (keeping last good shader): %v", err))
 		return
 	}
-	newShader, err := ebiten.NewShader(displaySrc)
+	displayMerged, displayDeps, err := resolveShaderImports(displaySrc, shaderSourceName(s.ShaderPath), s.workDir)
+	if err != nil {
+		s.reportShaderReloadErr(fmt.Sprintf("Shader reload failed (keeping last good shader): %v", err))
+		return
+	}
+	newShader, err := ebiten.NewShader(displayMerged)
 	if err != nil {
 		s.reportShaderReloadErr(fmt.Sprintf("Shader reload failed (keeping last good shader): %v", err))
 		return
 	}
 	var newStateUniforms []shaderUniform
 	var newStateShader *ebiten.Shader
+	var stateDeps []string
 	if s.StatePath != "" {
 		newStateUniforms, err = parseShaderUniforms(stateSrc)
 		if err != nil {
 			s.reportShaderReloadErr(fmt.Sprintf("State shader reload failed (keeping last good shader): %v", err))
 			return
 		}
-		newStateShader, err = ebiten.NewShader(stateSrc)
+		var stateMerged []byte
+		stateMerged, stateDeps, err = resolveShaderImports(stateSrc, shaderSourceName(s.StatePath), s.workDir)
+		if err != nil {
+			s.reportShaderReloadErr(fmt.Sprintf("State shader reload failed (keeping last good shader): %v", err))
+			return
+		}
+		newStateShader, err = ebiten.NewShader(stateMerged)
 		if err != nil {
 			s.reportShaderReloadErr(fmt.Sprintf("State shader reload failed (keeping last good shader): %v", err))
 			return
@@ -649,11 +720,13 @@ func (s *Sketch) checkShaderReload() {
 
 	s.shader = newShader
 	s.shaderMtime = displayInfo.ModTime()
+	s.shaderDeps = statShaderDeps(displayDeps)
 	warnUndirectedUniforms(newUniforms)
 	if s.StatePath != "" {
 		s.stateShader = newStateShader
 		s.stateUniforms = newStateUniforms
 		s.stateMtime = stateInfo.ModTime()
+		s.stateDeps = statShaderDeps(stateDeps)
 		warnUndirectedUniforms(newStateUniforms)
 	}
 	s.setShaderUniforms(newUniforms) // also recomputes traits over both lists

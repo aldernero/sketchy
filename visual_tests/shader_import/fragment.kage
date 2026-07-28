@@ -1,0 +1,39 @@
+//kage:unit pixels
+
+package main
+
+// Imported libraries are resolved by sketchy before the source reaches
+// Ebitengine, which has no import mechanism of its own. Files are looked up
+// as <name>.kage in the sketch directory, then ./lib, then
+// ~/.config/sketchy/kage. See docs/shaders.md.
+import (
+	"palette"
+	"sdf"
+)
+
+var (
+	Time       float
+	Resolution vec2
+	Count      int   //sketchy:slider min=1 max=12 default=6 folder=Shape
+	Radius     float //sketchy:slider min=20 max=260 default=170 folder=Shape
+	Thickness  float //sketchy:slider min=1 max=40 default=7 folder=Shape
+	Cool       vec3  //sketchy:color default=#7d3ac1 folder=Palette
+	Warm       vec3  //sketchy:color default=#e4b363 folder=Palette
+)
+
+func Fragment(dstPos vec4) vec4 {
+	p := dstPos.xy - Resolution*0.5
+	d := 1.0e9
+	for i := 0; i < 12; i++ {
+		if i >= Count {
+			break
+		}
+		a := sdf.Tau*float(i)/float(Count) + Time*0.4
+		q := sdf.Rotate(p, a) - vec2(Radius*0.45, 0.0)
+		d = min(d, sdf.Ring(q, Radius*0.4, Thickness))
+	}
+	edge := 1.0 - smoothstep(0.0, 2.0, d)
+	glow := 0.5 / (1.0 + abs(d)*0.05)
+	col := palette.Cosine(d*0.0015+Time*0.08, Cool*0.55, Warm*0.45)
+	return vec4(col*(edge+glow), 1.0)
+}

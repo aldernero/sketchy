@@ -221,6 +221,7 @@ type Sketch struct {
 	shader          *ebiten.Shader
 	shaderUniforms  []shaderUniform
 	shaderMtime     time.Time
+	shaderDeps      []shaderDep   // imported libraries, watched for reload
 	shaderErr       string        // last reload error, shown in the Builtins panel
 	shaderStatus    string        // last successful reload message
 	shaderTarget    *ebiten.Image // reused export/record render target
@@ -233,6 +234,7 @@ type Sketch struct {
 	stateShader   *ebiten.Shader
 	stateUniforms []shaderUniform
 	stateMtime    time.Time
+	stateDeps     []shaderDep
 	pingFront     *ebiten.Image // current state; read by both passes
 	pingBack      *ebiten.Image // next state; written by the state pass, then swapped
 	stateSubstep  int           // 0..Steps-1 within this tick's state advances

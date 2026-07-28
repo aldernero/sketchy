@@ -1,0 +1,11 @@
+// Package palette holds colour ramps shared across sketches. It imports sdf,
+// so this sketch also exercises a transitive import.
+package palette
+
+import "sdf"
+
+// Cosine is an IQ-style cosine palette between two colours.
+// https://iquilezles.org/articles/palettes/
+func Cosine(t float, a vec3, b vec3) vec3 {
+	return a + b*cos(sdf.Tau*(t+vec3(0.0, 0.33, 0.67)))
+}

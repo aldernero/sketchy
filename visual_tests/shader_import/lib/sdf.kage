@@ -1,0 +1,26 @@
+// Package sdf holds signed distance functions shared across sketches.
+//
+// A library is an ordinary .kage file with a package clause and no Fragment
+// entry point. It may declare consts and funcs, but not package-level vars:
+// every one of those would become a uniform. See docs/shaders.md.
+package sdf
+
+// Tau is one full turn in radians.
+const Tau = 6.283185307179586
+
+// Circle returns the signed distance from p to a circle of radius r.
+func Circle(p vec2, r float) float {
+	return length(p) - r
+}
+
+// Ring returns the signed distance to a ring of radius r and thickness t.
+func Ring(p vec2, r float, t float) float {
+	return abs(Circle(p, r)) - t
+}
+
+// Rotate turns p about the origin by a radians.
+func Rotate(p vec2, a float) vec2 {
+	c := cos(a)
+	s := sin(a)
+	return vec2(p.x*c-p.y*s, p.x*s+p.y*c)
+}
