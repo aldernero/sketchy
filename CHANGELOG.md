@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.1] - 2026-07-28
+
 ### Changed
 
 - **gaul upgraded to v0.4.0** ([release notes](https://github.com/aldernero/gaul/releases/tag/v0.4.0)), a correctness release that fixes 13 functions which silently returned wrong results. No sketchy source changes were needed and nothing sketchy calls changed signature. All 21 bundled examples and visual tests render byte-identically before and after the upgrade, apart from three whose output is already nondeterministic run to run (`examples/reaction_diffusion`, `examples/shader_photo`, `visual_tests/nearest_neighbor`) — for those the cross-version difference is smaller than the same-version run-to-run variance, so none of it is attributable to gaul.
