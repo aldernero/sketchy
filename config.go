@@ -4,17 +4,46 @@ import "image/color"
 
 // Config holds sketch options set from code (no JSON).
 type Config struct {
+	// DefaultBackground is the canvas clear color before Drawer runs; nil means black at Init.
+	DefaultBackground color.Color
+	// DefaultForeground is the initial stroke (and default pen) color for the canvas context; nil means white at Init.
+	DefaultForeground      color.Color
 	Title                  string
 	Prefix                 string
-	SketchWidth            float64
-	SketchHeight           float64
-	ControlWidth           int
-	ControlHeight          int
 	ControlBackgroundColor string
 	ControlOutlineColor    string
 	// SketchBackgroundColor is currently unused at runtime (letterbox uses Builtins dark/light theme).
 	SketchBackgroundColor string
 	SketchOutlineColor    string
+	// PaletteDBPath locates the palettedb SQLite database for the Builtins palette
+	// dropdowns; empty means the palettedb default (~/.config/palettedb/palettedb.db).
+	PaletteDBPath string
+	// ShaderPath enables shader mode: the file is compiled as a Kage fragment
+	// shader whose //sketchy: directives auto-create panel controls that are
+	// passed back as uniforms. The file is live-reloaded when it changes.
+	// Drawer is unused in shader mode. See docs/shaders.md.
+	ShaderPath string
+	// StatePath enables a second Kage fragment shader (the "state" /
+	// simulation pass) alongside ShaderPath (the "display" pass), for
+	// feedback effects that need to remember the previous frame:
+	// reaction-diffusion, flame-fractal-style accumulation, trails, etc.
+	// Requires ShaderPath (or ShaderSrc). See docs/shaders.md.
+	StatePath string
+	// Images lists files to load at Init; use Image/DrawNamedImage in Drawer by Name.
+	Images []ImageAsset
+	// ShaderSrc supplies embedded Kage source directly (no live reload).
+	// ShaderPath wins when both are set.
+	ShaderSrc     []byte
+	SketchWidth   float64
+	SketchHeight  float64
+	ControlWidth  int
+	ControlHeight int
+	// RasterDPI sets raster resolution (default 96 = one canvas pixel per
+	// logical sketch pixel); display size is unaffected, saves gain detail.
+	RasterDPI  float64
+	RandomSeed int64
+	// DefaultStrokeWidth is the initial stroke width in pixels; 0 means 1 at Init.
+	DefaultStrokeWidth float64
 	// DisableClearBetweenFrames keeps previous frames' raster under each new
 	// frame so strokes accumulate on screen (display-only; saves render just
 	// the current frame). Sketch.Clear() wipes to DefaultBackground.
@@ -23,38 +52,9 @@ type Config struct {
 	// tdewolff/canvas FastStroke workaround is gone with the gaul renderer.
 	DisableFastStroke bool
 	ShowFPS           bool
-	// RasterDPI sets raster resolution (default 96 = one canvas pixel per
-	// logical sketch pixel); display size is unaffected, saves gain detail.
-	RasterDPI float64
 	// PreviewMode rasterizes at half detail and scales up on screen for
 	// ~4x faster frames while iterating.
 	PreviewMode bool
-	RandomSeed  int64
-	// DefaultBackground is the canvas clear color before Drawer runs; nil means black at Init.
-	DefaultBackground color.Color
-	// DefaultForeground is the initial stroke (and default pen) color for the canvas context; nil means white at Init.
-	DefaultForeground color.Color
-	// DefaultStrokeWidth is the initial stroke width in pixels; 0 means 1 at Init.
-	DefaultStrokeWidth float64
-	// PaletteDBPath locates the palettedb SQLite database for the Builtins palette
-	// dropdowns; empty means the palettedb default (~/.config/palettedb/palettedb.db).
-	PaletteDBPath string
-	// Images lists files to load at Init; use Image/DrawNamedImage in Drawer by Name.
-	Images []ImageAsset
-	// ShaderPath enables shader mode: the file is compiled as a Kage fragment
-	// shader whose //sketchy: directives auto-create panel controls that are
-	// passed back as uniforms. The file is live-reloaded when it changes.
-	// Drawer is unused in shader mode. See docs/shaders.md.
-	ShaderPath string
-	// ShaderSrc supplies embedded Kage source directly (no live reload).
-	// ShaderPath wins when both are set.
-	ShaderSrc []byte
-	// StatePath enables a second Kage fragment shader (the "state" /
-	// simulation pass) alongside ShaderPath (the "display" pass), for
-	// feedback effects that need to remember the previous frame:
-	// reaction-diffusion, flame-fractal-style accumulation, trails, etc.
-	// Requires ShaderPath (or ShaderSrc). See docs/shaders.md.
-	StatePath string
 }
 
 // New returns an uninitialized sketch. Set BuildUI, Updater, and Drawer, then call Init().

@@ -43,25 +43,24 @@ func (k uniformKind) String() string {
 // shaderUniform is one uniform declared in the Kage source's top-level var
 // block, with its optional //sketchy: directive.
 type shaderUniform struct {
+	Directive *uniformDirective // nil = no directive
 	Name      string
 	Kind      uniformKind
-	Directive *uniformDirective // nil = no directive
 }
 
 // uniformDirective is a parsed, validated //sketchy: comment.
 type uniformDirective struct {
-	Control string // "slider" | "checkbox" | "color" | "dropdown" | "none"
+	// seenKeys records which keys the directive spelled out, so validation
+	// can apply kind-aware defaults only for omitted ones.
+	seenKeys      map[string]bool
+	Control       string // "slider" | "checkbox" | "color" | "dropdown" | "none"
+	DefaultHex    string // color
+	Folder, Label string
+	Options       []string
 
 	Min, Max, Default, Step float64 // slider (and checkbox Default 0/1)
 	Digits                  int     // slider decimal digits (-1 = derive from step)
-	DefaultHex              string  // color
-	Options                 []string
-	DefaultIdx              int // dropdown
-	Folder, Label           string
-
-	// seenKeys records which keys the directive spelled out, so validation
-	// can apply kind-aware defaults only for omitted ones.
-	seenKeys map[string]bool
+	DefaultIdx              int     // dropdown
 }
 
 // controlName is the panel display name (Label override or uniform name).

@@ -131,8 +131,8 @@ func validateImportPath(path string) error {
 
 // edit is a byte-range replacement in a source file.
 type edit struct {
-	start, end int
 	text       string
+	start, end int
 }
 
 // blankEdit replaces a range with spaces, preserving line breaks so that
@@ -146,7 +146,7 @@ func blankEdit(src []byte, start, end int) edit {
 			b.WriteByte(' ')
 		}
 	}
-	return edit{start, end, b.String()}
+	return edit{start: start, end: end, text: b.String()}
 }
 
 func applyEdits(src []byte, edits []edit) []byte {
@@ -179,15 +179,15 @@ type resolvedLib struct {
 }
 
 type importResolver struct {
-	dirs     []string
-	libs     map[string]*resolvedLib
-	order    []string // resolution order, dependencies first
-	visiting []string // cycle-detection stack
+	libs map[string]*resolvedLib
 	// declared records each library's package-scope names, so a qualified
 	// reference can be validated against the library that must define it.
 	declared map[string]map[string]bool
 	// mangled guards against two libraries flattening to the same name.
-	mangled map[string]string
+	mangled  map[string]string
+	dirs     []string
+	order    []string // resolution order, dependencies first
+	visiting []string // cycle-detection stack
 }
 
 // resolveShaderImports rewrites src into a single flat Kage source with every
@@ -449,11 +449,11 @@ func rewriteKageFile(f *kageFile, ownPath string, declared map[string]map[string
 				walkErr = fmt.Errorf("%s: %s is not declared in imported package %q", f.pos(e.Sel.Pos()), e.Sel.Name, path)
 				return false
 			}
-			edits = append(edits, edit{f.offset(e.X.Pos()), f.offset(e.Sel.End()), mangle(path, e.Sel.Name)})
+			edits = append(edits, edit{start: f.offset(e.X.Pos()), end: f.offset(e.Sel.End()), text: mangle(path, e.Sel.Name)})
 			return false // do not descend; X is a package name, not an expression
 		case *ast.Ident:
 			if to, ok := renames[e.Name]; ok && isTopLevelRef(f, e) {
-				edits = append(edits, edit{f.offset(e.Pos()), f.offset(e.End()), to})
+				edits = append(edits, edit{start: f.offset(e.Pos()), end: f.offset(e.End()), text: to})
 			}
 		}
 		return true

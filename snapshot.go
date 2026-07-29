@@ -12,12 +12,12 @@ const snapshotSchemaVersion = 2
 // snapshotPayload is stored in sqlite control_json.
 // Schema 1 had only "sliders" (float). Schema 2 adds "int_sliders" for IntSlider values.
 type snapshotPayload struct {
-	Schema     int                `json:"_schema"`
 	Sliders    map[string]float64 `json:"sliders,omitempty"`
 	IntSliders map[string]int     `json:"int_sliders,omitempty"`
 	Toggles    map[string]bool    `json:"toggles"`
 	Colors     map[string]string  `json:"colors"`
 	Dropdowns  map[string]int     `json:"dropdowns"`
+	Schema     int                `json:"_schema"`
 }
 
 func controlMapKey(folder, name string) string {
@@ -120,10 +120,10 @@ func (s *Sketch) applyControlStateJSON(data []byte) ([]string, error) {
 type builtinSnapshotPayload struct {
 	DefaultBackground    string  `json:"default_background"`
 	DefaultForeground    string  `json:"default_foreground"`
-	DefaultStrokeWidthMM float64 `json:"default_stroke_width_mm"`
-	RandomSeed           int64   `json:"random_seed"`
 	DiscretePalette      string  `json:"discrete_palette,omitempty"`
 	SinePalette          string  `json:"sine_palette,omitempty"`
+	DefaultStrokeWidthMM float64 `json:"default_stroke_width_mm"`
+	RandomSeed           int64   `json:"random_seed"`
 	// ExportScale is RasterDPI/DefaultDPI. Zero (absent in older
 	// snapshots) leaves the sketch's current scale untouched.
 	ExportScale float64 `json:"export_scale,omitempty"`

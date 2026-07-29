@@ -40,7 +40,14 @@ const (
 // RecordingOptions configures a recording started with
 // [Sketch.StartRecording]. One video frame is captured per sketch tick.
 type RecordingOptions struct {
-	Format RecordingFormat
+	// OutPath overrides the output file path. Default:
+	// saves/video/<Prefix>_<timestamp>.<ext> under the working directory.
+	OutPath string
+	// ExtraArgs are appended after the per-format defaults and before the
+	// output path, so ffmpeg's last-option-wins lets them override
+	// anything (e.g. "-crf", "30", or "-lossless", "1" for VP9).
+	ExtraArgs []string
+	Format    RecordingFormat
 	// FPS is the playback frame rate written into the file (1-240,
 	// default 60). It does not resample: one tick is always one frame.
 	FPS int
@@ -54,13 +61,6 @@ type RecordingOptions struct {
 	// begins at the next tick where Tick % StartModulus == 0. Combined
 	// with NumFrames == StartModulus this captures a perfect loop.
 	StartModulus int64
-	// ExtraArgs are appended after the per-format defaults and before the
-	// output path, so ffmpeg's last-option-wins lets them override
-	// anything (e.g. "-crf", "30", or "-lossless", "1" for VP9).
-	ExtraArgs []string
-	// OutPath overrides the output file path. Default:
-	// saves/video/<Prefix>_<timestamp>.<ext> under the working directory.
-	OutPath string
 }
 
 const (
@@ -176,20 +176,20 @@ const (
 // State transitions happen on the ebiten thread; the encoder goroutine only
 // stores encErr and sends the final result on doneCh.
 type videoRecorder struct {
-	state recState
-	opts  RecordingOptions
-	// w, h are fixed at start; ffmpeg's frame size cannot change mid-stream.
-	w, h       int
-	frames     int64
+	encErr     atomic.Value // error: encoder failed; Update auto-stops next tick
+	sink       frameSink
+	captureErr error // capture-side abort reason, reported at finish
 	frameCh    chan []byte
 	doneCh     chan error
-	encErr     atomic.Value  // error: encoder failed; Update auto-stops next tick
 	free       chan []byte   // recycled frame buffers
 	raster     *image.RGBA   // reused replay target for the record-scale path
 	gpuTarget  *ebiten.Image // reused record-size shader render target
-	sink       frameSink
-	outPath    string // full path, for the status message
-	captureErr error  // capture-side abort reason, reported at finish
+	outPath    string        // full path, for the status message
+	opts       RecordingOptions
+	state      recState
+	// w, h are fixed at start; ffmpeg's frame size cannot change mid-stream.
+	w, h   int
+	frames int64
 }
 
 func (r *videoRecorder) getBuf() []byte {

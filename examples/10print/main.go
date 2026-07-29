@@ -23,12 +23,12 @@ const (
 )
 
 type Truchet struct {
+	tiles    []Tile
 	rows     int
 	cols     int
 	originX  float64
 	originY  float64
 	cellSize float64
-	tiles    []Tile
 }
 
 func (t *Truchet) init(cellSize float64, s *sketchy.Sketch) {

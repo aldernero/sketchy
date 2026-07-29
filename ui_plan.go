@@ -11,9 +11,9 @@ const (
 )
 
 type controlEntry struct {
+	Folder string
 	Kind   controlEntryKind
 	Index  int
-	Folder string
 }
 
 func folderOrder(plan []controlEntry) []string {
@@ -34,9 +34,9 @@ func folderOrder(plan []controlEntry) []string {
 // uiFolderPlan is the control panel layout grouped by folder, precomputed at
 // Init so controlWindow doesn't rebuild it every frame.
 type uiFolderPlan struct {
+	folderEntries map[string][]controlEntry
 	rootEntries   []controlEntry
 	folderTitles  []string
-	folderEntries map[string][]controlEntry
 }
 
 func buildFolderPlan(plan []controlEntry) uiFolderPlan {

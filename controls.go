@@ -28,34 +28,34 @@ const (
 
 // FloatSlider is a continuous control backed by debugui SliderF and a text field for the value.
 type FloatSlider struct {
-	Folder        string
-	Name          string
-	MinVal        float64
-	MaxVal        float64
-	Val           float64
-	Incr          float64
-	DidJustChange bool
-	lastVal       float64
-	digits        int // precision for SliderF display (from Incr)
+	Folder  string
+	Name    string
+	textBuf string
+	MinVal  float64
+	MaxVal  float64
+	Val     float64
+	Incr    float64
+	lastVal float64
+	digits  int // precision for SliderF display (from Incr)
 	// TextDecimals is fraction digits for the value text when >= 0; when < 0, use digits derived from Incr.
-	TextDecimals int
-	textBuf      string
-	textSyncVal  float64
-	textSyncOK   bool
+	TextDecimals  int
+	textSyncVal   float64
+	DidJustChange bool
+	textSyncOK    bool
 }
 
 // IntSlider is a discrete stepped control backed by debugui Slider and a text field for the value.
 type IntSlider struct {
 	Folder        string
 	Name          string
+	textBuf       string
 	MinVal        int
 	MaxVal        int
 	Val           int
 	Incr          int
-	DidJustChange bool
 	lastVal       int
-	textBuf       string
 	textSyncVal   int
+	DidJustChange bool
 	textSyncOK    bool
 }
 
@@ -72,15 +72,15 @@ type Toggle struct {
 }
 
 type ColorPicker struct {
+	c             color.Color
 	Folder        string
 	Name          string
 	Color         string
-	DidJustChange bool
 	lastColor     string
 	r             int
 	g             int
 	b             int
-	c             color.Color
+	DidJustChange bool
 }
 
 // Dropdown is a string option list control.

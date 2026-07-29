@@ -117,8 +117,8 @@ func shaderSourceName(path string) string {
 // shaderDep is an imported library file the shader was built from, watched
 // alongside the shader itself so editing a library live-reloads the sketch.
 type shaderDep struct {
-	path  string
 	mtime time.Time
+	path  string
 }
 
 func statShaderDeps(paths []string) []shaderDep {

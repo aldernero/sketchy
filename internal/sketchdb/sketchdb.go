@@ -170,16 +170,16 @@ func (d *DB) InsertSave(relPath, format string) (int64, error) {
 }
 
 type SnapshotRow struct {
-	ID          int64
 	Name        string
 	CreatedAt   string
 	ControlJSON string
 	BuiltinJSON string
 	Description string
-	PNGSaveID   sql.NullInt64
-	SVGSaveID   sql.NullInt64
 	PNGPath     string
 	SVGPath     string
+	PNGSaveID   sql.NullInt64
+	SVGSaveID   sql.NullInt64
+	ID          int64
 }
 
 func (d *DB) ListSnapshotNames() ([]string, error) {

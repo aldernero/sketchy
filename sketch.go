@@ -44,93 +44,39 @@ type (
 
 // SaveRequest is an async save operation (relative path under workDir).
 type SaveRequest struct {
+	// Pixels is a pre-captured frame (shader sketches: GPU output must be
+	// read back on the ebiten thread, so the capture happens at enqueue
+	// time and the worker only encodes). When set, Format must be "png".
+	Pixels   *image.RGBA
 	RelPath  string // e.g. saves/png/foo.png
 	Format   string // "png" or "svg"
 	DPI      float64
 	RecordDB bool
-	// Pixels is a pre-captured frame (shader sketches: GPU output must be
-	// read back on the ebiten thread, so the capture happens at enqueue
-	// time and the worker only encodes). When set, Format must be "png".
-	Pixels *image.RGBA
 }
 
 type Sketch struct {
-	Title                  string
-	Prefix                 string
-	SketchWidth            float64
-	SketchHeight           float64
-	ControlWidth           int
-	ControlHeight          int
-	ControlBackgroundColor string
-	ControlOutlineColor    string
-	// SketchBackgroundColor is unused for window filling; letterbox margins follow the Builtins UI theme.
-	// Kept for API compatibility; may be used again if margins become configurable.
-	SketchBackgroundColor string
-	SketchOutlineColor    string
+	uiFolders uiFolderPlan
+
+	shaderImages [4]*ebiten.Image
+
+	shaderMtime time.Time
+	stateMtime  time.Time
 	// DefaultBackground is the canvas clear color before each draw (image/color, default black).
 	DefaultBackground color.Color
 	// DefaultForeground is the initial stroke color for the canvas context before Drawer (default white).
 	DefaultForeground color.Color
-	// DefaultStrokeWidth is the initial stroke width in pixels (default 1).
-	DefaultStrokeWidth float64
-	// PaletteDBPath locates the palettedb SQLite database for the Builtins
-	// palette dropdowns; empty means the palettedb default
-	// (~/.config/palettedb/palettedb.db). Set before Init().
-	PaletteDBPath string
-	// DiscretePalette holds the discrete palette selected in the Builtins
-	// panel (default black→white until a palette is loaded).
-	DiscretePalette gaul.Gradient
-	// SinePalette holds the sine palette selected in the Builtins panel
-	// (default rainbow cosine palette until a palette is loaded).
-	SinePalette gaul.SinePalette
-	// DisableClearBetweenFrames keeps the previous frame's raster under each
-	// new frame so strokes accumulate on screen; Clear() wipes to
-	// DefaultBackground. Accumulation is display-only: image saves render
-	// just the current frame.
-	DisableClearBetweenFrames bool
-	// DisableFastStroke is a no-op kept for API compatibility; the old
-	// tdewolff/canvas FastStroke workaround is gone with the gaul renderer.
-	DisableFastStroke bool
-	ShowFPS           bool
-	// RasterDPI sets raster resolution (default 96, where one canvas pixel
-	// matches one logical sketch pixel). The sketch is always displayed at
-	// SketchWidth x SketchHeight; higher DPI affects raster/save detail only.
-	RasterDPI float64
-	// PreviewMode rasterizes at DefaultPreviewDPI and scales up to the sketch
-	// size on screen: same layout, lower detail, ~4x faster raster.
-	PreviewMode  bool
-	RandomSeed   int64
-	imageAssets  []ImageAsset
-	images       map[string]image.Image
-	FloatSliders []FloatSlider
-	IntSliders   []IntSlider
-	Toggles      []Toggle
-	ColorPickers []ColorPicker
-	Dropdowns    []Dropdown
-	uiPlan       []controlEntry
-	uiFolders    uiFolderPlan
+	images            map[string]image.Image
 
 	// BuildUI registers controls; set before Init().
 	BuildUI func(s *Sketch, ui *UI)
 
 	Updater               SketchUpdater
 	Drawer                SketchDrawer
-	DidControlsChange     bool
-	DidSlidersChange      bool
-	DidTogglesChange      bool
-	DidColorPickersChange bool
-	DidDropdownsChange    bool
-	Rand                  gaul.Rng
 	floatSliderControlMap map[string]int
 	intSliderControlMap   map[string]int
 	toggleControlMap      map[string]int
 	colorPickerControlMap map[string]int
 	dropdownControlMap    map[string]int
-	needToClear           bool
-	Tick                  int64
-	ui                    debugui.DebugUI
-	showDebugUI           bool
-	uiCaptureState        debugui.InputCapturingState
 
 	offscreen *ebiten.Image
 	// rasterBuf is the reused CPU-side raster target for the per-frame
@@ -141,41 +87,110 @@ type Sketch struct {
 	// SVG without re-running Drawer.
 	recorder     *render.Recorder
 	ctx          *render.Context
-	dirty        bool
 	saveRequests chan SaveRequest
-	saveMutex    sync.Mutex
+	db           *sketchdb.DB
 
-	workDir string
-	db      *sketchdb.DB
+	dlgLoadPreviewRow *sketchdb.SnapshotRow
+
+	// Builtins palette dropdowns (palettedb); paletteDB is nil when no palette db was found.
+	paletteDB *palettedb.DB
+	// ExtraUniforms supplies computed uniform values merged last into every
+	// shader draw (wins over control-mapped and builtin uniforms). The
+	// escape hatch for vec2/matrix uniforms and values derived in Go.
+	ExtraUniforms func(s *Sketch) map[string]any
+
+	shader       *ebiten.Shader
+	shaderTarget *ebiten.Image // reused export/record render target
+
+	// State (ping-pong) pass: see shader.go.
+	stateShader *ebiten.Shader
+	pingFront   *ebiten.Image // current state; read by both passes
+	pingBack    *ebiten.Image // next state; written by the state pass, then swapped
+
+	// vrec is the live video recording; nil when idle (see video.go).
+	vrec                   *videoRecorder
+	Title                  string
+	Prefix                 string
+	ControlBackgroundColor string
+	ControlOutlineColor    string
+	// SketchBackgroundColor is unused for window filling; letterbox margins follow the Builtins UI theme.
+	// Kept for API compatibility; may be used again if margins become configurable.
+	SketchBackgroundColor string
+	SketchOutlineColor    string
+	// PaletteDBPath locates the palettedb SQLite database for the Builtins
+	// palette dropdowns; empty means the palettedb default
+	// (~/.config/palettedb/palettedb.db). Set before Init().
+	PaletteDBPath string
+
+	workDir                string
+	dlgSaveImagePrefix     string
+	dlgSnapshotName        string
+	dlgSnapshotDescription string
+	dlgLoadSelected        string
+	modalHexBuf            string
+	modalErr               string
+
+	sliderRangeModalErr string
+
+	// Shader mode (see shader.go): the sketch renders a Kage fragment
+	// shader instead of a CPU Drawer.
+	ShaderPath string
+	// StatePath enables the ping-pong "state" pass; see Config.StatePath.
+	StatePath    string
+	shaderErr    string // last reload error, shown in the Builtins panel
+	shaderStatus string // last successful reload message
+	recStatus    string
+
+	// DiscretePalette holds the discrete palette selected in the Builtins
+	// panel (default black→white until a palette is loaded).
+	DiscretePalette      gaul.Gradient
+	imageAssets          []ImageAsset
+	FloatSliders         []FloatSlider
+	IntSliders           []IntSlider
+	Toggles              []Toggle
+	ColorPickers         []ColorPicker
+	Dropdowns            []Dropdown
+	uiPlan               []controlEntry
+	dlgLoadNames         []string
+	dlgLoadMissing       []string
+	discretePaletteNames []string
+	sinePaletteNames     []string
+	ShaderSrc            []byte
+	shaderUniforms       []shaderUniform
+	shaderDeps           []shaderDep // imported libraries, watched for reload
+	stateUniforms        []shaderUniform
+	stateDeps            []shaderDep
+
+	// Static source images bound via //sketchy:image directives (either
+	// shader file), indexed by slot. Slot pingPongImageSlot is reserved for
+	// the ping-pong buffer when StatePath is set.
+	imageDirectives []shaderImageDirective
+	Rand            gaul.Rng
+	ui              debugui.DebugUI
+	// SinePalette holds the sine palette selected in the Builtins panel
+	// (default rainbow cosine palette until a palette is loaded).
+	SinePalette   gaul.SinePalette
+	SketchWidth   float64
+	SketchHeight  float64
+	ControlWidth  int
+	ControlHeight int
+	// DefaultStrokeWidth is the initial stroke width in pixels (default 1).
+	DefaultStrokeWidth float64
+	// RasterDPI sets raster resolution (default 96, where one canvas pixel
+	// matches one logical sketch pixel). The sketch is always displayed at
+	// SketchWidth x SketchHeight; higher DPI affects raster/save detail only.
+	RasterDPI      float64
+	RandomSeed     int64
+	Tick           int64
+	uiCaptureState debugui.InputCapturingState
 
 	viewportW, viewportH int
 	scrollX, scrollY     float64
-
-	dlgSaveImageOpen   bool
-	dlgSaveImagePrefix string
-	dlgSavePNG         bool
-	dlgSaveSVG         bool
-
-	dlgSnapshotOpen        bool
-	dlgSnapshotName        string
-	dlgSnapshotDescription string
-	dlgSnapshotPNG         bool
-	dlgSnapshotSVG         bool
-
-	dlgLoadOpen       bool
-	dlgLoadNames      []string
-	dlgLoadSelected   string
-	dlgLoadMissing    []string
-	dlgLoadPreviewRow *sketchdb.SnapshotRow
 
 	// Indices of Builtins-only ColorPickers (Folder "_builtins"), not in uiPlan.
 	builtinColorBGIdx int
 	builtinColorFGIdx int
 
-	// Builtins palette dropdowns (palettedb); paletteDB is nil when no palette db was found.
-	paletteDB                 *palettedb.DB
-	discretePaletteNames      []string
-	sinePaletteNames          []string
 	builtinDiscretePaletteIdx int
 	builtinSinePaletteIdx     int
 
@@ -183,19 +198,13 @@ type Sketch struct {
 
 	modalH, modalS, modalV float64
 	modalR, modalG, modalB int
-	modalHexBuf            string
-	modalErr               string
-
-	sliderRangeModalOpen  bool
-	sliderRangeModalFloat bool // true = FloatSliders[idx], false = IntSliders[idx]
-	sliderRangeModalIdx   int
-	sliderRangeModalErr   string
-	sliderRangeEditMinF   float64
-	sliderRangeEditMaxF   float64
-	sliderRangeEditIncrF  float64
-	sliderRangeEditMinI   int
-	sliderRangeEditMaxI   int
-	sliderRangeEditIncrI  int
+	sliderRangeModalIdx    int
+	sliderRangeEditMinF    float64
+	sliderRangeEditMaxF    float64
+	sliderRangeEditIncrF   float64
+	sliderRangeEditMinI    int
+	sliderRangeEditMaxI    int
+	sliderRangeEditIncrI   int
 
 	// builtinSeedInt mirrors RandomSeed for the Builtins NumberField (debugui uses *int).
 	builtinSeedInt int
@@ -207,50 +216,11 @@ type Sketch struct {
 	// debugUIThemeIndex selects the control-panel style (Builtins dropdown); 0 = themes/dark.json, 1 = themes/light.json.
 	debugUIThemeIndex int
 
-	// Shader mode (see shader.go): the sketch renders a Kage fragment
-	// shader instead of a CPU Drawer.
-	ShaderPath string
-	ShaderSrc  []byte
-	// StatePath enables the ping-pong "state" pass; see Config.StatePath.
-	StatePath string
-	// ExtraUniforms supplies computed uniform values merged last into every
-	// shader draw (wins over control-mapped and builtin uniforms). The
-	// escape hatch for vec2/matrix uniforms and values derived in Go.
-	ExtraUniforms func(s *Sketch) map[string]any
+	lastCursorX int
+	lastCursorY int
 
-	shader          *ebiten.Shader
-	shaderUniforms  []shaderUniform
-	shaderMtime     time.Time
-	shaderDeps      []shaderDep   // imported libraries, watched for reload
-	shaderErr       string        // last reload error, shown in the Builtins panel
-	shaderStatus    string        // last successful reload message
-	shaderTarget    *ebiten.Image // reused export/record render target
-	shaderAnimates  bool          // Time or Tick declared (or StatePath set): dirty every tick
-	shaderUsesMouse bool          // Mouse declared: dirty on cursor move
-	lastCursorX     int
-	lastCursorY     int
+	stateSubstep int // 0..Steps-1 within this tick's state advances
 
-	// State (ping-pong) pass: see shader.go.
-	stateShader   *ebiten.Shader
-	stateUniforms []shaderUniform
-	stateMtime    time.Time
-	stateDeps     []shaderDep
-	pingFront     *ebiten.Image // current state; read by both passes
-	pingBack      *ebiten.Image // next state; written by the state pass, then swapped
-	stateSubstep  int           // 0..Steps-1 within this tick's state advances
-
-	// Static source images bound via //sketchy:image directives (either
-	// shader file), indexed by slot. Slot pingPongImageSlot is reserved for
-	// the ping-pong buffer when StatePath is set.
-	imageDirectives []shaderImageDirective
-	shaderImages    [4]*ebiten.Image
-
-	// vrec is the live video recording; nil when idle (see video.go).
-	vrec *videoRecorder
-	// rasterUploadPending: updateRecording already ran renderFrame this
-	// tick; Draw must upload rasterBuf without re-rendering (a second
-	// render would double-consume Rand and change the animation).
-	rasterUploadPending bool
 	// Builtins Recording rows state (video_ui.go).
 	recFormatIdx int
 	recModeIdx   int
@@ -258,7 +228,47 @@ type Sketch struct {
 	recFrames    int
 	recModulus   int
 	recScaleIdx  int
-	recStatus    string
+	saveMutex    sync.Mutex
+
+	// DisableClearBetweenFrames keeps the previous frame's raster under each
+	// new frame so strokes accumulate on screen; Clear() wipes to
+	// DefaultBackground. Accumulation is display-only: image saves render
+	// just the current frame.
+	DisableClearBetweenFrames bool
+	// DisableFastStroke is a no-op kept for API compatibility; the old
+	// tdewolff/canvas FastStroke workaround is gone with the gaul renderer.
+	DisableFastStroke bool
+	ShowFPS           bool
+	// PreviewMode rasterizes at DefaultPreviewDPI and scales up to the sketch
+	// size on screen: same layout, lower detail, ~4x faster raster.
+	PreviewMode           bool
+	DidControlsChange     bool
+	DidSlidersChange      bool
+	DidTogglesChange      bool
+	DidColorPickersChange bool
+	DidDropdownsChange    bool
+	needToClear           bool
+	showDebugUI           bool
+	dirty                 bool
+
+	dlgSaveImageOpen bool
+	dlgSavePNG       bool
+	dlgSaveSVG       bool
+
+	dlgSnapshotOpen bool
+	dlgSnapshotPNG  bool
+	dlgSnapshotSVG  bool
+
+	dlgLoadOpen bool
+
+	sliderRangeModalOpen  bool
+	sliderRangeModalFloat bool // true = FloatSliders[idx], false = IntSliders[idx]
+	shaderAnimates        bool // Time or Tick declared (or StatePath set): dirty every tick
+	shaderUsesMouse       bool // Mouse declared: dirty on cursor move
+	// rasterUploadPending: updateRecording already ran renderFrame this
+	// tick; Draw must upload rasterBuf without re-rendering (a second
+	// render would double-consume Rand and change the animation).
+	rasterUploadPending bool
 
 	// Primary mouse edge (see refreshPrimaryMouseEdge): avoids relying on inpututil JustPressed tick matching.
 	sketchPrimaryMouseDown     bool

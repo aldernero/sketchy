@@ -53,11 +53,11 @@ var (
 // driver is the host: an ebiten.Game that drives one guest and composites its final frame into its own
 // (hidden) screen image. It does all its work in a single Update, then terminates.
 type driver struct {
+	closeErr error
 	guest    *vmhost.GuestSession
 	screen   *ebiten.Image
 	dumped   bool
 	closed   bool
-	closeErr error
 }
 
 func (d *driver) Update() error {
