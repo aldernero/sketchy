@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **gaul upgraded to v0.4.0** ([release notes](https://github.com/aldernero/gaul/releases/tag/v0.4.0)), a correctness release that fixes 13 functions which silently returned wrong results. No sketchy source changes were needed and nothing sketchy calls changed signature. All 21 bundled examples and visual tests render byte-identically before and after the upgrade, apart from three whose output is already nondeterministic run to run (`examples/reaction_diffusion`, `examples/shader_photo`, `visual_tests/nearest_neighbor`) — for those the cross-version difference is smaller than the same-version run-to-run variance, so none of it is attributable to gaul.
+
+  Your own sketches may still render differently, because the bundled examples happen not to exercise the changed paths. Specifically:
+
+  - **Seeded output changed.** `Rand.Gaussian`, `Rand.UniformRandomPoints`, and `Rand.NoisyRandomPoints` previously drew from the global `math/rand`, so `Config.RandomSeed` did not control them at all and the same seed gave different results on every run. They now draw from the seeded PRNG and are genuinely reproducible. `Rand.Prng.Uint64n` also rejects the biased tail of its range instead of returning a plain `Next() % n`.
+  - **Fractal noise weights octaves.** `Rand.Noise*D` never multiplied each octave by its amplitude, so `SetNoisePersistence` had no effect. Sketches using the default single octave are unaffected — which is why the examples did not move — but sketches calling `SetNoiseOctaves(n)` with `n > 1` will look different, and correct.
+  - **`Noise4D`'s w axis works.** `wscale` defaulted to zero, pinning the w term at 0. gaul adds `SetNoiseScaleW` / `SetNoiseOffsetW`.
+  - **Geometry fixes.** `Point.Rotate`, `Rect.Intersects` (returned false for *every* overlapping pair), `Circle.Boundary`, `Curve.Copy` (forced `Closed = true`), `Curve.Centroid` and `Polygon.Centroid` (sign-flipped for one winding direction), `QuadTree.QueryCircle` (searched a quarter of the circle), and `KDTree.Size` all returned wrong answers before. `Line.Angle` now returns a full-quadrant `Atan2` result, which shifts `PerpendicularAt`. Any sketch written to compensate for the old behavior needs revisiting.
+  - **`Affine2D.SetRotation` / `SetShearFactor`** now assign their component instead of multiplying into it; `SetRotation` previously produced a scale by `cos(angle)` and never a rotation.
+  - **`Curve.Lerp` / `Curve.LineAt`** clamp an out-of-range percentage instead of calling `log.Fatalf` and terminating the process.
+
+  Nearest-neighbor queries are now both correct and much faster: `PointHeap.Pop` corrupted the heap, so `KDTree.NearestNeighbors` and `QuadTree.NearestNeighbors` returned the wrong neighbors, and neither tree pruned its search. They are roughly 20x and 11x faster respectively.
+
 ## [0.7.0] - 2026-07-27
 
 ### Added

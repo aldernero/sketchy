@@ -1,7 +1,7 @@
 github.com/aldernero/debugui v0.0.0-20260714161712-cb701923b33b h1:KHQRRQqKTs+eVkXO68qwkYrA4MfrCccTk8TPhJi2nIA=
 github.com/aldernero/debugui v0.0.0-20260714161712-cb701923b33b/go.mod h1:KM2JsOEN00NAiFiPfDFtNNjdhTzKQ2Kph+0nG6OnkqQ=
-github.com/aldernero/gaul v0.3.0 h1:o2n//eCgnEhWUbMmDz10qFgrAxDQCgxPlQVg2XRcgM0=
-github.com/aldernero/gaul v0.3.0/go.mod h1:Vnq3zNDMLt7g+4Ikr8vMXfmF1W89NdTktfmB+Wl57mc=
+github.com/aldernero/gaul v0.4.0 h1:k8qdhpJaZqIzdHOssVHdUSvrx6IOeRwcp65HzyAsEzQ=
+github.com/aldernero/gaul v0.4.0/go.mod h1:Vnq3zNDMLt7g+4Ikr8vMXfmF1W89NdTktfmB+Wl57mc=
 github.com/aldernero/interp v0.0.0-20231114035812-9ab0a3e37bf6 h1:HU0GRLVJYfu2JFcfBvHnsn1UGC+T0XxVHgvE2JErStA=
 github.com/aldernero/interp v0.0.0-20231114035812-9ab0a3e37bf6/go.mod h1:m2qXCvyUGDX7/wj1uq7Lmcub35OehMt/uM0WSG5qy3w=
 github.com/aldernero/palettedb v0.1.4 h1:rCEOdCg5lzi6Gs1vSaf8FxH6IBpW+1e+V5YcHBLk8GI=
