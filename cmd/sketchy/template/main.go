@@ -89,8 +89,11 @@ func main() {
 	ebiten.SetWindowSize(ww, wh)
 	ebiten.SetWindowTitle("Sketchy - " + s.Title)
 	ebiten.SetWindowResizingMode(ebiten.WindowResizingModeEnabled)
+	// Vsync paces drawing to the display; the tick rate stays at the default 60.
+	// Avoid ebiten.SetTPS(ebiten.SyncWithFPS) here: it makes ebiten.TPS() report a
+	// negative sentinel, which breaks the control panel's key-repeat timing (a text
+	// field's caret jumps to the start of the text and typing comes out reversed).
 	ebiten.SetVsyncEnabled(true)
-	ebiten.SetTPS(ebiten.SyncWithFPS)
 	if iconImages != nil {
 		ebiten.SetWindowIcon(iconImages)
 	}

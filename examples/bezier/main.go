@@ -223,7 +223,6 @@ func main() {
 	ebiten.SetWindowTitle("Sketchy - " + s.Title)
 	ebiten.SetWindowResizingMode(ebiten.WindowResizingModeEnabled)
 	ebiten.SetVsyncEnabled(true)
-	ebiten.SetTPS(ebiten.SyncWithFPS)
 	if err := ebiten.RunGame(s); err != nil {
 		log.Fatal(err)
 	}
