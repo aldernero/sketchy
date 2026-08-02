@@ -33,9 +33,15 @@ type Config struct {
 	Images []ImageAsset
 	// ShaderSrc supplies embedded Kage source directly (no live reload).
 	// ShaderPath wins when both are set.
-	ShaderSrc     []byte
-	SketchWidth   float64
-	SketchHeight  float64
+	ShaderSrc    []byte
+	SketchWidth  float64
+	SketchHeight float64
+	// AppWidth is the initial app window width in pixels; 0 means SketchWidth.
+	// Widening the window past the sketch letterboxes the sketch area, which
+	// leaves room to move the control panel off of it.
+	AppWidth float64
+	// AppHeight is the initial app window height in pixels; 0 means SketchHeight.
+	AppHeight     float64
 	ControlWidth  int
 	ControlHeight int
 	// RasterDPI sets raster resolution (default 96 = one canvas pixel per
@@ -64,6 +70,8 @@ func New(cfg Config) *Sketch {
 		Prefix:                    cfg.Prefix,
 		SketchWidth:               cfg.SketchWidth,
 		SketchHeight:              cfg.SketchHeight,
+		AppWidth:                  cfg.AppWidth,
+		AppHeight:                 cfg.AppHeight,
 		ControlWidth:              cfg.ControlWidth,
 		ControlHeight:             cfg.ControlHeight,
 		ControlBackgroundColor:    cfg.ControlBackgroundColor,
@@ -90,6 +98,12 @@ func New(cfg Config) *Sketch {
 	}
 	if s.SketchHeight <= 0 {
 		s.SketchHeight = 1080
+	}
+	if s.AppWidth <= 0 {
+		s.AppWidth = s.SketchWidth
+	}
+	if s.AppHeight <= 0 {
+		s.AppHeight = s.SketchHeight
 	}
 	return s
 }

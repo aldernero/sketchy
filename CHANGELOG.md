@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **`Config.AppWidth` / `Config.AppHeight`** set the app window size independently of the sketch size, defaulting to `SketchWidth` / `SketchHeight` so existing sketches are unchanged. `Sketch.WindowSize()` (and the new `Sketch.AppSize()`) report these, so a window wider than the sketch opens letterboxed with room to move the control panel off the sketch area instead of having to resize by hand each run.
+
 ### Fixed
 
 - **Text fields in the control panel no longer type backwards.** Clicking a slider's text field put the caret at the end of the value, where it belonged, and then the caret immediately walked to the start of the text and stayed there, so every character typed was inserted in front of the last one. Backspace, Delete, and Enter did nothing.

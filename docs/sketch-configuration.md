@@ -23,6 +23,22 @@ s.Init()
 All canvas units are **pixels** (origin top-left, y down); the drawing surface
 is exactly `SketchWidth` × `SketchHeight`.
 
+`AppWidth` / `AppHeight` size the app window itself (what `s.WindowSize()`
+returns for `ebiten.SetWindowSize`), and default to the sketch size. Making the
+window bigger than the sketch letterboxes the sketch area inside it, which
+leaves room to drag the control panel off of the sketch:
+
+```go
+s := sketchy.New(sketchy.Config{
+	SketchWidth:  1080,
+	SketchHeight: 1080,
+	AppWidth:     1500, // extra room to the right of the sketch
+	AppHeight:    1080,
+})
+```
+
+The window stays resizable at runtime; these fields only set its initial size.
+
 ## Config fields
 
 | Field                     | Type        | Default     | Description |
@@ -31,6 +47,8 @@ is exactly `SketchWidth` × `SketchHeight`.
 | Prefix                    | string      | "sketch"    | filename prefix for saves and snapshots |
 | SketchWidth               | float64     | 1080        | sketch area width in pixels |
 | SketchHeight              | float64     | 1080        | sketch area height in pixels |
+| AppWidth                  | float64     | SketchWidth | app window width in pixels (`Sketch.WindowSize`) |
+| AppHeight                 | float64     | SketchHeight| app window height in pixels (`Sketch.WindowSize`) |
 | ControlWidth              | int         | 330         | control panel width in pixels |
 | ControlHeight             | int         | 500         | control panel height in pixels |
 | ControlBackgroundColor    | string      | "#1e1e1e"   | control panel background color |

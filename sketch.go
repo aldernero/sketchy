@@ -170,8 +170,14 @@ type Sketch struct {
 	// SinePalette holds the sine palette selected in the Builtins panel
 	// (default rainbow cosine palette until a palette is loaded).
 	SinePalette   gaul.SinePalette
-	SketchWidth   float64
-	SketchHeight  float64
+	SketchWidth  float64
+	SketchHeight float64
+	// AppWidth is the initial app window width in pixels (default SketchWidth).
+	// A window larger than the sketch letterboxes the sketch area, leaving room
+	// for the control panel beside it.
+	AppWidth float64
+	// AppHeight is the initial app window height in pixels (default SketchHeight).
+	AppHeight     float64
 	ControlWidth  int
 	ControlHeight int
 	// DefaultStrokeWidth is the initial stroke width in pixels (default 1).
@@ -286,11 +292,26 @@ func (s *Sketch) Height() float64 {
 	return s.SketchHeight
 }
 
-// WindowSize returns outer window dimensions for ebiten: the sketch size in pixels,
-// with width and height each at least MinWindowWidth and MinWindowHeight.
+// AppSize is the app window size in pixels: AppWidth x AppHeight, each falling
+// back to the corresponding sketch dimension when unset.
+func (s *Sketch) AppSize() (w, h float64) {
+	w, h = s.AppWidth, s.AppHeight
+	if w <= 0 {
+		w = s.SketchWidth
+	}
+	if h <= 0 {
+		h = s.SketchHeight
+	}
+	return w, h
+}
+
+// WindowSize returns outer window dimensions for ebiten: the app size in pixels
+// (AppWidth x AppHeight, defaulting to the sketch size), with width and height
+// each at least MinWindowWidth and MinWindowHeight.
 func (s *Sketch) WindowSize() (w, h int) {
-	w = int(s.SketchWidth)
-	h = int(s.SketchHeight)
+	aw, ah := s.AppSize()
+	w = int(aw)
+	h = int(ah)
 	if w < MinWindowWidth {
 		w = MinWindowWidth
 	}
@@ -319,6 +340,12 @@ func (s *Sketch) Init() {
 	}
 	if s.RasterDPI <= 0 {
 		s.RasterDPI = DefaultDPI
+	}
+	if s.AppWidth <= 0 {
+		s.AppWidth = s.SketchWidth
+	}
+	if s.AppHeight <= 0 {
+		s.AppHeight = s.SketchHeight
 	}
 	if s.RandomSeed == 0 {
 		s.RandomSeed = time.Now().UnixNano()
@@ -738,11 +765,12 @@ func (s *Sketch) RandomizeSliderIn(folder, name string) {
 }
 
 func (s *Sketch) Layout(outsideWidth, outsideHeight int) (int, int) {
+	aw, ah := s.AppSize()
 	if outsideWidth <= 0 {
-		outsideWidth = int(s.SketchWidth)
+		outsideWidth = int(aw)
 	}
 	if outsideHeight <= 0 {
-		outsideHeight = int(s.SketchHeight)
+		outsideHeight = int(ah)
 	}
 	s.viewportW, s.viewportH = outsideWidth, outsideHeight
 	s.clampScroll()
