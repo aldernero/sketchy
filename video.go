@@ -393,10 +393,10 @@ func (s *Sketch) updateRecording() {
 	// Render at most once per tick: Drawer may consume s.Rand, so rendering
 	// here and again in Draw would change the animation vs. non-recording
 	// runs. rasterUploadPending tells Draw to upload without re-rendering
-	// (shader mode renders straight into the offscreen, nothing to upload).
+	// (GPU sketches render straight into the offscreen, nothing to upload).
 	if s.dirty {
-		if s.IsShaderSketch() {
-			s.renderShaderFrame(s.offscreen)
+		if s.usesGPUCanvas() {
+			s.renderGPUFrame(s.offscreen, false)
 		} else {
 			s.renderFrame()
 			s.rasterUploadPending = true
@@ -419,10 +419,11 @@ func (s *Sketch) updateRecording() {
 // previous frame (duplicate, not skip) so ticks and frames stay 1:1.
 func (s *Sketch) captureVideoFrame() []byte {
 	r := s.vrec
-	if s.IsShaderSketch() {
+	if s.usesGPUCanvas() {
 		// GPU readback (premultiplied RGBA — the layout the ffmpeg pipe
 		// expects). At scale 1 the display offscreen already holds the
-		// frame; other scales re-render into a reused record-size target.
+		// frame; other scales re-render into a reused record-size target,
+		// which for a GPUDrawer is an export-style render at that size.
 		buf := r.getBuf()
 		if s.offscreen != nil && s.offscreen.Bounds().Dx() == r.w && s.offscreen.Bounds().Dy() == r.h {
 			s.offscreen.ReadPixels(buf)
@@ -431,7 +432,7 @@ func (s *Sketch) captureVideoFrame() []byte {
 		if r.gpuTarget == nil || r.gpuTarget.Bounds().Dx() != r.w || r.gpuTarget.Bounds().Dy() != r.h {
 			r.gpuTarget = ebiten.NewImage(r.w, r.h)
 		}
-		s.renderShaderFrame(r.gpuTarget)
+		s.renderGPUFrame(r.gpuTarget, true)
 		r.gpuTarget.ReadPixels(buf)
 		return buf
 	}

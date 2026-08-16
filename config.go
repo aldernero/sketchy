@@ -33,7 +33,12 @@ type Config struct {
 	Images []ImageAsset
 	// ShaderSrc supplies embedded Kage source directly (no live reload).
 	// ShaderPath wins when both are set.
-	ShaderSrc    []byte
+	ShaderSrc []byte
+	// GPUDrawer renders the sketch straight onto an ebiten image instead of
+	// the CPU canvas, for GPU work a single Kage shader cannot express. See
+	// SketchGPUDrawer. Mutually exclusive with ShaderPath/ShaderSrc; replaces
+	// Drawer when set. May also be assigned on the Sketch before Init.
+	GPUDrawer    SketchGPUDrawer
 	SketchWidth  float64
 	SketchHeight float64
 	// AppWidth is the initial app window width in pixels; 0 means SketchWidth.
@@ -92,6 +97,7 @@ func New(cfg Config) *Sketch {
 		ShaderPath:                cfg.ShaderPath,
 		ShaderSrc:                 append([]byte(nil), cfg.ShaderSrc...),
 		StatePath:                 cfg.StatePath,
+		GPUDrawer:                 cfg.GPUDrawer,
 	}
 	if s.SketchWidth <= 0 {
 		s.SketchWidth = 1080

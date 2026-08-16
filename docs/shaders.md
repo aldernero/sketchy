@@ -395,3 +395,60 @@ func Fragment(dstPos vec4, srcPos vec2) vec4 {
   source images.
 - A `StatePath` simulation's buffer contents are not part of snapshots
   (only control values are).
+
+# When one shader is not enough: `GPUDrawer`
+
+Shader mode compiles a single Kage shader and draws it with one
+`DrawRectShader`, which is why every bound source image has to match the
+render target's size and why the iteration bounds inside the shader are
+whatever you wrote. Some GPU work does not fit that shape:
+
+- a shader that must be **compiled per frame** — Kage requires
+  compile-time-constant `for` bounds, so a variable iteration ceiling
+  means stamping the source from a template and caching by tier;
+- **several passes** that are not the display/state ping-pong;
+- **source textures of unrelated size** — a lookup table, an orbit,
+  anything not the shape of the canvas;
+- anything needing **`DrawTrianglesShader`** rather than
+  `DrawRectShader`.
+
+For those, set `Config.GPUDrawer` instead of `ShaderPath`. Sketchy hands
+you the render target and stays out of the way; you keep the control
+panel, snapshots, image saves, and video recording.
+
+```go
+s := sketchy.New(sketchy.Config{
+    Title:       "Custom GPU Sketch",
+    SketchWidth: 1080, SketchHeight: 1080,
+    GPUDrawer: func(s *sketchy.Sketch, dst *ebiten.Image, export bool) {
+        // Render the current view into dst, whatever size dst is.
+    },
+})
+```
+
+`GPUDrawer` is mutually exclusive with `ShaderPath`/`ShaderSrc` (fatal at
+Init) and replaces `Drawer`. Two things about the signature matter:
+
+**Render at `dst`'s size, not the sketch's.** `dst` is the sketch
+offscreen at `SketchWidth x SketchHeight` on the live path, but an
+export-scale target for PNG saves, snapshots, and scaled video frames.
+Deriving your pixel scale from `dst.Bounds()` makes Export Scale a true
+supersample — a 4x PNG resolves detail the 1x frame cannot — rather than
+the upscaled blit shader mode has to settle for.
+
+**Honour `export`.** It marks the capture path, where the frame must be
+complete when the call returns. A drawer that spreads work across frames
+(a progressive or banded renderer) has to finish synchronously there, or
+the capture records a half-drawn buffer.
+
+Sketchy redraws only when the sketch is dirty, so a drawer with work
+left to do should call `s.MarkDirty()` from the `Updater` until it is
+finished; otherwise the sketch idles at no GPU cost.
+
+`Sketch.IsGPUSketch` reports the mode, and `Sketch.CaptureGPUImage`
+renders at Export Scale and reads the result back — the building block
+for custom export flows, paired with `Sketch.EnqueueSavePixels`.
+
+The limitations above that follow from rendering on the GPU apply here
+too: no Preview Mode, no `DisableClearBetweenFrames`, no SVG output, and
+the background/foreground/stroke defaults do not affect the result.

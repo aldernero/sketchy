@@ -38,8 +38,8 @@ go run .
 A sketch is plain Go code—there is **no** `sketch.json` for controls.
 
 1. Call [`sketchy.New`](../sketch.go) with a [`sketchy.Config`](../config.go) (window title, sketch size, colors, optional defaults for canvas background/foreground/stroke width, etc.).
-2. Set [`BuildUI`](../sketch.go) to a function that registers controls with [`sketchy.UI`](../ui_builder.go) (`FloatSlider`, `IntSlider`, `Checkbox`, `ColorPicker`, `Dropdown`, `Folder`, …).
-3. Set [`Updater`](../sketch.go) and [`Drawer`](../sketch.go).
+2. Set [`BuildUI`](../sketch.go) to a function that registers controls with [`sketchy.UI`](../ui_builder.go) (`FloatSlider`, `IntSlider`, `Checkbox`, `Button`, `ColorPicker`, `Dropdown`, `TextBox`, `Label`, `Folder`, …).
+3. Set [`Updater`](../sketch.go) and [`Drawer`](../sketch.go) — or [`GPUDrawer`](../sketch.go) to render on the GPU instead of the CPU canvas.
 4. Call [`Init`](../sketch.go) (opens `sketch.db`, builds the control map, applies defaults).
 5. Configure Ebitengine (window size/title from [`WindowSize`](../sketch.go), etc.) and run [`ebiten.RunGame`](../cmd/sketchy/template/main.go).
 
@@ -96,6 +96,22 @@ func buildUI(_ *sketchy.Sketch, ui *sketchy.UI) {
 `FloatSlider` takes `name`, `min`, `max`, `initial`, `step` (in pixels, like all canvas units in Sketchy). The value column is a **text field** (you can type numbers, including forms like `1e-3`); the track shows position only.
 
 To group controls under a header, wrap them in `ui.Folder("Shape", func() { … })` and then use `s.GetFloat("Shape", "radius")` instead of `s.Slider("radius")`.
+
+For a value no slider can hold — an arbitrary-precision coordinate, an identifier, an expression — use `ui.TextBox`. It commits on Enter or focus loss, and its `validate` function normalizes what was typed and may reject it (returning `ok = false` reverts the field, exactly as an unparseable slider value does); pass `nil` to accept anything. Read and write it with `s.GetText` / `s.SetText`, and use `ui.MultilineTextBox` when the value is too long to read in the narrow value column.
+
+```go
+ui.TextBox("center", "-0.5", func(v string) (string, bool) {
+	f, _, err := big.ParseFloat(v, 10, 512, big.ToNearestEven)
+	if err != nil {
+		return "", false
+	}
+	return f.Text('g', 20), true
+})
+```
+
+Text boxes are persisted in snapshots like any other control, so this is how a value that no numeric control could round-trip gets saved and restored by name.
+
+`ui.Label(name, func() string { … })` adds a read-only status row instead, for live state that no control owns. It is called every time the panel is drawn, and keeps such readouts off the canvas, where they would be baked into every saved image.
 
 ## 2. Set sketch size in `Config`
 

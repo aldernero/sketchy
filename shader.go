@@ -32,18 +32,41 @@ func (s *Sketch) IsShaderSketch() bool {
 	return s.ShaderPath != "" || len(s.ShaderSrc) > 0
 }
 
+// IsGPUSketch reports whether this sketch renders through a GPUDrawer.
+func (s *Sketch) IsGPUSketch() bool {
+	return s.GPUDrawer != nil
+}
+
+// usesGPUCanvas reports whether frames are produced on the GPU rather than by
+// rasterizing the vector recording — true for both shader mode and a
+// GPUDrawer. Everything that follows from that turns on it: the offscreen is
+// drawn into directly, Preview Mode does not apply, image saves go through a
+// readback, and there is no vector output to write as SVG.
+func (s *Sketch) usesGPUCanvas() bool {
+	return s.IsShaderSketch() || s.IsGPUSketch()
+}
+
 // initShader loads, parses, and compiles the shader (and, if StatePath is
 // set, the state/simulation shader and its ping-pong buffers) at Init. Any
 // failure here is fatal: a shader sketch has nothing else to render.
 func (s *Sketch) initShader() {
+	if s.IsGPUSketch() && s.IsShaderSketch() {
+		log.Fatal("sketchy: GPUDrawer and ShaderPath/ShaderSrc are mutually exclusive")
+	}
 	if s.StatePath != "" && !s.IsShaderSketch() {
 		log.Fatal("sketchy: StatePath requires ShaderPath (or ShaderSrc) for the display pass")
 	}
-	if !s.IsShaderSketch() {
+	if s.usesGPUCanvas() && s.DisableClearBetweenFrames {
+		log.Fatal("sketchy: DisableClearBetweenFrames is not supported for GPU-rendered sketches")
+	}
+	if s.IsGPUSketch() {
+		// Same reasoning as shader mode below: the live display is always
+		// native 1:1, so Preview Mode never applies.
+		s.PreviewMode = false
 		return
 	}
-	if s.DisableClearBetweenFrames {
-		log.Fatal("sketchy: DisableClearBetweenFrames is not supported in shader mode")
+	if !s.IsShaderSketch() {
+		return
 	}
 
 	// The live display always renders 1:1 with the sketch's logical size
@@ -529,23 +552,45 @@ func (s *Sketch) renderShaderFrame(dst *ebiten.Image) {
 	dst.DrawRectShader(w, h, s.shader, opts)
 }
 
-// CaptureShaderImage renders the display pass at the Builtins Export Scale
-// resolution (RasterDPI/DefaultDPI x SketchWidth x SketchHeight — the live
-// display always stays native 1:1, see initShader) and reads the result
-// back to the CPU — the building block for custom export flows (pair with
-// [Sketch.EnqueueSavePixels]). Must be called on the ebiten thread
-// (Updater/Drawer callbacks are fine); returns nil for non-shader sketches.
-// Pixels are premultiplied RGBA, identical in layout to the CPU raster
-// path.
-//
-// Any bound //sketchy:image source or ping-pong state buffer is native
-// resolution (SketchWidth x SketchHeight) regardless of scale — Ebitengine
-// requires every DrawRectShaderOptions.Images entry to match the draw
-// target's size exactly, so at scale != 1 they are upscaled (GPU, linear
-// filter) into scratch images sized to match, used for this one capture,
-// and disposed; the originals and the live simulation are untouched.
+// renderGPUFrame draws one frame into dst through whichever GPU path this
+// sketch uses. export is passed through to a GPUDrawer; shader mode ignores it,
+// its single draw always producing a complete frame.
+func (s *Sketch) renderGPUFrame(dst *ebiten.Image, export bool) {
+	if s.IsShaderSketch() {
+		s.renderShaderFrame(dst)
+		return
+	}
+	dst.Clear()
+	s.GPUDrawer(s, dst, export)
+}
+
+// CaptureShaderImage is [Sketch.CaptureGPUImage] restricted to shader
+// sketches, kept for compatibility. Prefer CaptureGPUImage, which also covers
+// GPUDrawer sketches.
 func (s *Sketch) CaptureShaderImage() *image.RGBA {
 	if !s.IsShaderSketch() {
+		return nil
+	}
+	return s.CaptureGPUImage()
+}
+
+// CaptureGPUImage renders the current frame at the Builtins Export Scale
+// resolution (RasterDPI/DefaultDPI x SketchWidth x SketchHeight — the live
+// display always stays native 1:1) and reads the result back to the CPU. It is
+// the capture path for both shader mode and a GPUDrawer, and the building
+// block for custom export flows (pair with [Sketch.EnqueueSavePixels]). Must
+// be called on the ebiten thread (Updater/Drawer callbacks are fine); returns
+// nil for CPU sketches. Pixels are premultiplied RGBA, identical in layout to
+// the CPU raster path.
+//
+// A GPUDrawer is called with export = true and the scaled target, so it can
+// render the view at that resolution for real. Shader mode cannot do that —
+// Ebitengine requires every DrawRectShaderOptions.Images entry to match the
+// draw target exactly, so at scale != 1 its bound source images and ping-pong
+// buffer are upscaled into scratch images for the one capture and disposed;
+// the originals and the live simulation are untouched.
+func (s *Sketch) CaptureGPUImage() *image.RGBA {
+	if !s.usesGPUCanvas() {
 		return nil
 	}
 	scale := s.RasterDPI / DefaultDPI
@@ -556,6 +601,14 @@ func (s *Sketch) CaptureShaderImage() *image.RGBA {
 	h := int(s.SketchHeight*scale + 0.5)
 	if s.shaderTarget == nil || s.shaderTarget.Bounds().Dx() != w || s.shaderTarget.Bounds().Dy() != h {
 		s.shaderTarget = ebiten.NewImage(w, h)
+	}
+
+	if s.IsGPUSketch() {
+		s.shaderTarget.Clear()
+		s.GPUDrawer(s, s.shaderTarget, true)
+		img := image.NewRGBA(image.Rect(0, 0, w, h))
+		s.shaderTarget.ReadPixels(img.Pix)
+		return img
 	}
 
 	nativeW, nativeH := int(s.SketchWidth), int(s.SketchHeight)

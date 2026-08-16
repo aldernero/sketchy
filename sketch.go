@@ -40,6 +40,23 @@ const (
 type (
 	SketchUpdater func(s *Sketch)
 	SketchDrawer  func(s *Sketch, ctx *render.Context)
+
+	// SketchGPUDrawer renders one frame straight onto an ebiten image, for
+	// sketches whose drawing is GPU work that the CPU canvas cannot express:
+	// a shader that has to be compiled per frame, several passes, source
+	// textures of unrelated size, anything needing DrawTrianglesShader.
+	// Config.ShaderPath covers the common single-shader case without any of
+	// this; reach for a GPUDrawer only when that is not enough.
+	//
+	// dst is the sketch offscreen at SketchWidth x SketchHeight on the live
+	// path, and an export-scale target for PNG saves, snapshots and video
+	// frames — so render the current view at whatever size dst is rather than
+	// assuming the sketch dimensions.
+	//
+	// export marks the capture path, where the frame must be complete when the
+	// call returns. A drawer that spreads work across frames has to finish it
+	// synchronously here, or the capture records a half-drawn buffer.
+	SketchGPUDrawer func(s *Sketch, dst *ebiten.Image, export bool)
 )
 
 // SaveRequest is an async save operation (relative path under workDir).
@@ -70,13 +87,18 @@ type Sketch struct {
 	// BuildUI registers controls; set before Init().
 	BuildUI func(s *Sketch, ui *UI)
 
-	Updater               SketchUpdater
-	Drawer                SketchDrawer
+	Updater SketchUpdater
+	Drawer  SketchDrawer
+	// GPUDrawer renders the sketch on the GPU instead of the CPU canvas; see
+	// SketchGPUDrawer. Mutually exclusive with ShaderPath/ShaderSrc, and
+	// replaces Drawer when set.
+	GPUDrawer             SketchGPUDrawer
 	floatSliderControlMap map[string]int
 	intSliderControlMap   map[string]int
 	toggleControlMap      map[string]int
 	colorPickerControlMap map[string]int
 	dropdownControlMap    map[string]int
+	textBoxControlMap     map[string]int
 
 	offscreen *ebiten.Image
 	// rasterBuf is the reused CPU-side raster target for the per-frame
@@ -150,6 +172,8 @@ type Sketch struct {
 	Toggles              []Toggle
 	ColorPickers         []ColorPicker
 	Dropdowns            []Dropdown
+	TextBoxes            []TextBox
+	Labels               []Label
 	uiPlan               []controlEntry
 	dlgLoadNames         []string
 	dlgLoadMissing       []string
@@ -169,7 +193,7 @@ type Sketch struct {
 	ui              debugui.DebugUI
 	// SinePalette holds the sine palette selected in the Builtins panel
 	// (default rainbow cosine palette until a palette is loaded).
-	SinePalette   gaul.SinePalette
+	SinePalette  gaul.SinePalette
 	SketchWidth  float64
 	SketchHeight float64
 	// AppWidth is the initial app window width in pixels (default SketchWidth).
@@ -253,6 +277,7 @@ type Sketch struct {
 	DidTogglesChange      bool
 	DidColorPickersChange bool
 	DidDropdownsChange    bool
+	DidTextBoxesChange    bool
 	needToClear           bool
 	showDebugUI           bool
 	dirty                 bool
@@ -434,6 +459,8 @@ func (s *Sketch) rebuildControls() {
 	s.Toggles = nil
 	s.ColorPickers = nil
 	s.Dropdowns = nil
+	s.TextBoxes = nil
+	s.Labels = nil
 	s.uiPlan = nil
 	ui := &UI{s: s}
 	if s.BuildUI != nil {
@@ -558,6 +585,34 @@ func (s *Sketch) Dropdown(name string) int {
 	return s.GetDropdownIndex("", name)
 }
 
+// GetText returns a text box value in folder (use "" for root).
+func (s *Sketch) GetText(folder, name string) string {
+	k := controlMapKey(folder, name)
+	i, ok := s.textBoxControlMap[k]
+	if !ok {
+		log.Fatalf("%q is not a text box", k)
+	}
+	return s.TextBoxes[i].Val
+}
+
+// SetText sets a text box value from code. The field's edit buffer follows
+// unless the user is currently typing in the panel, which SetText must not
+// interrupt — see [Sketch.InputCaptured].
+func (s *Sketch) SetText(folder, name, v string) {
+	k := controlMapKey(folder, name)
+	i, ok := s.textBoxControlMap[k]
+	if !ok {
+		log.Fatalf("%q is not a text box", k)
+	}
+	s.TextBoxes[i].Val = v
+	s.TextBoxes[i].maybeSyncTextBufFromVal(s.InputCaptured())
+}
+
+// Text is shorthand for GetText("", name).
+func (s *Sketch) Text(name string) string {
+	return s.GetText("", name)
+}
+
 // SelectedDropdown returns the selected string for a root-folder dropdown.
 func (s *Sketch) SelectedDropdown(name string) string {
 	k := controlMapKey("", name)
@@ -620,6 +675,16 @@ func (s *Sketch) buildMaps() {
 			log.Fatalf("duplicate dropdown key %q", k)
 		}
 		s.dropdownControlMap[k] = i
+	}
+	s.textBoxControlMap = make(map[string]int)
+	for i := range s.TextBoxes {
+		s.TextBoxes[i].lastVal = s.TextBoxes[i].Val
+		s.TextBoxes[i].syncTextBufFromVal()
+		k := controlMapKey(s.TextBoxes[i].Folder, s.TextBoxes[i].Name)
+		if _, dup := s.textBoxControlMap[k]; dup {
+			log.Fatalf("duplicate text box key %q", k)
+		}
+		s.textBoxControlMap[k] = i
 	}
 }
 
@@ -693,10 +758,24 @@ func (s *Sketch) UpdateControls() {
 			s.DidDropdownsChange = true
 		}
 	}
-	if s.DidSlidersChange || s.DidTogglesChange || s.DidColorPickersChange || s.DidDropdownsChange {
+	for i := range s.TextBoxes {
+		s.TextBoxes[i].UpdateState()
+		if s.TextBoxes[i].DidJustChange {
+			s.DidTextBoxesChange = true
+		}
+	}
+	if s.DidSlidersChange || s.DidTogglesChange || s.DidColorPickersChange || s.DidDropdownsChange || s.DidTextBoxesChange {
 		s.DidControlsChange = true
 		s.dirty = true
 	}
+}
+
+// InputCaptured reports whether a control-panel widget currently has keyboard
+// focus — a text field being typed into. Key handling in an Updater should be
+// suppressed while it is true, or typing a location into a text box also
+// triggers every single-key shortcut the sketch defines.
+func (s *Sketch) InputCaptured() bool {
+	return s.uiCaptureState&debugui.InputCapturingStateFocus != 0
 }
 
 // viewPad is half the empty margin when the sketch is smaller than the viewport (may be negative).
@@ -836,9 +915,9 @@ func colorToRGBHex(c color.Color) string {
 }
 
 func (s *Sketch) Draw(screen *ebiten.Image) {
-	if s.IsShaderSketch() {
+	if s.usesGPUCanvas() {
 		if s.dirty {
-			s.renderShaderFrame(s.offscreen)
+			s.renderGPUFrame(s.offscreen, false)
 			s.dirty = false
 		}
 	} else if s.dirty || s.rasterUploadPending {
@@ -884,6 +963,7 @@ func (s *Sketch) Draw(screen *ebiten.Image) {
 	s.DidTogglesChange = false
 	s.DidColorPickersChange = false
 	s.DidDropdownsChange = false
+	s.DidTextBoxesChange = false
 }
 
 // renderFrame rebuilds the current frame: it re-records the drawing (for

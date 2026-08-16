@@ -83,6 +83,57 @@ type ColorPicker struct {
 	DidJustChange bool
 }
 
+// TextBox is a free-form string control: a full-width debugui text field whose
+// value is committed on Enter or focus loss. It exists for values no numeric
+// control can hold — arbitrary-precision coordinates, identifiers, expressions
+// — and it persists in snapshots like any other control.
+//
+// Val is the committed value and the only thing to read; textBuf is the live
+// edit buffer and holds whatever the user has typed so far.
+type TextBox struct {
+	Folder string
+	Name   string
+	// Val is the last committed value, after validation.
+	Val string
+	// Validate normalizes a typed value before it is committed. Returning
+	// ok = false rejects the input and reverts the field to Val, the same way
+	// an unparseable slider value reverts. A nil Validate accepts anything.
+	Validate func(string) (string, bool)
+	// Multiline lays the field out on its own row under the label, for values
+	// too long to read in the value column.
+	Multiline     bool
+	DidJustChange bool
+
+	textBuf string
+	lastVal string
+	// textSyncOK guards the initial sync of textBuf from Val.
+	textSyncOK bool
+}
+
+func NewTextBox(name, initial string, validate func(string) (string, bool)) TextBox {
+	t := TextBox{
+		Name:     name,
+		Val:      initial,
+		Validate: validate,
+	}
+	t.lastVal = initial
+	t.syncTextBufFromVal()
+	return t
+}
+
+func (t *TextBox) UpdateState() {
+	t.DidJustChange = t.Val != t.lastVal
+	t.lastVal = t.Val
+}
+
+// Label is a read-only status row. Value is called each time the panel is
+// drawn, so a Label can report live state that no control owns.
+type Label struct {
+	Folder string
+	Name   string
+	Value  func() string
+}
+
 // Dropdown is a string option list control.
 type Dropdown struct {
 	Folder        string

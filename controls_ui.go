@@ -65,7 +65,7 @@ func (s *Sketch) builtinsPanel(ctx *debugui.Context) {
 		s.drawColorRow(ctx, s.builtinColorFGIdx)
 		s.drawBuiltinDefaultStrokeWidthRow(ctx)
 		s.drawBuiltinExportScaleRow(ctx)
-		if !s.IsShaderSketch() { // shader mode's live display is always 1:1; Preview mode doesn't apply
+		if !s.usesGPUCanvas() { // a GPU live display is always 1:1; Preview mode doesn't apply
 			s.drawBuiltinPreviewModeRow(ctx)
 		}
 		s.drawBuiltinPaletteRows(ctx)
@@ -122,8 +122,50 @@ func (s *Sketch) drawControlEntries(ctx *debugui.Context, entries []controlEntry
 			s.drawColorRow(ctx, e.Index)
 		case entryDropdown:
 			s.drawDropdownRow(ctx, e.Index)
+		case entryTextBox:
+			s.drawTextBoxRow(ctx, e.Index)
+		case entryLabel:
+			s.drawLabelRow(ctx, e.Index)
 		}
 	}
+}
+
+func (s *Sketch) drawTextBoxRow(ctx *debugui.Context, idx int) {
+	t := &s.TextBoxes[idx]
+	// The panel is drawn from inside debugui's own update, so the focus state
+	// from the previous frame is what is available here; it is enough to keep
+	// an external SetText from overwriting the caret mid-word.
+	t.maybeSyncTextBufFromVal(s.InputCaptured())
+
+	field := func() {
+		ctx.IDScope(fmt.Sprintf("tbx%d", idx), func() {
+			ctx.TextField(&t.textBuf).On(func() {
+				commitTextBoxText(t)
+			})
+		})
+	}
+	if t.Multiline {
+		// Label on its own row, field full width beneath it: the only layout
+		// that shows a useful number of characters for a long value.
+		ctx.SetGridLayout([]int{-1}, nil)
+		ctx.Text(t.Name)
+		field()
+		return
+	}
+	ctx.SetGridLayout([]int{ControlLabelColumnWidth, -1}, nil)
+	ctx.Text(t.Name)
+	field()
+}
+
+func (s *Sketch) drawLabelRow(ctx *debugui.Context, idx int) {
+	l := &s.Labels[idx]
+	v := ""
+	if l.Value != nil {
+		v = l.Value()
+	}
+	ctx.SetGridLayout([]int{ControlLabelColumnWidth, -1}, nil)
+	ctx.Text(l.Name)
+	ctx.Text(v)
 }
 
 func (s *Sketch) drawBuiltinDefaultStrokeWidthRow(ctx *debugui.Context) {
@@ -364,7 +406,7 @@ func (s *Sketch) dialogSaveImage(ctx *debugui.Context) {
 		prefix := &s.dlgSaveImagePrefix
 		ctx.TextField(prefix).On(func() {})
 		ctx.Checkbox(&s.dlgSavePNG, "PNG")
-		if !s.IsShaderSketch() { // shader output has no vector representation
+		if !s.usesGPUCanvas() { // GPU output has no vector representation
 			ctx.Checkbox(&s.dlgSaveSVG, "SVG")
 		}
 		modalActionRow(ctx, "OK", func() { s.dlgSaveImageOpen = false }, func() {
@@ -374,15 +416,15 @@ func (s *Sketch) dialogSaveImage(ctx *debugui.Context) {
 			}
 			if s.dlgSavePNG {
 				rel := filepath.ToSlash(filepath.Join("saves", "png", base+".png"))
-				if s.IsShaderSketch() {
+				if s.usesGPUCanvas() {
 					// GPU readback must happen here on the ebiten thread;
 					// the worker only encodes.
-					s.EnqueueSavePixels(rel, s.CaptureShaderImage(), true)
+					s.EnqueueSavePixels(rel, s.CaptureGPUImage(), true)
 				} else {
 					s.EnqueueSave(rel, "png", s.RasterDPI, true)
 				}
 			}
-			if s.dlgSaveSVG && !s.IsShaderSketch() {
+			if s.dlgSaveSVG && !s.usesGPUCanvas() {
 				rel := filepath.ToSlash(filepath.Join("saves", "svg", base+".svg"))
 				s.EnqueueSave(rel, "svg", 0, true)
 			}
@@ -450,7 +492,7 @@ func (s *Sketch) dialogSnapshot(ctx *debugui.Context) {
 					}
 				}
 			}
-			if s.dlgSnapshotSVG && !s.IsShaderSketch() {
+			if s.dlgSnapshotSVG && !s.usesGPUCanvas() {
 				rel := filepath.ToSlash(filepath.Join("saves", "svg", base+".svg"))
 				full := filepath.Join(s.workDir, filepath.FromSlash(rel))
 				if err := writeSVG(full, s); err != nil {

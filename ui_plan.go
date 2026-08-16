@@ -8,6 +8,8 @@ const (
 	entryToggle
 	entryColor
 	entryDropdown
+	entryTextBox
+	entryLabel
 )
 
 type controlEntry struct {

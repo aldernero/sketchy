@@ -108,6 +108,39 @@ func commitFloatSliderText(sl *FloatSlider) {
 	sl.syncTextBufFromVal()
 }
 
+func (t *TextBox) syncTextBufFromVal() {
+	t.textBuf = t.Val
+	t.textSyncOK = true
+}
+
+// maybeSyncTextBufFromVal refreshes the edit buffer when Val changed from
+// outside (SetText, a snapshot load), but never while the field is focused —
+// rewriting the buffer under the caret would eat what is being typed.
+func (t *TextBox) maybeSyncTextBufFromVal(focused bool) {
+	if focused {
+		return
+	}
+	if !t.textSyncOK || t.textBuf != t.Val {
+		t.syncTextBufFromVal()
+	}
+}
+
+func commitTextBoxText(t *TextBox) {
+	s := strings.TrimSpace(t.textBuf)
+	if t.Validate == nil {
+		t.Val = s
+		t.syncTextBufFromVal()
+		return
+	}
+	v, ok := t.Validate(s)
+	if !ok {
+		t.syncTextBufFromVal()
+		return
+	}
+	t.Val = v
+	t.syncTextBufFromVal()
+}
+
 func (sl *IntSlider) syncTextBufFromVal() {
 	sl.textBuf = formatIntSliderDisplay(sl)
 	sl.textSyncVal = sl.Val

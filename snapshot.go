@@ -7,16 +7,19 @@ import (
 	"strings"
 )
 
-const snapshotSchemaVersion = 2
+const snapshotSchemaVersion = 3
 
 // snapshotPayload is stored in sqlite control_json.
 // Schema 1 had only "sliders" (float). Schema 2 adds "int_sliders" for IntSlider values.
+// Schema 3 adds "texts" for TextBox values. Older rows simply lack the newer
+// keys, so loading them still works.
 type snapshotPayload struct {
 	Sliders    map[string]float64 `json:"sliders,omitempty"`
 	IntSliders map[string]int     `json:"int_sliders,omitempty"`
 	Toggles    map[string]bool    `json:"toggles"`
 	Colors     map[string]string  `json:"colors"`
 	Dropdowns  map[string]int     `json:"dropdowns"`
+	Texts      map[string]string  `json:"texts,omitempty"`
 	Schema     int                `json:"_schema"`
 }
 
@@ -25,6 +28,21 @@ func controlMapKey(folder, name string) string {
 		return name
 	}
 	return folder + "/" + name
+}
+
+// SerializeControlState returns every control's value as the JSON a snapshot
+// stores in sketch.db. Exported for sketches that want to save or diff their
+// own state outside the Snapshot dialogs.
+func (s *Sketch) SerializeControlState() ([]byte, error) {
+	return s.serializeControlState()
+}
+
+// ApplyControlState restores control values from JSON produced by
+// [Sketch.SerializeControlState], returning the keys that no longer match a
+// control in this sketch. Values are set without running any validator: the
+// data describes a state the sketch already accepted.
+func (s *Sketch) ApplyControlState(data []byte) (missing []string, err error) {
+	return s.applyControlStateJSON(data)
 }
 
 func (s *Sketch) serializeControlState() ([]byte, error) {
@@ -60,6 +78,13 @@ func (s *Sketch) serializeControlState() ([]byte, error) {
 	for i := range s.Dropdowns {
 		k := controlMapKey(s.Dropdowns[i].Folder, s.Dropdowns[i].Name)
 		p.Dropdowns[k] = s.Dropdowns[i].Index
+	}
+	if len(s.TextBoxes) > 0 {
+		p.Texts = make(map[string]string)
+		for i := range s.TextBoxes {
+			k := controlMapKey(s.TextBoxes[i].Folder, s.TextBoxes[i].Name)
+			p.Texts[k] = s.TextBoxes[i].Val
+		}
 	}
 	return json.Marshal(p)
 }
@@ -105,6 +130,14 @@ func (s *Sketch) applyControlStateJSON(data []byte) ([]string, error) {
 		if err := s.setDropdownQuiet(f, n, v); err != nil {
 			missing = append(missing, k)
 		}
+	}
+	for k, v := range p.Texts {
+		f, n := splitControlKey(k)
+		if err := s.setTextQuiet(f, n, v); err != nil {
+			missing = append(missing, k)
+			continue
+		}
+		s.DidTextBoxesChange = true
 	}
 	s.syncControlLastState()
 	s.syncBuiltinDefaultsFromColorPickers()
@@ -236,6 +269,9 @@ func (s *Sketch) snapshotKeysPresentInJSON(data []byte) (missing []string, err e
 	for k := range p.Dropdowns {
 		check(k)
 	}
+	for k := range p.Texts {
+		check(k)
+	}
 	return missing, nil
 }
 
@@ -253,8 +289,26 @@ func (s *Sketch) hasControl(folder, name string) bool {
 	if _, ok := s.colorPickerControlMap[k]; ok {
 		return true
 	}
-	_, ok := s.dropdownControlMap[k]
+	if _, ok := s.dropdownControlMap[k]; ok {
+		return true
+	}
+	_, ok := s.textBoxControlMap[k]
 	return ok
+}
+
+// setTextQuiet restores a text box without running its validator: a snapshot
+// holds a value this sketch already accepted once, and re-validating it would
+// silently drop a location whose validator has since been tightened.
+func (s *Sketch) setTextQuiet(folder, name, v string) error {
+	k := controlMapKey(folder, name)
+	i, ok := s.textBoxControlMap[k]
+	if !ok {
+		return fmt.Errorf("no text box %q", k)
+	}
+	s.TextBoxes[i].Val = v
+	s.TextBoxes[i].lastVal = v
+	s.TextBoxes[i].syncTextBufFromVal()
+	return nil
 }
 
 func (s *Sketch) setFloatQuiet(folder, name string, v float64) error {
@@ -332,5 +386,8 @@ func (s *Sketch) syncControlLastState() {
 	}
 	for i := range s.Dropdowns {
 		s.Dropdowns[i].lastIdx = s.Dropdowns[i].Index
+	}
+	for i := range s.TextBoxes {
+		s.TextBoxes[i].lastVal = s.TextBoxes[i].Val
 	}
 }

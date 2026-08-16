@@ -65,6 +65,34 @@ func (u *UI) ColorPicker(name, initial string) {
 	u.s.uiPlan = append(u.s.uiPlan, controlEntry{Kind: entryColor, Index: len(u.s.ColorPickers) - 1, Folder: u.folder})
 }
 
+// TextBox adds a free-form text field in the current folder, committed on
+// Enter or focus loss. validate normalizes the typed value and may reject it
+// (returning ok = false reverts the field); pass nil to accept anything.
+//
+// The value is persisted in snapshots like any other control, which makes a
+// TextBox the way to store something no numeric control can hold.
+func (u *UI) TextBox(name, initial string, validate func(string) (string, bool)) {
+	tb := NewTextBox(name, initial, validate)
+	tb.Folder = u.folder
+	u.s.TextBoxes = append(u.s.TextBoxes, tb)
+	u.s.uiPlan = append(u.s.uiPlan, controlEntry{Kind: entryTextBox, Index: len(u.s.TextBoxes) - 1, Folder: u.folder})
+}
+
+// MultilineTextBox is like TextBox but lays the field out on its own row under
+// the label, for values too long to read in the narrow value column.
+func (u *UI) MultilineTextBox(name, initial string, validate func(string) (string, bool)) {
+	u.TextBox(name, initial, validate)
+	u.s.TextBoxes[len(u.s.TextBoxes)-1].Multiline = true
+}
+
+// Label adds a read-only status row in the current folder. value is called
+// every frame the panel is drawn, so it can report live state. Labels hold no
+// value of their own and are not persisted in snapshots.
+func (u *UI) Label(name string, value func() string) {
+	u.s.Labels = append(u.s.Labels, Label{Folder: u.folder, Name: name, Value: value})
+	u.s.uiPlan = append(u.s.uiPlan, controlEntry{Kind: entryLabel, Index: len(u.s.Labels) - 1, Folder: u.folder})
+}
+
 // Dropdown adds a dropdown in the current folder. options must be non-empty.
 func (u *UI) Dropdown(name string, options []string, selectedIndex int) {
 	if len(options) == 0 {

@@ -1,6 +1,7 @@
 package sketchy
 
 import (
+	"fmt"
 	"image"
 	"image/png"
 	"os"
@@ -13,6 +14,11 @@ import (
 // at the given DPI (96 = one raster pixel per sketch pixel) and writes it as
 // PNG. It holds saveMutex so it never observes a half-rebuilt frame.
 func (s *Sketch) renderPNGToFile(full string, dpi float64) error {
+	if s.usesGPUCanvas() {
+		// The recorder is empty for a GPU-rendered sketch; replaying it would
+		// write a blank image. Capture the frame instead.
+		return fmt.Errorf("sketchy: GPU-rendered sketches have no vector recording to save; use EnqueueSavePixels with CaptureGPUImage")
+	}
 	scale := dpi / DefaultDPI
 	if scale <= 0 {
 		scale = 1
@@ -30,6 +36,9 @@ func (s *Sketch) renderPNGToFile(full string, dpi float64) error {
 
 // renderSVGToFile replays the current frame's recording into an SVG document.
 func (s *Sketch) renderSVGToFile(full string) error {
+	if s.usesGPUCanvas() {
+		return fmt.Errorf("sketchy: GPU-rendered sketches have no vector representation to save as SVG")
+	}
 	s.saveMutex.Lock()
 	defer s.saveMutex.Unlock()
 	svg := render.NewSVG(s.SketchWidth, s.SketchHeight)
@@ -69,11 +78,11 @@ func writePixelsPNG(full string, img *image.RGBA) error {
 }
 
 // writeSnapshotPNG writes the current frame for the snapshot dialog,
-// dispatching between the CPU recorder replay and the GPU shader capture.
-// Must run on the ebiten thread in shader mode.
+// dispatching between the CPU recorder replay and the GPU capture.
+// Must run on the ebiten thread for GPU-rendered sketches.
 func (s *Sketch) writeSnapshotPNG(full string) error {
-	if s.IsShaderSketch() {
-		return writePixelsPNG(full, s.CaptureShaderImage())
+	if s.usesGPUCanvas() {
+		return writePixelsPNG(full, s.CaptureGPUImage())
 	}
 	return writePNG(full, s)
 }
