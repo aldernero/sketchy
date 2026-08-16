@@ -7,7 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-08-16
+
 ### Added
+
+- **`UI.TextBox` / `UI.MultilineTextBox`**, a free-form string control committed on Enter or focus loss. `validate` normalizes the typed value and may reject it, reverting the field the same way an unparseable slider value does; pass `nil` to accept anything. Read and write it with `Sketch.GetText` / `Sketch.SetText` (`Sketch.Text` for the root folder), and `SetText` leaves the edit buffer alone while the field has focus, so a value arriving from code cannot overwrite what someone is typing.
+
+  Text boxes persist in snapshots like any other control, under a new `texts` key in `control_json` (payload schema 2 → 3; older snapshots simply lack the key and still load). That is what the control is for: a value no numeric control can hold — an arbitrary-precision coordinate, an identifier, an expression — can now be saved and restored by name.
+
+- **`UI.Label`**, a read-only status row whose `func() string` is called each time the panel is drawn. For live state that no control owns, so it does not have to be drawn onto the canvas and baked into every saved image. Not persisted in snapshots.
+
+- **`Config.GPUDrawer`** (type `SketchGPUDrawer`) renders a sketch straight onto an `*ebiten.Image` instead of the CPU canvas, for GPU work a single Kage shader cannot express: a shader that has to be compiled per frame, several passes, source textures of unrelated size, anything needing `DrawTrianglesShader`. `Config.ShaderPath` still covers the common single-shader case; this is the escape hatch under it.
+
+  The drawer is handed the sketch offscreen on the live path and an export-scale target for PNG saves, snapshots and video frames, so it should render at whatever size the target is — which makes Export scale a true supersample rather than an upscaled blit. An `export` flag marks the capture path, where the frame must be complete when the call returns; a drawer that spreads work across frames finishes it synchronously there. Mutually exclusive with `ShaderPath`/`ShaderSrc`.
+
+  `Sketch.IsGPUSketch` reports the mode, and `Sketch.CaptureGPUImage` is the capture entry point for it and for shader mode alike (`CaptureShaderImage` remains as a shader-only wrapper). Everything that follows from rendering on the GPU now keys off both modes: the offscreen is drawn into directly, Preview mode does not apply, image saves go through a readback, and SVG is unavailable.
+
+- **`Sketch.InputCaptured`** reports whether a control-panel widget currently has keyboard focus. Single-key shortcuts in an `Updater` should be suppressed while it is true, or typing into a panel text field also fires every shortcut the sketch defines.
+
+- **`Sketch.SerializeControlState` / `Sketch.ApplyControlState`**, exported so a sketch can save, diff, or restore its own control state outside the Snapshot dialogs.
 
 - **`Config.AppWidth` / `Config.AppHeight`** set the app window size independently of the sketch size, defaulting to `SketchWidth` / `SketchHeight` so existing sketches are unchanged. `Sketch.WindowSize()` (and the new `Sketch.AppSize()`) report these, so a window wider than the sketch opens letterboxed with room to move the control panel off the sketch area instead of having to resize by hand each run.
 
@@ -133,6 +151,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Initial published release (tag `v0.1.0`). Use `git log v0.1.0` for commit-level history before this changelog existed.
 
+[0.8.0]: https://github.com/aldernero/sketchy/compare/v0.7.1...v0.8.0
 [0.7.0]: https://github.com/aldernero/sketchy/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/aldernero/sketchy/compare/v0.5.0...v0.6.0
 [0.3.0]: https://github.com/aldernero/sketchy/compare/v0.2.0...v0.3.0
